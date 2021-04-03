@@ -13,6 +13,7 @@
 - [Tecnologia](#3-tecnologia)
 - [Resumo](#4-resumo)
 - [Avaliação](#5-avaliação)
+- [Perguntas](#Perguntas)
 
 ---
 
@@ -169,3 +170,10 @@ A entregar: o `hub`, `hub-tester`, `rec`, `rec-tester` e a `app`.
 - ID de grupo: **A24**
     - colocar no README na **raiz do projeto**
     - alterar nos `pom.xlm` e source code
+
+
+---
+## Perguntas
+- No rec porque recebemos o ip do próprio? Não tem que ser sempre `localhost`?
+- É suposto termos uma thread para dar *shutdown* do server como no exemplo desta aula?
+- É suposto metermos os default arguments no pom?

@@ -4,14 +4,14 @@
 syntax = "proto3";
 package pt.tecnico.rec.grpc;
 
-message CtrlPingRequest {
+message PingRequest {
   string input = 1;
 }
 
-message CtrlPingResponse {
+message PingResponse {
 	string output = 1;
 }
   
 service RecordService {
-  rpc ctrl_ping(CtrlPingRequest) returns (CtrlPingResponse);
+  rpc ping(PingRequest) returns (PingResponse);
 }
