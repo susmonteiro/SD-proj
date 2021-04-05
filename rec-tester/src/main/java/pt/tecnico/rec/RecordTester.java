@@ -1,5 +1,7 @@
 package pt.tecnico.rec;
 
+import pt.tecnico.rec.RecordFrontend;
+import pt.tecnico.rec.grpc.Rec.*;
 
 public class RecordTester {
 	
@@ -11,6 +13,23 @@ public class RecordTester {
 		for (int i = 0; i < args.length; i++) {
 			System.out.printf("arg[%d] = %s%n", i, args[i]);
 		}
+
+		// check arguments
+		if (args.length < 2) {
+			System.out.println("Argument(s) missing!");
+			System.out.printf("Usage: java %s host port%n", RecordTester.class.getName());
+			return;
+		}
+
+		final String host = args[0];
+		final int port = Integer.parseInt(args[1]);
+
+		RecordFrontend frontend = new RecordFrontend(host, port);
+		
+		PingRequest request = PingRequest.newBuilder().setInput("friend").build();
+		PingResponse response = frontend.ping(request);
+		System.out.println(response);
+
 	}
 	
 }

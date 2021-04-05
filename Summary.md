@@ -175,5 +175,8 @@ A entregar: o `hub`, `hub-tester`, `rec`, `rec-tester` e a `app`.
 ---
 ## Perguntas
 - No rec porque recebemos o ip do próprio? Não tem que ser sempre `localhost`?
+    > nope, vamos usar mais tarde
 - É suposto termos uma thread para dar *shutdown* do server como no exemplo desta aula?
+    > sim, é giro
 - É suposto metermos os default arguments no pom?
+    > yep, é boa ideia. Ou então usar [AppAssembler](https://github.com/tecnico-distsys/example_java-app/tree/appassembler)

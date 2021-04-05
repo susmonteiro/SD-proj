@@ -39,6 +39,12 @@
 			<version>${version.junit}</version>
 			<scope>test</scope>
 		</dependency>
+		<!-- Record frontend interfaces with Record server -->
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>rec</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>
