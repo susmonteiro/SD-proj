@@ -9,17 +9,13 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
 public class RecordMain {
-	/** Set flag to true to print debug messages. 
-	 * The flag can be set using the -Ddebug command line option. */
-	private static final boolean DEBUG = (System.getProperty("debug") != null);
-
 	private static String ZooKeeper_IP, IP;
 	private static int ZooKeeper_PORT, PORT, instance_num;
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		System.out.println(RecordMain.class.getSimpleName());
 		
-		if(DEBUG) setDefault(); else checkArgs(args);
+		checkArgs(args);
 
 		final BindableService impl = new RecordServerImpl();
 
@@ -40,14 +36,6 @@ public class RecordMain {
 
 		// Do not exit the main thread. Wait until server is terminated.
 		server.awaitTermination();
-	}
-
-	public static void setDefault() {
-		ZooKeeper_IP = "localhost";
-		ZooKeeper_PORT = 2181;
-		IP = "localhost";
-		PORT = 8091;
-		instance_num = 1;
 	}
 
 	public static void checkArgs(String[] args) {

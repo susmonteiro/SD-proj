@@ -19,6 +19,9 @@
 
 		<rec.i>1</rec.i><!-- instance number -->
 		<rec.port>809${rec.i}</rec.port>
+		<rec.host>localhost</rec.host>
+		<rec.ZKhost>localhost</rec.ZKhost>
+		<rec.ZKport>2181</rec.ZKport>
 	</properties>
 
 	<!-- Dependencies are code archives - JARs - on which your current module needs in order to compile, build, test, and/or to run. 
@@ -75,7 +78,11 @@
 				<configuration>
 					<mainClass>${mainclass}</mainClass>
 					<arguments>
+						<argument>${rec.ZKhost}</argument>
+						<argument>${rec.ZKport}</argument>
+						<argument>${rec.host}</argument>
 						<argument>${rec.port}</argument>
+						<argument>${rec.i}</argument>
 					</arguments>
 				</configuration>
 			</plugin>
