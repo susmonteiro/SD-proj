@@ -1,7 +1,7 @@
 package pt.tecnico.rec;
 
-import pt.tecnico.rec.RecordFrontend;
 import pt.tecnico.rec.grpc.Rec.*;
+import io.grpc.StatusRuntimeException;
 
 public class RecordTester {
 	
@@ -26,10 +26,16 @@ public class RecordTester {
 
 		RecordFrontend frontend = new RecordFrontend(host, port);
 		
-		PingRequest request = PingRequest.newBuilder().setInput("friend").build();
-		PingResponse response = frontend.ping(request);
-		System.out.println(response);
+		try{
+			PingRequest request = PingRequest.newBuilder().setInput("").build();
+			PingResponse response = frontend.ping(request);
+			System.out.println(response);
+		} catch (StatusRuntimeException e) {
+			System.out.println("Caught exception with description: " +
+			e.getStatus().getDescription());
+		}
 
+		frontend.close();
 	}
 	
 }
