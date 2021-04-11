@@ -1,12 +1,12 @@
-package pt.tecnico.domain;
+package pt.tecnico.bicloin.hub.domain;
 
 public class Station {
     private String _name;
-    private String _id;     // 4 chars
+    private String _id;          // 4 chars
     private float _latitude;     // between -90 and 90
     private float _longitude;    // between -180 and 180
     private int _numDocks;
-    private int _numBicycles;       // only in rec?
+    private int _numBicycles;    // only in rec?
     private int _reward;
 
     // TODO permitir que o servidor possa arrancar sem stations

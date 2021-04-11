@@ -1,4 +1,4 @@
-package pt.tecnico.domain;
+package pt.tecnico.bicloin.hub.domain;
 
 public class User {
     private String _id;          // 3-10 chars
@@ -19,6 +19,5 @@ public class User {
     public void setName(String name) { this._name = name; }
     
     public void setPhoneNumber(String phoneNumber) { this._phoneNumber = phoneNumber; }
-
 
 }

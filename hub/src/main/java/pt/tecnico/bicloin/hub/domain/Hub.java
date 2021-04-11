@@ -1,4 +1,4 @@
-package pt.tecnico.domain;
+package pt.tecnico.bicloin.hub.domain;
 
 import java.util.Map; 
 
