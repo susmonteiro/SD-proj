@@ -4,6 +4,58 @@
 syntax = "proto3";
 package pt.tecnico.bicloin.hub.grpc;
 
+message Coordinates {
+  float latitude = 1;
+  float longitude = 2;
+}
+
+message BalanceRequest {
+  string userId = 1;
+}
+
+message AmountResponse {
+  int32 balance = 1;
+}
+
+message TopUpRequest {
+  string userId = 1;
+  int32 amount = 2;
+  string phoneNumber = 3;
+}
+
+message InfoStationRequest {
+  string stationId = 1;
+}
+
+message InfoStationResponse {
+  string name = 1;
+  Coordinates coordinates = 2;
+  int32 nDocks = 3;
+  int32 reward = 4;
+  int32 nBicycles = 5;
+  int32 nPickUps = 6;
+  int32 nDeliveries = 7;
+}
+
+message LocateStationRequest {
+  Coordinates coordinates = 1; 
+  int32 nStations = 2;
+}
+
+message LocateStationResponse {
+  repeated string stationId = 1;
+}
+
+message BikeRequest {
+  string userId = 1;
+  Coordinates coordinates = 2;
+  string stationId = 3;
+}
+
+message BikeResponse {
+  // No arguments for this request.
+}
+
 message PingRequest {
   string input = 1;
 }
@@ -11,7 +63,27 @@ message PingRequest {
 message PingResponse {
 	string output = 1;
 }
+
+message SysStatusRequest {
+  // No arguments for this request.
+}
+
+message SysStatusResponse {
+  message StatusResponse{
+    string path = 1;
+    bool status = 2;
+  }
+  repeated StatusResponse status = 1;
+}
+
   
 service HubService {
+  rpc balance(BalanceRequest) returns (AmountResponse);
+  rpc topUp(TopUpRequest) returns (AmountResponse);
+  rpc infoStation(InfoStationRequest) returns (InfoStationResponse);
+  rpc locateStation(LocateStationRequest) returns (LocateStationResponse);
+  rpc bikeUp(BikeRequest) returns (BikeResponse);
+  rpc bikeDown(BikeRequest) returns (BikeResponse);
   rpc ping(PingRequest) returns (PingResponse);
+  rpc sysStatus(SysStatusRequest) returns (SysStatusRequest);
 }
