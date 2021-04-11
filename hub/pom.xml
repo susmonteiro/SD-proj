@@ -21,6 +21,9 @@
 
 		<hub.i>1</hub.i><!-- instance number -->
 		<hub.port>808${hub.i}</hub.port>
+		<hub.host>localhost</hub.host>
+		<hub.ZKhost>localhost</hub.ZKhost>
+		<hub.ZKport>2181</hub.ZKport>
 	</properties>
 
 	<!-- Dependencies are code archives - JARs - on which your current module needs in order to compile, build, test, and/or to run. 
@@ -29,7 +32,7 @@
 		<!-- contract brings gRPC dependencies with it -->
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>rec-contract</artifactId>
+			<artifactId>hub-contract</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
@@ -79,7 +82,11 @@
 					<killAfter>-1</killAfter>
 					<mainClass>${mainclass}</mainClass>
 					<arguments>
+						<argument>${hub.ZKhost}</argument>
+						<argument>${hub.ZKport}</argument>
+						<argument>${hub.host}</argument>
 						<argument>${hub.port}</argument>
+						<argument>${hub.i}</argument>
 					</arguments>
 				</configuration>
 			</plugin>
