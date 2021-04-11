@@ -180,3 +180,9 @@ A entregar: o `hub`, `hub-tester`, `rec`, `rec-tester` e a `app`.
     > sim, é giro
 - É suposto metermos os default arguments no pom?
     > yep, é boa ideia. Ou então usar [AppAssembler](https://github.com/tecnico-distsys/example_java-app/tree/appassembler)
+
+- Os ficheiros como argumentos no hub são sempre obrigatórios e se sim são sempre aqueles 2?
+
+- Zookeeper para esta entrega? Se não como fazemos o sys-status?
+
+- Vale a pena guardar numBicycles no hub ou é só mandado no inicio para o rec?
