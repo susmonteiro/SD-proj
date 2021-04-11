@@ -32,6 +32,12 @@
 			<artifactId>hub-contract</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
+		<!-- Hub frontend interfaces with Hub server -->
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>hub</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
 		<!-- JUnit is a unit testing framework for the Java programming language. -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
