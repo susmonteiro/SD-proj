@@ -15,7 +15,7 @@ public class RecordMain {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		System.out.println(RecordMain.class.getSimpleName());
 		
-		checkArgs(args);
+		parseArgs(args);
 
 		final BindableService impl = new RecordServerImpl();
 
@@ -38,7 +38,7 @@ public class RecordMain {
 		server.awaitTermination();
 	}
 
-	public static void checkArgs(String[] args) {
+	public static void parseArgs(String[] args) {
 		// receive and print arguments
 		System.out.printf("Received %d arguments%n", args.length);
 		for (int i = 0; i < args.length; i++) {
@@ -59,6 +59,10 @@ public class RecordMain {
 		PORT = Integer.parseInt(args[3]);
 		instance_num = Integer.parseInt(args[4]);
 
+	}
+
+	public static String identity() {
+		return "Im Rec " + instance_num + " at " + IP + ":" + PORT; 
 	}
 	
 }

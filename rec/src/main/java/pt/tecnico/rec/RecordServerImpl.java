@@ -18,7 +18,7 @@ public class RecordServerImpl extends RecordServiceGrpc.RecordServiceImplBase {
 				.withDescription("Input cannot be empty!").asRuntimeException());	
 
 		} else {
-			String output = "Hello " + input + "!";
+			String output = "Hello " + input + "! " + RecordMain.identity();
 			PingResponse response = PingResponse.newBuilder().setOutput(output).build();
 			responseObserver.onNext(response);
 			responseObserver.onCompleted();
