@@ -4,6 +4,28 @@
 syntax = "proto3";
 package pt.tecnico.rec.grpc;
 
+// defined seperatly for future additions
+message RegisterRequest {
+  string id = 1;
+}
+
+message ReadRequest {
+  RegisterRequest register = 1;
+}
+
+message ReadResponse {
+  int32 value = 1;
+}
+
+message WriteRequest {
+  RegisterRequest register = 1;
+  int32 value = 2;
+}
+
+message WriteResponse {
+
+}
+
 message PingRequest {
   string input = 1;
 }
@@ -13,5 +35,7 @@ message PingResponse {
 }
   
 service RecordService {
+  rpc read(ReadRequest) returns (ReadResponse);
+  rpc write(WriteRequest) returns (WriteResponse);
   rpc ping(PingRequest) returns (PingResponse);
 }
