@@ -8,6 +8,12 @@ public class User {
     // TODO confirmar input
     // TODO permitir que o servidor possa arrancar sem users
 
+    public User(String id, String name, String phoneNumber) {
+        _id = id;
+        _name = name;
+        _phoneNumber = phoneNumber;
+    }
+
     public String getId() { return _id; }
 
     public String getName() { return _name; }
