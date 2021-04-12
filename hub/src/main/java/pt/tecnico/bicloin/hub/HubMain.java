@@ -11,17 +11,25 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
 public class HubMain {
-	private static String ZooKeeper_IP, IP;
-	private static int ZooKeeper_PORT, PORT, instance_num;
-	private static List<String> givenFiles = new ArrayList<String>();
+	private static String recIP, IP;
+	private static int recPORT, PORT, instance_num;
+	private static String usersFile, stationsFile;
 	private static boolean initRec = false;
+
+	private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
+
+	/** Helper method to print debug messages. */
+	public static void debug(Object debugMessage) {
+		if (DEBUG_FLAG)
+			System.err.println(debugMessage);
+	}
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		System.out.println(HubMain.class.getSimpleName());
 		
 		parseArgs(args);
 
-		final BindableService impl = new HubServerImpl();
+		final BindableService impl = new HubServerImpl(recIP, recPORT);
 
 		// Create a new server to listen on port.
 		Server server = ServerBuilder.forPort(PORT).addService(impl).build();
@@ -50,27 +58,28 @@ public class HubMain {
 		}
 
 		// Check arguments.
-		if (args.length < 5) {
+		if (args.length < 7) {
 			System.err.println("Argument(s) missing!");
-			System.err.printf("Usage: java %s ZooKeeper_IP ZooKeeper_PORT " + 
-				"IP PORT instance_num [files]* [initRec] %n", HubMain.class.getName());
+			System.err.printf("Usage: java %s recIP recPORT " + 
+				"IP PORT instance_num users.csv stations.csv [initRec] %n", HubMain.class.getName());
 			System.exit(1);
 		}
 		
-		ZooKeeper_IP = args[0];
-		ZooKeeper_PORT = Integer.parseInt(args[1]);
+		recIP = args[0];
+		recPORT = Integer.parseInt(args[1]);
 		IP = args[2];
 		PORT = Integer.parseInt(args[3]);
 		instance_num = Integer.parseInt(args[4]);
+		usersFile = args[5];
+		stationsFile = args[6];
 		initRec = args[args.length-1].equals("initRec");
-				
-		int nFiles = (initRec ? args.length-1 : args.length);
-		for (int i = 5; i < nFiles; i++)
-			givenFiles.add(args[i]);
 	}
 
 	public static String identity() {
-		return "Im Hub " + instance_num + " at " + IP + ":" + PORT; 
+		return "Im Hub " + instance_num + " at " + path(); 
 	}
 	
+	public static String path() {
+		return IP + ":" + PORT;
+	}
 }

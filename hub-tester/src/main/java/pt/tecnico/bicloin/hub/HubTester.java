@@ -35,6 +35,10 @@ public class HubTester {
 			e.getStatus().getDescription());
 		}
 
+		SysStatusRequest request = SysStatusRequest.newBuilder().build();
+		SysStatusResponse response = frontend.sysStatus(request);
+		System.out.println(response);
+
 		frontend.close();
 	}
 	

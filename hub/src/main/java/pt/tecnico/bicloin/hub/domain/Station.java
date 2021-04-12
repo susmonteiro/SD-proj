@@ -6,7 +6,6 @@ public class Station {
     private float _latitude;     // between -90 and 90
     private float _longitude;    // between -180 and 180
     private int _nDocks;
-    private int _nBicycles;    // only in rec?
     private int _reward;
 
     // TODO permitir que o servidor possa arrancar sem stations
@@ -17,7 +16,6 @@ public class Station {
             _latitude = latitude;
             _longitude = longitude;
             _nDocks = nDocks;
-            _nBicycles = nBicycles;
             _reward = reward;
     }
 
@@ -31,9 +29,7 @@ public class Station {
     public float getLong() { return _longitude; }
     
     public int getNDocks() { return _nDocks; }
-    
-    public int getNBicycles() { return _nBicycles; }
-    
+        
     public int getReward() { return _reward; }
     
     public void setName(String name) { this._name = name; }
@@ -43,8 +39,6 @@ public class Station {
     public void setLat(float latitude) { this._latitude = latitude; }
     
     public void setLong(float longitude) { this._longitude = longitude; }
-    
-    public void setNBicycles(int nBicycles) { this._nBicycles = nBicycles; }
     
     public void setNDocks(int nDocks) { this._nDocks = nDocks; }
     

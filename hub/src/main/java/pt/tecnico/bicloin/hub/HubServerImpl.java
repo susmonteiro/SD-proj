@@ -3,10 +3,19 @@ package pt.tecnico.bicloin.hub;
 import pt.tecnico.bicloin.hub.grpc.HubServiceGrpc;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 import io.grpc.stub.StreamObserver;
+import pt.tecnico.bicloin.hub.domain.Hub;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
 
 public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
+
+	/* Server Implementation */
+	private Hub hub;
+
+	public HubServerImpl(String recIP, int recPORT) {
+		super();
+		this.hub = new Hub(recIP, recPORT);
+	}
 
 	@Override
     public void ping(PingRequest request, StreamObserver<PingResponse> responseObserver) {
@@ -23,6 +32,12 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 			responseObserver.onCompleted();
 			
 		}
+	}
+
+	@Override
+	public void sysStatus(SysStatusRequest request, StreamObserver<SysStatusResponse> responseObserver) {
+		responseObserver.onNext(hub.getAllServerStatus());
+		responseObserver.onCompleted();
 	}
     
 }

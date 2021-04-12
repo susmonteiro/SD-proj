@@ -69,11 +69,11 @@ message SysStatusRequest {
 }
 
 message SysStatusResponse {
-  message StatusResponse{
+  message StatusResponse {
     string path = 1;
     bool status = 2;
   }
-  repeated StatusResponse status = 1;
+  repeated StatusResponse serverStatus = 1;
 }
 
   
@@ -85,5 +85,5 @@ service HubService {
   rpc bikeUp(BikeRequest) returns (BikeResponse);
   rpc bikeDown(BikeRequest) returns (BikeResponse);
   rpc ping(PingRequest) returns (PingResponse);
-  rpc sysStatus(SysStatusRequest) returns (SysStatusRequest);
+  rpc sysStatus(SysStatusRequest) returns (SysStatusResponse);
 }

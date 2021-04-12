@@ -186,3 +186,7 @@ A entregar: o `hub`, `hub-tester`, `rec`, `rec-tester` e a `app`.
 - Zookeeper para esta entrega? Se não como fazemos o sys-status?
 
 - Vale a pena guardar numBicycles no hub ou é só mandado no inicio para o rec?
+
+> Registos Fortemente tipificados?
+
+> ConcurrentMap

@@ -21,6 +21,10 @@ public class HubFrontend implements AutoCloseable {
 	public PingResponse ping(PingRequest request) {
 		return stub.ping(request);
 	}
+
+	public SysStatusResponse sysStatus(SysStatusRequest request) {
+		return stub.sysStatus(request);
+	}
 	
     @Override
 	public final void close() {

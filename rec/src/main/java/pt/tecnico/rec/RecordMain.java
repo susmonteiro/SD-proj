@@ -62,7 +62,11 @@ public class RecordMain {
 	}
 
 	public static String identity() {
-		return "Im Rec " + instance_num + " at " + IP + ":" + PORT; 
+		return "Im Rec " + instance_num + " at " + path(); 
+	}
+
+	public static String path() {
+		return IP + ":" + PORT;
 	}
 	
 }

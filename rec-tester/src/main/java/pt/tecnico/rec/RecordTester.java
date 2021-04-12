@@ -27,7 +27,7 @@ public class RecordTester {
 		RecordFrontend frontend = new RecordFrontend(host, port);
 		
 		try{
-			PingRequest request = PingRequest.newBuilder().setInput("").build();
+			PingRequest request = PingRequest.newBuilder().setInput("friend").build();
 			PingResponse response = frontend.ping(request);
 			System.out.println(response);
 		} catch (StatusRuntimeException e) {
