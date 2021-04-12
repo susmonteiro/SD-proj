@@ -22,15 +22,19 @@ public class RecordFrontend implements AutoCloseable {
 		this.host = host;
 		this.port = port;
 	}
+	
+	public String getPath() {
+		return host + ":" + port;
+	}
 
 	public PingResponse ping(PingRequest request) {
 		return stub.ping(request);
 	}
 
-	public String path() {
-		return host + ":" + port;
+	public WriteResponse write(WriteRequest request) {
+		return WriteResponse.getDefaultInstance(); // TODO
 	}
-	
+
     @Override
 	public final void close() {
 		channel.shutdown();
