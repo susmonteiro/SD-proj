@@ -13,7 +13,8 @@
 - [Tecnologia](#3-tecnologia)
 - [Resumo](#4-resumo)
 - [Avaliação](#5-avaliação)
-- [Perguntas](#Perguntas)
+- [Implementação](#implementação)
+- [Perguntas](#perguntas)
 
 ---
 
@@ -170,7 +171,13 @@ A entregar: o `hub`, `hub-tester`, `rec`, `rec-tester` e a `app`.
 - ID de grupo: **A24**
     - colocar no README na **raiz do projeto**
     - alterar nos `pom.xlm` e source code
-
+---
+## Implementação
+- Lazy loading users. Apenas inicializa no Rec com o primeiro acesso, nao envia com `initRec`
+- Rec registers:
+    - users balance: `<userId_balance, value>`
+    - users onBike
+    - stations nBicycles: `<stationId_, value>`
 
 ---
 ## Perguntas
@@ -190,3 +197,6 @@ A entregar: o `hub`, `hub-tester`, `rec`, `rec-tester` e a `app`.
 > Registos Fortemente tipificados?
 
 > ConcurrentMap
+
+- podemos fazer "template" messages para os ReadRequest
+- podemos não usar Money para o balance
