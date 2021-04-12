@@ -2,14 +2,10 @@ package pt.tecnico.bicloin.hub.domain;
 
 import java.util.Map; 
 import java.util.HashMap; 
-import java.util.List;
-import java.util.ArrayList;
 
 import pt.tecnico.bicloin.hub.HubMain;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 import pt.tecnico.rec.grpc.Rec;
-
-import io.grpc.StatusRuntimeException;
 
 import pt.tecnico.rec.RecordFrontend;
 
