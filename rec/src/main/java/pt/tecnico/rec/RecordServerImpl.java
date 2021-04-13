@@ -13,6 +13,20 @@ public class RecordServerImpl extends RecordServiceGrpc.RecordServiceImplBase {
 	private final Rec rec = new Rec();
 
 	@Override
+    public void read(RegisterRequest request, StreamObserver<ReadResponse> responseObserver) {
+		String id = request.getId();
+		RegisterValue.ValueCase type = request.getData().getValueCase();
+
+		RegisterValue value = rec.getRegister(id, type);
+
+		ReadResponse response = ReadResponse.newBuilder().setData(value).build();
+		
+		responseObserver.onNext(response);
+		responseObserver.onCompleted();
+		
+	}
+
+	@Override
     public void write(RegisterRequest request, StreamObserver<WriteResponse> responseObserver) {
 		String id = request.getId();
 		RegisterValue value = request.getData();
@@ -24,7 +38,6 @@ public class RecordServerImpl extends RecordServiceGrpc.RecordServiceImplBase {
 		
 		responseObserver.onNext(response);
 		responseObserver.onCompleted();
-			
 	}
 
 	@Override

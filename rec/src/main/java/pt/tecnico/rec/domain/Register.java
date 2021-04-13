@@ -13,6 +13,14 @@ public class Register {
     public Register() {
     }
 
+    private RegisterValue setDefault(RegisterValue.ValueCase type) {
+        return RegisterValue.getDefaultInstance();
+    }
+
+    public RegisterValue getValue(RegisterValue.ValueCase type) {
+        return register.containsKey(type) ? register.get(type) : setDefault(type);
+    }
+
     public void setValue(RegisterValue.ValueCase type, RegisterValue value) {
         register.put(type, value);
     }

@@ -20,6 +20,13 @@ public class Rec {
         
     }
 
+    public synchronized RegisterValue getRegister(String id, RegisterValue.ValueCase type) {
+        
+        Register register = registers.containsKey(id) ? registers.get(id) : addNewRegister(id);
+
+        return register.getValue(type);
+    }
+
     public synchronized void setRegister(String id, 
             RegisterValue.ValueCase type, RegisterValue value) {
 
