@@ -9,13 +9,14 @@ import static io.grpc.Status.INVALID_ARGUMENT;
 import io.grpc.StatusRuntimeException;
 import pt.tecnico.rec.grpc.Rec.*;
 
+
 public class PingIT extends BaseIT {
 	
 	@Test
 	public void pingOKTest() {
 		PingRequest request = PingRequest.newBuilder().setInput("friend").build();
 		PingResponse response = frontend.ping(request);
-		assertEquals("Hello friend!", response.getOutput());
+		assertEquals("Hello friend! Im Rec 1 at localhost:8091", response.getOutput());
 	}
 
 	@Test

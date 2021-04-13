@@ -5,13 +5,13 @@ import java.util.Properties;
 
 import org.junit.jupiter.api.*;
 
-import pt.tecnico.rec.RecordFrontend;
+import pt.tecnico.rec.frontend.RecordFrontend;
 
 public class BaseIT {
 
 	private static final String TEST_PROP_FILE = "/test.properties";
 	protected static Properties testProps;
-	static RecordFrontend frontend;
+	public static RecordFrontend frontend;
 
 	@BeforeAll
 	public static void oneTimeSetup () throws IOException {
@@ -31,6 +31,7 @@ public class BaseIT {
 		final int port = Integer.parseInt(testProps.getProperty("server.port"));
 		
 		frontend = new RecordFrontend(host, port);
+		System.out.println(frontend.getPath());
 	}
 	
 	@AfterAll

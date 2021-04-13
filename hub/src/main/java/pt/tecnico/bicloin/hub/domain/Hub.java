@@ -6,7 +6,7 @@ import static pt.tecnico.bicloin.hub.HubMain.debug;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 import pt.tecnico.rec.grpc.Rec;
 
-import pt.tecnico.rec.RecordFrontend;
+import pt.tecnico.rec.frontend.RecordFrontend;
 
 public class Hub {
     private Map<String, User> users;

@@ -1,4 +1,4 @@
-package pt.tecnico.rec;
+package pt.tecnico.rec.frontend;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
