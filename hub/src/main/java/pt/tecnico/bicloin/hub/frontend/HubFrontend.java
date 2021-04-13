@@ -1,4 +1,4 @@
-package pt.tecnico.bicloin.hub;
+package pt.tecnico.bicloin.hub.frontend;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;

@@ -3,6 +3,8 @@ package pt.tecnico.bicloin.hub;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 import io.grpc.StatusRuntimeException;
 
+import pt.tecnico.bicloin.hub.frontend.HubFrontend;
+
 public class HubTester {
 	
 	public static void main(String[] args) {

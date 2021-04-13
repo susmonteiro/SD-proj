@@ -5,6 +5,7 @@ import java.util.Properties;
 
 import org.junit.jupiter.api.*;
 
+import pt.tecnico.bicloin.hub.frontend.HubFrontend;
 
 public class BaseIT {
 

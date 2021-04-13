@@ -51,9 +51,8 @@ public class Hub {
             debug("id: " + stationId + "\n" + stations.get(stationId.toString()));
             int nBicycles = stations.get(stationId).getNBicycles();
             
-            Rec.WriteRequest request = Rec.WriteRequest.newBuilder()
-                .setRegister(Rec.RegisterRequest.newBuilder()
-                    .setId(stationId))
+            Rec.RegisterRequest request = Rec.RegisterRequest.newBuilder()
+                .setId(stationId)
                 .setData(Rec.RegisterValue.newBuilder()
                     .setRegNBikes(Rec.RegisterNBikes.newBuilder()
                         .setNBikes(nBicycles)))

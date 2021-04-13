@@ -5,10 +5,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import pt.tecnico.rec.grpc.Rec.*;
 
-public class Rec {
-    private Map<String, Register> registers = new ConcurrentHashMap<>();
+public class Register {
+    Map<RegisterValue.ValueCase, RegisterValue> register = new ConcurrentHashMap<>();
 
-    public Rec() {
+    public Register() {
     }
 
 }

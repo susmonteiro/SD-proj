@@ -4,6 +4,8 @@ import pt.tecnico.rec.frontend.RecordFrontend;
 import pt.tecnico.rec.grpc.Rec.*;
 import io.grpc.StatusRuntimeException;
 
+import pt.tecnico.rec.frontend.RecordFrontend;
+
 public class RecordTester {
 	
 	private static final RegisterRequest registerDefault = RegisterRequest.newBuilder()
