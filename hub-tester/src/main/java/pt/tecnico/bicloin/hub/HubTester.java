@@ -5,7 +5,9 @@ import io.grpc.StatusRuntimeException;
 
 import pt.tecnico.bicloin.hub.frontend.HubFrontend;
 
+
 public class HubTester {
+	private static HubFrontend frontend;
 	
 	public static void main(String[] args) {
 		System.out.println(HubTester.class.getSimpleName());
@@ -26,22 +28,41 @@ public class HubTester {
 		final String host = args[0];
 		final int port = Integer.parseInt(args[1]);
 
-		HubFrontend frontend = new HubFrontend(host, port);
+		frontend = new HubFrontend(host, port);
+
 		
+		/* ===    Remote functions    === */
+
+		/* Ping */
+		pingTest("boss");
+		pingTest("");
+
+		/* SysStatus */
+		sysStatusTest();
+		
+
+		frontend.close();
+	}
+
+	private static void pingTest(String input) {
+		System.out.println("@Ping...");
+
 		try{
-			PingRequest request = PingRequest.newBuilder().setInput("Boss").build();
+			PingRequest request = PingRequest.newBuilder().setInput(input).build();
 			PingResponse response = frontend.ping(request);
 			System.out.println(response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " +
 			e.getStatus().getDescription());
 		}
+	}
+
+	private static void sysStatusTest() {
+		System.out.println("@SysStatus...");
 
 		SysStatusRequest request = SysStatusRequest.newBuilder().build();
 		SysStatusResponse response = frontend.sysStatus(request);
 		System.out.println(response);
-
-		frontend.close();
 	}
 	
 }
