@@ -3,6 +3,8 @@ package pt.tecnico.rec;
 import pt.tecnico.rec.grpc.Rec.*;
 import io.grpc.StatusRuntimeException;
 
+import pt.tecnico.rec.frontend.RecordFrontend;
+
 public class RecordTester {
 	
 	public static void main(String[] args) {

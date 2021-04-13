@@ -31,7 +31,7 @@ public class RecordFrontend implements AutoCloseable {
 		return stub.ping(request);
 	}
 
-	public WriteResponse write(WriteRequest request) {
+	public WriteResponse write(RegisterRequest request) {
 		return WriteResponse.getDefaultInstance(); // TODO
 	}
 
