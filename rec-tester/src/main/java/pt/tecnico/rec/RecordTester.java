@@ -1,6 +1,5 @@
 package pt.tecnico.rec;
 
-import pt.tecnico.rec.frontend.RecordFrontend; 
 import pt.tecnico.rec.grpc.Rec.*;
 import io.grpc.StatusRuntimeException;
 
@@ -8,8 +7,7 @@ import pt.tecnico.rec.frontend.RecordFrontend;
 
 public class RecordTester {
 	
-	private static final RegisterRequest registerDefault = RegisterRequest.newBuilder()
-		.setId("rec-tester").build();
+	private static final String registerIdDefault = "rec-tester";
 
 	private static RecordFrontend frontend;
 
@@ -39,18 +37,18 @@ public class RecordTester {
 		pingTest(getPingRequest(""));
 
 		/* Write */
-		writeTest(registerDefault, getRegisterBalanceAsRegisterValue(1));
-		writeTest(registerDefault, getRegisterOnBikeAsRegisterValue(true));
-		writeTest(registerDefault, getRegisterNBikesAsRegisterValue(2));
-		writeTest(registerDefault, getRegisterNPickUpsAsRegisterValue(3));
-		writeTest(registerDefault, getRegisterNDeliveriesAsRegisterValue(4));
+		writeTest(registerIdDefault, getRegisterBalanceAsRegisterValue(1));
+		writeTest(registerIdDefault, getRegisterOnBikeAsRegisterValue(true));
+		writeTest(registerIdDefault, getRegisterNBikesAsRegisterValue(2));
+		writeTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue(3));
+		writeTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue(4));
 
 		/* Read */
-		readTest(registerDefault, getRegisterBalanceAsRegisterValue());
-		readTest(registerDefault, getRegisterOnBikeAsRegisterValue());
-		readTest(registerDefault, getRegisterNBikesAsRegisterValue());
-		readTest(registerDefault, getRegisterNPickUpsAsRegisterValue());
-		readTest(registerDefault, getRegisterNDeliveriesAsRegisterValue());
+		readTest(registerIdDefault, getRegisterBalanceAsRegisterValue());
+		readTest(registerIdDefault, getRegisterOnBikeAsRegisterValue());
+		readTest(registerIdDefault, getRegisterNBikesAsRegisterValue());
+		readTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue());
+		readTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue());
 
 		frontend.close();
 	}
@@ -68,10 +66,10 @@ public class RecordTester {
 		}
 	}
 
-	private static void writeTest(RegisterRequest register, RegisterValue value) {
+	private static void writeTest(String registerId, RegisterValue value) {
 		try{
-			WriteRequest request = WriteRequest.newBuilder()
-				.setRegister(registerDefault)
+			RegisterRequest request = RegisterRequest.newBuilder()
+				.setId(registerId)
 				.setData(value)
 				.build();
 			WriteResponse response = frontend.write(request);
@@ -82,14 +80,14 @@ public class RecordTester {
 		}
 	}
 
-	private static void readTest(RegisterRequest register, RegisterValue value) {
+	private static void readTest(String registerId, RegisterValue value) {
 		try{
-			ReadRequest request = ReadRequest.newBuilder()
-				.setRegister(registerDefault)
-				// .setData(value)
+			RegisterRequest request = RegisterRequest.newBuilder()
+				.setId(registerId)
+				.setData(value)
 				.build();
-			// ReadResponse response = frontend.read(request);
-			// System.out.println("@ReadTest:\n" + response);
+			ReadResponse response = frontend.read(request);
+			System.out.println("@ReadTest:\n" + response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("@ReadTest:\nCaught exception with description: " +
 				e.getStatus().getDescription());
@@ -99,6 +97,10 @@ public class RecordTester {
 
 	/* ================ */
 	/* Message building */
+
+	private static PingRequest getPingRequest(String input) {
+		return PingRequest.newBuilder().setInput(input).build();
+	}
 
 	private static RegisterValue getRegisterBalanceAsRegisterValue(int value) {
 		return RegisterValue.newBuilder().setRegBalance(
@@ -155,7 +157,4 @@ public class RecordTester {
 			).build();
 	}
 
-	private static PingRequest getPingRequest(String input) {
-		return PingRequest.newBuilder().setInput(input).build();
-	}
 }
