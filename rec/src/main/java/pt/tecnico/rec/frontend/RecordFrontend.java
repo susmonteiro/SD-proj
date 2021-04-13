@@ -35,6 +35,10 @@ public class RecordFrontend implements AutoCloseable {
 		return WriteResponse.getDefaultInstance(); // TODO
 	}
 
+	public ReadResponse read(RegisterRequest request) {
+		return ReadResponse.getDefaultInstance(); // TODO
+	}
+
     @Override
 	public final void close() {
 		channel.shutdown();

@@ -18,6 +18,30 @@ public class HubFrontend implements AutoCloseable {
 		stub = HubServiceGrpc.newBlockingStub(channel);
 	}
 
+	public AmountResponse balance(BalanceRequest request) {
+		return AmountResponse.getDefaultInstance();	//TODO
+	}
+
+	public AmountResponse topUp(BalanceRequest request) {
+		return AmountResponse.getDefaultInstance();	//TODO
+	}
+
+	public InfoStationResponse infoStantion(InfoStationRequest request) {
+		return InfoStationResponse.getDefaultInstance();	//TODO
+	}
+
+	public LocateStationResponse locateStation(LocateStationRequest request) {
+		return LocateStationResponse.getDefaultInstance();	//TODO
+	}
+
+	public BikeResponse bikeUp(BikeRequest request) {
+		return BikeResponse.getDefaultInstance();	//TODO
+	}
+
+	public BikeResponse bikeDown(BikeRequest request) {
+		return BikeResponse.getDefaultInstance();	//TODO
+	}
+
 	public PingResponse ping(PingRequest request) {
 		return stub.ping(request);
 	}
