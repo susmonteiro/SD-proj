@@ -8,6 +8,28 @@ import io.grpc.stub.StreamObserver;
 import static io.grpc.Status.INVALID_ARGUMENT;
 
 public class RecordServerImpl extends RecordServiceGrpc.RecordServiceImplBase {
+	private RegisterValue foo = RegisterValue.getDefaultInstance();
+
+	@Override
+	public void read(RegisterRequest request, StreamObserver<ReadResponse> responseObserver) {
+		System.out.println("@read:\n" + request);
+		ReadResponse response = ReadResponse.newBuilder()
+			.setData(foo).build();
+		
+		responseObserver.onNext(response);
+		responseObserver.onCompleted();
+		
+	}
+
+	@Override
+	public void write(RegisterRequest request, StreamObserver<WriteResponse> responseObserver) {
+		System.out.println("@write:\n" + request);
+		this.foo = request.getData(); 
+		WriteResponse response = WriteResponse.getDefaultInstance();
+		
+		responseObserver.onNext(response);
+		responseObserver.onCompleted();
+	}
 
 	@Override
     public void ping(PingRequest request, StreamObserver<PingResponse> responseObserver) {

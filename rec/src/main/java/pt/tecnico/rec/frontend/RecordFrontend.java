@@ -32,11 +32,11 @@ public class RecordFrontend implements AutoCloseable {
 	}
 
 	public WriteResponse write(RegisterRequest request) {
-		return WriteResponse.getDefaultInstance(); // TODO
+		return stub.write(request);
 	}
 
 	public ReadResponse read(RegisterRequest request) {
-		return ReadResponse.getDefaultInstance(); // TODO
+		return stub.read(request);
 	}
 
     @Override
