@@ -22,11 +22,11 @@ public class HubFrontend implements AutoCloseable {
 		return AmountResponse.getDefaultInstance();	//TODO
 	}
 
-	public AmountResponse topUp(BalanceRequest request) {
+	public AmountResponse topUp(TopUpRequest request) {
 		return AmountResponse.getDefaultInstance();	//TODO
 	}
 
-	public InfoStationResponse infoStantion(InfoStationRequest request) {
+	public InfoStationResponse infoStation(InfoStationRequest request) {
 		return InfoStationResponse.getDefaultInstance();	//TODO
 	}
 
