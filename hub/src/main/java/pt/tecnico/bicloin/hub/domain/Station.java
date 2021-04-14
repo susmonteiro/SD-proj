@@ -1,5 +1,6 @@
 package pt.tecnico.bicloin.hub.domain;
 
+import pt.tecnico.bicloin.hub.domain.exception.InvalidArgumentException;
 import pt.tecnico.bicloin.hub.domain.exception.InvalidFileInputException;
 
 public class Station {
@@ -21,20 +22,19 @@ public class Station {
 
     // TODO permitir que o servidor possa arrancar sem stations
 
-    public Station(String name, String id, float latitude, float longitude, int nDocks, int nBicycles, int reward) throws InvalidFileInputException {
-        if (id.length() != 4) 
-            throw new InvalidFileInputException("ID " + id + " is invalid.\nID needs to have 4 chars.");
-        if (latitude < -90 || latitude > 90)
-            throw new InvalidFileInputException("Latitude " + latitude + " is invalid\n.Latitude has to be between -90 and 90.");
-        if (longitude < -180 || longitude > 180)
-            throw new InvalidFileInputException("Longitude " + longitude + " is invalid\n.Longitude has to be between -180 and 180.");
-        if (nDocks < 0)
-            throw new InvalidFileInputException("Number of Docks " + nDocks + " is invalid.\nNumber of Docks cannot be negative.");    
-        if (nBicycles < 0 || nBicycles > nDocks)
-            throw new InvalidFileInputException("Number of Bicycles " + nBicycles + " is invalid.\nNumber of Bicycles cannot be negative or higher than the Number of Docks.");
-        if (reward < 0)
-            throw new InvalidFileInputException("Reward " + reward + " is invalid.\nReward has to be positive.");
-        
+    public Station(String name, String id, float latitude, float longitude, int nDocks,
+            int nBicycles, int reward) throws InvalidFileInputException {
+        try {
+            checkId(id);
+            checkLatitude(latitude);
+            checkLongitude(longitude);
+            checkNBicycles(nBicycles, nDocks);
+            checkNDocks(nDocks);
+            checkReward(reward);
+        } catch (InvalidArgumentException e) {
+            throw new InvalidFileInputException(e.getMessage());
+        }
+
         _name = name;
         _id = id;
         _latitude = latitude;
@@ -49,6 +49,29 @@ public class Station {
             Float.parseFloat(fields[LONGITUDE_IDX]), Integer.parseInt(fields[NDOCKS_IDX]), 
             Integer.parseInt(fields[NBICYCLES_IDX]), Integer.parseInt(fields[REWARD_IDX]));
     }
+
+    /* Data checks */
+    /* =========== */
+    
+    public static void checkId(String id) throws InvalidArgumentException {
+        if (id.length() != 4)  throw new InvalidArgumentException("ID " + id + " is invalid.\nID needs to have 4 chars.");
+    }
+    public static void checkLatitude(float latitude) throws InvalidArgumentException {
+        if (latitude < -90 || latitude > 90) throw new InvalidArgumentException("Latitude " + latitude + " is invalid\n.Latitude has to be between -90 and 90.");
+    }
+    public static void checkLongitude(float longitude) throws InvalidArgumentException {
+        if (longitude < -180 || longitude > 180) throw new InvalidArgumentException("Longitude " + longitude + " is invalid\n.Longitude has to be between -180 and 180.");
+    }
+    public static void checkNDocks(int nDocks) throws InvalidArgumentException {
+        if (nDocks < 0) throw new InvalidArgumentException("Number of Docks " + nDocks + " is invalid.\nNumber of Docks cannot be negative.");    
+    }
+    public static void checkNBicycles(int nBicycles, int nDocks) throws InvalidArgumentException {
+        if (nBicycles < 0 || nBicycles > nDocks) throw new InvalidArgumentException("Number of Bicycles " + nBicycles + " is invalid.\nNumber of Bicycles cannot be negative or higher than the Number of Docks.");
+    }
+    public static void checkReward(int reward) throws InvalidArgumentException {
+        if (reward < 0) throw new InvalidArgumentException("Reward " + reward + " is invalid.\nReward has to be positive.");
+    }
+        
 
 
     public String getName() { return _name; }

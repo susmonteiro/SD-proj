@@ -1,15 +1,18 @@
 package pt.tecnico.bicloin.hub;
 
+import io.grpc.stub.StreamObserver;
 import pt.tecnico.bicloin.hub.grpc.HubServiceGrpc;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
-import io.grpc.stub.StreamObserver;
+
 import static pt.tecnico.bicloin.hub.HubMain.debug;
 import pt.tecnico.bicloin.hub.domain.*;
 
+import pt.tecnico.bicloin.hub.domain.exception.FailedPreconditionException;
 import pt.tecnico.bicloin.hub.domain.exception.InvalidArgumentException;
 import io.grpc.StatusRuntimeException;
 import static io.grpc.Status.INVALID_ARGUMENT;
 import static io.grpc.Status.UNAVAILABLE;
+import static io.grpc.Status.FAILED_PRECONDITION;
 
 import java.util.Map;
 
@@ -78,6 +81,38 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 			debug("@HubServerImpl Got exception:" + e.getStatus().getDescription());
 		}
 	}
+
+	@Override
+	public void bikeUp(BikeRequest request, StreamObserver<BikeResponse> responseObserver) {
+		String userId = request.getUserId();
+		float latitude = request.getCoordinates().getLatitude();
+		float longitude = request.getCoordinates().getLongitude();
+		String stationId = request.getStationId();
+
+		try{
+			hub.bikeUp(userId, latitude, longitude, stationId);
+			BikeResponse response = BikeResponse.getDefaultInstance();
+
+			responseObserver.onNext(response);
+			responseObserver.onCompleted();
+
+		} catch (InvalidArgumentException e) {
+			responseObserver.onError(INVALID_ARGUMENT
+				.withDescription(e.getMessage()).asRuntimeException());
+			debug("@HubServerImpl Got exception:" + e);
+
+		} catch (FailedPreconditionException e) {
+			responseObserver.onError(FAILED_PRECONDITION
+				.withDescription(e.getMessage()).asRuntimeException());
+			debug("@HubServerImpl Got exception:" + e);
+
+		} catch (StatusRuntimeException e) {
+			responseObserver.onError(UNAVAILABLE
+				.withDescription("Request could not be processed.").asRuntimeException());
+			debug("@HubServerImpl Got exception:" + e.getStatus().getDescription());
+		}
+	}
+
 
 	@Override
     public void ping(PingRequest request, StreamObserver<PingResponse> responseObserver) {
