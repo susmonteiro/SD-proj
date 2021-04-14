@@ -14,7 +14,9 @@ public class Register {
     }
 
     private RegisterValue setDefault(RegisterValue.ValueCase type) {
-        return RegisterValue.getDefaultInstance();
+        RegisterValue defaultValue = RegisterValue.getDefaultInstance();
+        this.setValue(type, defaultValue);
+        return defaultValue;
     }
 
     public RegisterValue getValue(RegisterValue.ValueCase type) {
@@ -30,7 +32,7 @@ public class Register {
         String output = "=== REGISTER CONTENT ===\n";
         for (Map.Entry<RegisterValue.ValueCase, RegisterValue> entry : register.entrySet()) {
             output += "Type: " + entry.getKey() +
-                                 "\nValue: " + entry.getValue();
+                        "\n" + entry.getValue();
         }
         return output;
     }
