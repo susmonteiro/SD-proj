@@ -19,27 +19,27 @@ public class HubFrontend implements AutoCloseable {
 	}
 
 	public AmountResponse balance(BalanceRequest request) {
-		return AmountResponse.getDefaultInstance();	//TODO
+		return stub.balance(request);
 	}
 
 	public AmountResponse topUp(TopUpRequest request) {
-		return AmountResponse.getDefaultInstance();	//TODO
+		return stub.topUp(request);
 	}
 
 	public InfoStationResponse infoStation(InfoStationRequest request) {
-		return InfoStationResponse.getDefaultInstance();	//TODO
+		return stub.infoStation(request);
 	}
 
 	public LocateStationResponse locateStation(LocateStationRequest request) {
-		return LocateStationResponse.getDefaultInstance();	//TODO
+		return stub.locateStation(request);
 	}
 
 	public BikeResponse bikeUp(BikeRequest request) {
-		return BikeResponse.getDefaultInstance();	//TODO
+		return stub.bikeUp(request);
 	}
 
 	public BikeResponse bikeDown(BikeRequest request) {
-		return BikeResponse.getDefaultInstance();	//TODO
+		return stub.bikeDown(request);
 	}
 
 	public PingResponse ping(PingRequest request) {
