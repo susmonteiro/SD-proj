@@ -9,8 +9,17 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
 public class RecordMain {
+	private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 	private static String ZooKeeper_IP, IP;
 	private static int ZooKeeper_PORT, PORT, instance_num;
+
+	/** Helper method to print debug messages. */
+	public static void debug(Object debugMessage) {
+		if (DEBUG_FLAG)
+			System.err.println(debugMessage);
+	}
+
+
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		System.out.println(RecordMain.class.getSimpleName());
