@@ -8,11 +8,11 @@ package pt.tecnico.rec.grpc;
 // Specific Values
 message RegisterValue {
   oneof value {
-    RegisterBalance RegBalance = 2;
-    RegisterOnBike RegOnBike = 3;
-    RegisterNBikes RegNBikes = 4;
-    RegisterNPickUps RegNPickUps = 5;
-    RegisterNDeliveries RegNDeliveries = 6;
+    RegisterBalance RegBalance = 1;
+    RegisterOnBike RegOnBike = 2;
+    RegisterNBikes RegNBikes = 3;
+    RegisterNPickUps RegNPickUps = 4;
+    RegisterNDeliveries RegNDeliveries = 5;
   }
 }
 

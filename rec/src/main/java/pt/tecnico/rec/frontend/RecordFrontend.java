@@ -27,17 +27,18 @@ public class RecordFrontend implements AutoCloseable {
 		return host + ":" + port;
 	}
 
+	public ReadResponse read(RegisterRequest request) {
+		return stub.read(request);
+	}
+
+	public WriteResponse write(RegisterRequest request) {
+		return stub.write(request);
+	}
+
 	public PingResponse ping(PingRequest request) {
 		return stub.ping(request);
 	}
 
-	public WriteResponse write(RegisterRequest request) {
-		return WriteResponse.getDefaultInstance(); // TODO
-	}
-
-	public ReadResponse read(RegisterRequest request) {
-		return ReadResponse.getDefaultInstance(); // TODO
-	}
 
     @Override
 	public final void close() {
