@@ -85,7 +85,7 @@ public class Hub {
         Station.checkLatitude(latitude);
         Station.checkLongitude(longitude);
         checkStation(stationId);
-        checkLocation(stationId, latitude, longitude); //TODO
+        // checkLocation(stationId, latitude, longitude); //TODO
 
         /* Always synchronize in this order to avoid DeadLocks */
         synchronized (users.get(userId)) {
@@ -224,7 +224,7 @@ public class Hub {
         checkUserOnBike(id);
 
         // checkUserHasMoney
-        if (money <= BIKE_UP_PRICE) throw new NotEnoughMoneyException();
+        if (money < BIKE_UP_PRICE) throw new NotEnoughMoneyException();
 }
 
     public void checkUserOnBike(String id) throws StatusRuntimeException, UserAlreadyOnBikeException {
