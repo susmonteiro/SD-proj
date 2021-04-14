@@ -101,7 +101,7 @@ public class Hub {
         int oldBalance = balance(id);
         int newBalance = oldBalance + getBicFromMoney(value);
 
-        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue(value));
+        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue(newBalance));
         debug("@Hub #TopUp\n**Request:\n" + request);
 
         rec.write(request);
