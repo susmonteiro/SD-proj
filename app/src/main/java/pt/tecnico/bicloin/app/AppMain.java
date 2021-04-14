@@ -25,21 +25,9 @@ public class AppMain {
 		
 		parseArgs(args);
 		
-		App app = new App();
-		app.start(hubIP, hubPORT, userID, userPhoneNumber, latitude, longitude);
-		/* //TODO apanhar excecao Mismatch input
-		while(true){
-			System.out.print(">");
-			try (Scanner in = new Scanner(System.in)) {
-			String input = in.nextLine();
-			debug(input);
-			} catch(InputMismatchException e) {
-				System.out.println(e.getMessage());
-				System.exit(1);		
-			}
-		}
-		//in.close();
-		//System.out.println(s); */
+		App app = new App(hubIP, hubPORT, userID, userPhoneNumber, latitude, longitude);
+		app.start();
+	
 		
 	}
 
