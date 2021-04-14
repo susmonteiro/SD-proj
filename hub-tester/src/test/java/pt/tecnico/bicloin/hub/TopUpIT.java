@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
-import static io.grpc.Status.UNAUTHENTICATED;
 import io.grpc.StatusRuntimeException;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
@@ -30,7 +29,7 @@ public class TopUpIT extends BaseIT {
 				.setPhoneNumber("+35193334444")
 				.build();
 		assertEquals(
-			UNAUTHENTICATED.getCode(),
+			INVALID_ARGUMENT.getCode(),
 			assertThrows(StatusRuntimeException.class, () -> frontend.topUp(request))
 			.getStatus().getCode()
 		);
