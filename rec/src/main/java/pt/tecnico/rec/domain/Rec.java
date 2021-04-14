@@ -20,21 +20,23 @@ public class Rec {
         
     }
 
-    public synchronized RegisterValue getRegister(String id, RegisterValue.ValueCase type) {
+    public RegisterValue getRegister(String id, RegisterValue.ValueCase type) {
         
         Register register = registers.containsKey(id) ? registers.get(id) : addNewRegister(id);
 
+        debug(register);
         return register.getValue(type);
     }
 
-    public synchronized void setRegister(String id, 
+    public void setRegister(String id, 
             RegisterValue.ValueCase type, RegisterValue value) {
+        
+        // if registers doesnt exist, we add it atomically to registers
+        registers.putIfAbsent(id, new Register());
 
-        Register register = registers.containsKey(id) ? registers.get(id) : addNewRegister(id);
-
-        register.setValue(type, value);    
-        debug(register);    
+        Register register = registers.get(id);        
+        register.setValue(type, value);
+        debug(register);
 	}
-
 
 }
