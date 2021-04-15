@@ -25,6 +25,7 @@ class Default {
 
 public class Hub {
     private static final int BIC_EXCHANGE_RATE = 10;    /* Bic (Bicloin) is the currency */
+    private static final int BIKE_UP_PRICE = 10;    /* Price of bike up in project currency (Bic`s) */ 
     private Map<String, User> users;
     private Map<String, Station> stations;
     private RecordFrontend rec;
@@ -35,23 +36,9 @@ public class Hub {
         rec = new RecordFrontend(recIP, recPORT);
     }
 
-    /* Data checks */
-    /* =========== */
-
-    public void checkUser(String id) throws InvalidUserException {
-        if (!users.containsKey(id)) { throw new InvalidUserException(); }
-    }
-
-    public void checkUserPhoneNumber(String id, String phoneNumber) throws InvalidPhoneNumberException {
-        if (!users.get(id).getPhoneNumber().equals(phoneNumber)) { throw new InvalidPhoneNumberException(); }
-    }
-
-    public void checkValidTopUpAmout(int value) throws InvalidTopUpAmountException {
-        if (!(value >= 1 && value <= 20)) { throw new InvalidTopUpAmountException(); }
-    }
-
     /* Methods */
     /* ======= */
+    
     public int getBicFromMoney(int value) {
         return value*BIC_EXCHANGE_RATE;
     }
@@ -74,39 +61,58 @@ public class Hub {
             rec.write(request);
         }
 	}
-
+    
     public int balance(String id) throws StatusRuntimeException, InvalidUserException {
         checkUser(id);
-        
-        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue());
-        debug("@Hub #Balance\n**Request:\n" + request);
-        
-        Rec.ReadResponse response = rec.read(request);
-        debug("@Hub #Balance\n**Response:\n" + response);
-        
-        int value = getBalanceValue(response.getData());
-        debug("@Hub #Balance\n**Value:\n" + value);
-
-        return value;
+    
+        return getUserBalance(id);
     }
 
-    public int topUp(String id, int value, String phoneNumber) 
-        throws StatusRuntimeException, InvalidUserException, 
-            InvalidPhoneNumberException, InvalidTopUpAmountException {
+    public synchronized int topUp(String id, int value, String phoneNumber) 
+        throws StatusRuntimeException, InvalidArgumentException {
         
         checkUser(id);
         checkUserPhoneNumber(id, phoneNumber);
         checkValidTopUpAmout(value);
 
-        int oldBalance = balance(id);
+        int oldBalance = getUserBalance(id);
         int newBalance = oldBalance + getBicFromMoney(value);
 
-        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue(newBalance));
-        debug("@Hub #TopUp\n**Request:\n" + request);
-
-        rec.write(request);
+        setUserBalance(id, newBalance);
 
         return newBalance;
+    }
+
+    public void bikeUp(String userId, float latitude, float longitude, String stationId)
+            throws StatusRuntimeException, InvalidArgumentException, FailedPreconditionException {
+        
+        checkUser(userId);
+        Station.checkLatitude(latitude);
+        Station.checkLongitude(longitude);
+        checkStation(stationId);
+        // checkLocation(stationId, latitude, longitude); //TODO
+
+        /* Always synchronize in this order to avoid DeadLocks */
+        synchronized (users.get(userId)) {
+            // check if already onBike and has enought money
+            int balance = getUserBalance(userId);
+            checkUserCanBikeUp(userId, balance);
+
+            synchronized (stations.get(stationId)) {
+                // check if bikes available
+                int availableBikes = getStationAvailableBikes(stationId);
+                checkStationAvailableBikes(availableBikes);
+
+                // perform bikup - Station
+                    // decrease bikes available
+                setStationAvailableBikes(stationId, availableBikes-1);
+            }
+            // perform bikup - User
+                // decrease money
+                // change status onBike
+            setUserBalance(userId, balance-BIKE_UP_PRICE);
+            setUserOnBike(userId, true);
+        }
     }
 
     public SysStatusResponse getAllServerStatus() {
@@ -131,6 +137,115 @@ public class Hub {
         debug(serverResponse);
         return serverResponse.build();
     }
+
+    /* Record Getters and Setters */
+    /* ========================== */
+
+    public int getUserBalance(String id) throws StatusRuntimeException {
+        /* Use only with trusted id */
+        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue());
+        debug("@Hub #getUserBalance\n**Request:\n" + request);
+        
+        Rec.ReadResponse response = rec.read(request);
+        debug("@Hub #getUserBalance\n**Response:\n" + response);
+        
+        int value = getBalanceValue(response.getData());
+        debug("@Hub #getUserBalance\n**Value:\n" + value);
+
+        return value;
+    }
+    public void setUserBalance(String id, int value) throws StatusRuntimeException {
+        /* Use only with trusted id */
+        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue(value));
+        debug("@Hub #setStationAvailableBikes\n**Request:\n" + request);
+
+        rec.write(request);
+    }
+    
+
+    public int getStationAvailableBikes(String id) throws StatusRuntimeException {
+        /* Use only with trusted id */
+        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterNBikesAsRegisterValue());
+        debug("@Hub #getAvailableBikes\n**Request:\n" + request);
+        
+        Rec.ReadResponse response = rec.read(request);
+        debug("@Hub #getAvailableBikes\n**Response:\n" + response);
+        
+        int value = getNBikesValue(response.getData());
+        debug("@Hub #getAvailableBikes\n**Value:\n" + value);
+
+        return value;
+    }
+    public void setStationAvailableBikes(String id, int value) throws StatusRuntimeException {
+        /* Use only with trusted id */
+        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterNBikesAsRegisterValue(value));
+        debug("@Hub #setStationAvailableBikes\n**Request:\n" + request);
+        
+        rec.write(request);
+    }
+
+    public boolean getUserOnBike(String id) throws StatusRuntimeException {
+        /* Use only with trusted id */
+        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterOnBikeAsRegisterValue());
+        debug("@Hub #getUserOnBike\n**Request:\n" + request);
+        
+        Rec.ReadResponse response = rec.read(request);
+        debug("@Hub #getUserOnBike\n**Response:\n" + response);
+        
+        boolean value = getOnBikeValue(response.getData());
+        debug("@Hub #getUserOnBike\n**Value:\n" + value);
+
+        return value;
+    }
+    public void setUserOnBike(String id, Boolean value) throws StatusRuntimeException {
+        /* Use only with trusted id */
+        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterOnBikeAsRegisterValue(value));
+        debug("@Hub #setUserOnBike\n**Request:\n" + request);
+        
+        rec.write(request);
+    }
+
+    /* Data checks */
+    /* =========== */
+
+    public void checkUser(String id) throws InvalidUserException {
+        if (!users.containsKey(id)) { throw new InvalidUserException(); }
+    }
+    
+    public void checkStation(String id) throws InvalidStationException {
+        if (!stations.containsKey(id)) { throw new InvalidStationException(); }
+    }
+
+    public void checkUserPhoneNumber(String id, String phoneNumber) throws InvalidPhoneNumberException {
+        if (!users.get(id).getPhoneNumber().equals(phoneNumber)) { throw new InvalidPhoneNumberException(); }
+    }
+
+    public void checkValidTopUpAmout(int value) throws InvalidTopUpAmountException {
+        if (!(value >= 1 && value <= 20)) { throw new InvalidTopUpAmountException(); }
+    }
+
+    public void checkUserCanBikeUp(String id, int money) throws FailedPreconditionException {
+        /* Use only with trusted id */
+        checkUserOnBike(id);
+
+        // checkUserHasMoney
+        if (money < BIKE_UP_PRICE) throw new NotEnoughMoneyException();
+}
+
+    public void checkUserOnBike(String id) throws StatusRuntimeException, UserAlreadyOnBikeException {
+        /* Use only with trusted id */
+        Rec.RegisterRequest onBikeReq = getRegisterRequest(id, getRegisterOnBikeAsRegisterValue());
+        Rec.ReadResponse onBikeResp = rec.read(onBikeReq);
+
+        boolean onBike = getOnBikeValue(onBikeResp.getData());
+        if (onBike) throw new UserAlreadyOnBikeException();
+    }
+
+    /* Implemented in function for future conditions (eg. bike reserve) */
+    public void checkStationAvailableBikes(int value) throws NoBikeAvailableException {
+        if (value <= 0) throw new NoBikeAvailableException();
+    }
+
 
 	/* Record Communication */
     /* ==================== */
