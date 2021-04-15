@@ -64,7 +64,6 @@ public class BikeUpIT extends BaseIT {
         );
 	}
 
-
 	@Test
 	public void bikeUpInvalidStationIdTest() {
 		BikeRequest request = getBikeRequest("alice", 38.6867f, -9.3124f, "s");
