@@ -47,7 +47,7 @@ public class Hub {
         /* Users lazy loaded (registers only initialized on first access) */
         debug("Initializing Rec...");
 		for (String stationId: stations.keySet()) {
-            debug("id: " + stationId + "\n" + stations.get(stationId.toString()));
+            debug("id: " + stationId + "\n" + stations.get(stationId));
             int nBicycles = stations.get(stationId).getNBicycles();
             
             Rec.RegisterRequest request = Rec.RegisterRequest.newBuilder()
