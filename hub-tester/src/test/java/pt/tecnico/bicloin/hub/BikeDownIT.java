@@ -10,7 +10,11 @@ import static io.grpc.Status.INVALID_ARGUMENT;
 import io.grpc.StatusRuntimeException;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
+import static pt.tecnico.bicloin.hub.frontend.HubFrontend.*;
+
+
 public class BikeDownIT extends BaseIT {
+	@Disabled
 	@Test
 	public void bikeDownNoSuchUserTest() {
 		BikeRequest request = BikeRequest.newBuilder()
@@ -29,6 +33,7 @@ public class BikeDownIT extends BaseIT {
         );
 	}
 
+	@Disabled
 	@Test
 	public void bikeDownInvalidLatitudeTest() {
 		BikeRequest request = BikeRequest.newBuilder()
@@ -47,6 +52,7 @@ public class BikeDownIT extends BaseIT {
         );
 	}
 
+	@Disabled
 	@Test
 	public void bikeDownInvalidLongitudeTest() {
 		BikeRequest request = BikeRequest.newBuilder()
@@ -65,6 +71,7 @@ public class BikeDownIT extends BaseIT {
         );
 	}
 
+	@Disabled
 	@Test
 	public void bikeDownInvalidStationIdTest() {
 		BikeRequest request = BikeRequest.newBuilder()
@@ -83,6 +90,7 @@ public class BikeDownIT extends BaseIT {
         );
 	}
 
+	@Disabled
 	@Test
 	public void bikeDownUserTooFarAwayIdTest() {
 		BikeRequest request = BikeRequest.newBuilder()
@@ -101,6 +109,7 @@ public class BikeDownIT extends BaseIT {
         );
 	}
 
+	@Disabled
 	@Test
 	public void bikeDownEmptyUserIdTest() {
 		BikeRequest request = BikeRequest.newBuilder()
@@ -118,6 +127,7 @@ public class BikeDownIT extends BaseIT {
         );
 	}
 
+	@Disabled
 	@Test
 	public void bikeDownEmptyCoordinatesTest() {
 		BikeRequest request = BikeRequest.newBuilder()
@@ -132,6 +142,7 @@ public class BikeDownIT extends BaseIT {
         );
 	}
 	
+	@Disabled
 	@Test
 	public void bikeDownEmptyStationIdTest() {
 		BikeRequest request = BikeRequest.newBuilder()

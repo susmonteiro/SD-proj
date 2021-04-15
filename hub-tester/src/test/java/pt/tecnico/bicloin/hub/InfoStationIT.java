@@ -10,7 +10,8 @@ import static io.grpc.Status.UNIMPLEMENTED;
 import io.grpc.StatusRuntimeException;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
-public class InfoStationIT extends BaseIT{	
+public class InfoStationIT extends BaseIT{
+    @Disabled	
 	@Test
     public void infoStationSuccessTest() {
 		InfoStationRequest request = InfoStationRequest.newBuilder()
@@ -29,6 +30,7 @@ public class InfoStationIT extends BaseIT{
 		assertEquals(0, response.getNDeliveries());
     }
 
+    @Disabled
     @Test
     public void infoStationNoSuchStationTest() {
         InfoStationRequest request = InfoStationRequest.newBuilder()
@@ -41,6 +43,7 @@ public class InfoStationIT extends BaseIT{
         );
     }
 
+    @Disabled
     @Test
     public void infoStationEmptyStationTest() {
         InfoStationRequest request = InfoStationRequest.newBuilder().build();          
