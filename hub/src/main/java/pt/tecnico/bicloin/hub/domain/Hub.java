@@ -127,6 +127,7 @@ public class Hub {
         
         User.checkLatitude(latitude);
         User.checkLongitude(longitude);
+        checkCount(count);
         
         Map<Double, String> allDistances = new HashMap<Double, String>();
 		List<Double> lowestDistances = new ArrayList<Double>();
@@ -141,11 +142,13 @@ public class Hub {
 		
         lowestDistances.sort(Comparator.naturalOrder());
 		
+        int n = (count < lowestDistances.size()) ? count : lowestDistances.size();
+
 		LocateStationResponse.Builder response = LocateStationResponse.newBuilder();
-		for (int i=0; i<count; i++) {
+		for (int i=0; i<n; i++) {
 			String name = allDistances.get(lowestDistances.get(i));
             //if count > stations only send those that exist
-			if (name != null) response.addStationId(name);
+			response.addStationId(name);
 			debug(name);
 		}
 		return response.build();
@@ -276,6 +279,10 @@ public class Hub {
     /* Implemented in function for future conditions (eg. bike reserve) */
     public void checkStationAvailableBikes(int value) throws NoBikeAvailableException {
         if (value <= 0) throw new NoBikeAvailableException();
+    }
+
+    public void checkCount(int count) throws InvalidArgumentException {
+        if (count < 0) throw new InvalidStationCountException();
     }
 
 

@@ -27,7 +27,8 @@ public class AppMain {
 		
 		App app = new App(hubIP, hubPORT, userID, userPhoneNumber, latitude, longitude);
 		app.start();
-	
+		
+		return;
 		
 	}
 

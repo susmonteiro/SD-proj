@@ -8,6 +8,8 @@ import java.util.InputMismatchException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
+import java.util.NoSuchElementException;
 
 import io.grpc.StatusRuntimeException;
 import io.grpc.ManagedChannel;
@@ -15,6 +17,8 @@ import io.grpc.ManagedChannelBuilder;
 
 import pt.tecnico.bicloin.hub.frontend.HubFrontend;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
+
+import pt.tecnico.bicloin.hub.domain.exception.InvalidArgumentException;
 
 
 public class App {
@@ -47,6 +51,17 @@ public class App {
     
     public App(String hubIP, int hubPORT, String userID, String userPhoneNumber, 
         float latitude, float longitude) {
+
+        try {
+            checkId(userID);
+            checkPhoneNumber(userPhoneNumber);
+            checkLatitude(latitude);
+            checkLongitude(longitude);
+        } catch (InvalidArgumentException e) {
+            System.out.println(e.getMessage());
+            System.exit(1);	
+        }
+
         _host = hubIP;
         _port = hubPORT;
         _user = userID;
@@ -65,6 +80,22 @@ public class App {
 			System.err.println(debugMessage);
 	}
 
+    /**========== Checking User Information ========== */
+    public static void checkId(String id) throws InvalidArgumentException {
+        if (id.length() < 3 || id.length() > 10) throw new InvalidArgumentException("ID " + id + " is invalid.\nID has to be between 3 and 10 characters.");
+    }
+    public static void checkPhoneNumber(String phoneNumber) throws InvalidArgumentException {
+        if (!phoneNumber.startsWith("+")) throw new InvalidArgumentException("Phone number " + phoneNumber + " is invalid.\nPhone number has to contain a country code}.");
+    }
+    public static void checkLatitude(float latitude) throws InvalidArgumentException {
+        if (latitude < -90 || latitude > 90) throw new InvalidArgumentException("Latitude " + latitude + " is invalid\n.Latitude has to be between -90 and 90.");
+    }
+    public static void checkLongitude(float longitude) throws InvalidArgumentException {
+        if (longitude < -180 || longitude > 180) throw new InvalidArgumentException("Longitude " + longitude + " is invalid\n.Longitude has to be between -180 and 180.");
+    }
+
+
+
     public static void start(){
 
         System.out.println(App.class.getSimpleName());
@@ -75,7 +106,6 @@ public class App {
             do {
                 System.out.print(">");
                     input = scanner.next();
-                    //debug(input);
 
                     switch(input) {
                         case "balance":
@@ -111,26 +141,38 @@ public class App {
                     case "sys-status":
                         break;
                     case "help":
+                        help();
+                        break;
+                    case "#":
+                        scanner.nextLine();
+                        break;
+                    case "zzz":
+                        TimeUnit.MILLISECONDS.sleep(scanner.nextInt());
                         break;
                 }
     
-            //App closes when user enters command 'exit'
+            //App closes when user enters command 'exit' or it reaches the EOF
             } while (!input.equals("exit"));
-            scanner.close();
-		} catch(InputMismatchException e) {
-			System.out.println(e.getMessage());
-			System.exit(1);		
-		}
-		
-
+            scanner.close();		
+        } catch (NoSuchElementException e) {
+            System.out.println("Chegou ao fim. Terminando a app...");
+            hub.close();
+            System.exit(0);
+        } catch (InterruptedException e) {
+            System.out.println("ERRO - " + e.getMessage());
+        }
         hub.close();
         
     }
 
 
+
+    /** ==========  COMMANDS ========== */
+
     private static void balance() {
         try {
             AmountResponse response = hub.doBalanceOperation(_user);
+            debug(response);
             System.out.println(_user + " " + response.getBalance() + " BIC");
         } catch (StatusRuntimeException e) {
             System.out.println("ERRO - " + e.getMessage());
@@ -138,16 +180,16 @@ public class App {
     }
 
     private static void topup(Scanner scanner) {
-        if ((scanner.findInLine("") == null) || (scanner.findInLine("\t") == null)) {  
+        if (scanner.findInLine("") == null) {  
             System.out.println("ERRO - Faltam argumentos: Quantia a carregar!");
             return;
         }
         try {
             if (scanner.hasNextInt()) {
                 int amount = scanner.nextInt();
-                debug(amount);
         
             AmountResponse response = hub.doTopUpOperation(_user, amount, _phone);
+            debug(response);
             System.out.println(_user + " " + response.getBalance() + " BIC");
             } else {
                 System.out.println("ERRO - Argumentos incorretos para comando top-up!");
@@ -161,8 +203,8 @@ public class App {
 
 
     private static void tag(Scanner scanner) {
-        if ((scanner.findInLine("") == null) || (scanner.findInLine("\t") == null)) {  
-            System.out.println("ERRO - Faltam argumentos: Coordenadas e Nome da Tag!");
+        if (scanner.findInLine("") == null) {  
+            System.out.println("ERRO - Faltam argumentos: [Coordenadas] e [Nome da Tag]");
             return;
         }
     
@@ -172,7 +214,7 @@ public class App {
             if (scanner.findInLine("") != null) newlongitude = scanner.nextFloat();
             if (scanner.findInLine("") != null) { newloc = scanner.next();
             } else {
-                System.out.println("ERRO - Faltam argumentos: Coordenadas e Nome da Tag!");
+                System.out.println("ERRO - Faltam argumentos: [Coordenadas] e [Nome da Tag]");
                 return;
             }
                 
@@ -185,15 +227,12 @@ public class App {
         }
     }
 
-    private static void createTag(float newlatitude, float newlongitude, String newloc) {
-        Tag tag = new Tag(newlatitude, newlongitude, newloc);
-        _tags.put(newloc, tag);
-    }
+    
 
     private static void move(Scanner scanner) {
         
-        if ((scanner.findInLine("") == null) || (scanner.findInLine("\t") == null)) { 
-            System.out.println("ERRO - Faltam argumentos: Coordenadas ou Tag!");
+        if (scanner.findInLine("") == null) { 
+            System.out.println("ERRO - Faltam argumentos: [Coordenadas] ou [Tag]");
             return;
         }
     
@@ -210,23 +249,160 @@ public class App {
         }
     }
 
-    private static  void moveCoords(Scanner scanner) {
-        try {
-            _latitude = scanner.nextFloat();
+    
+    private static void at() {
+        System.out.println(_user + " em " + String.format("%.04f", _latitude) 
+            + "," + String.format("%.04f", _longitude));
+    }
+
+    
+    private static void scan(Scanner scanner) {
+        
+        if (scanner.findInLine("") == null) {  
+            System.out.println("ERRO - Faltam argumentos: [Numero de estacoes]");
+            return;
+        }
+        if (scanner.hasNextInt()) {
+            try {
+                List<String> stations = new ArrayList<String>();
+                int count = scanner.nextInt();
+                LocateStationResponse response = hub.doLocateStationOperation(
+                    _latitude, _longitude, count);
+                debug(response);
+                stations = response.getStationIdList();
+                for (String station : stations) {
+                    InfoStationResponse infoRes = hub.doInfoStationOperation(station);
+                    float lat = infoRes.getCoordinates().getLatitude();
+                    float lon = infoRes.getCoordinates().getLongitude();
+                    System.out.println(station 
+                    + ", lat " + String.format("%.04f", lat)
+                    + ", " + String.format("%.04f", lon)
+                    + " long, " + infoRes.getNDocks() + " docas, "
+                    + infoRes.getReward() + " BIC prémio, " 
+                    + infoRes.getNBicycles() + " bicicletas, " 
+                    + "a " + (int)Math.round(distance(_latitude, _longitude, lat, lon)) + " metros");
+                }
                 
-            if (scanner.findInLine("") != null) {
-                _longitude = scanner.nextFloat();
-                at();
-            } else {  
-                System.out.println("ERRO - Faltam argumentos: [latitude] [longitude] !"); 
-            }
-            
-        } catch (InputMismatchException e) {
-            System.out.println("ERRO - Argumentos incorretos para comando move!");
-            scanner.nextLine();
+            } catch (InputMismatchException e) {
+                System.out.println("ERRO - Argumentos incorretos para comando scan!");	
+            } catch (StatusRuntimeException e) {
+                System.out.println("ERRO - " + e.getMessage());
+            } 
+        }
+     
+    }
+    
+    
+    private static void info(Scanner scanner) {
+        if (scanner.findInLine("") == null) { 
+            System.out.println("ERRO - Faltam argumentos: [Station]");
+            return;
+        }
+        if (scanner.hasNext()) {
+            try {
+                String station = scanner.next();
+                InfoStationResponse response = hub.doInfoStationOperation(station);
+                debug(response);
+                System.out.println(response.getName() 
+                    + ", lat " + String.format("%.04f", response.getCoordinates().getLatitude())
+                    + ", " + String.format("%.04f", response.getCoordinates().getLongitude())
+                    + " long, " + response.getNDocks() + " docas, "
+                    + response.getReward() + " BIC prémio, " 
+                    + response.getNBicycles() + " bicicletas, " 
+                    + response.getNPickUps() + " levantamentos, "
+                    + response.getNDeliveries() + " devoluções.");
+                    
+            } catch (InputMismatchException e) {
+                System.out.println("ERRO - Argumentos incorretos para comando info!");
+            } catch (StatusRuntimeException e) {
+                System.out.println("ERRO - " + e.getMessage());
+            } 
         }
     }
     
+
+    private static void bikeup(Scanner scanner) {
+        if (scanner.findInLine("") == null) {  
+            System.out.println("ERRO - Faltam argumentos: [Station]");
+            return;
+        }
+        if (scanner.hasNext()) {
+            try {
+                String station = scanner.next();
+                hub.doBikeUpOperation(_user, _latitude, _longitude, station);
+                System.out.println("OK");
+            } catch (InputMismatchException e) {
+                System.out.println("ERRO - Argumentos incorretos para comando bike-up!");
+            } catch (StatusRuntimeException e) {
+                System.out.println("ERRO - " + e.getMessage());
+            } 
+        }
+    }
+
+    private static void bikedown(Scanner scanner) {
+        if (scanner.findInLine("") == null) { 
+            System.out.println("ERRO - Faltam argumentos: [Station]");
+            return;
+        } 
+        if (scanner.hasNext()) {
+            try {
+                String station = scanner.next();
+                hub.doBikeDownOperation(_user, _latitude, _longitude, station);
+                System.out.println("OK");
+            } catch (InputMismatchException e) {
+                System.out.println("ERRO - Argumentos incorretos para comando bike-down!");
+            } catch (StatusRuntimeException e) {
+                System.out.println("ERRO - " + e.getMessage());
+            } 
+        }
+    }
+    
+
+    private static void ping() {
+        try {
+            PingResponse response = hub.doPingOperation(_user);
+            System.out.println(response.getOutput());
+        } catch (StatusRuntimeException e) {
+            System.out.println("ERRO - " + e.getMessage());
+        } 
+    }
+    /*
+    private static void sysStatus() {
+        try {
+            SysStatusResponse response = hub.doSysStatusOperation(_user);
+            System.out.println(response.getOutput());
+        } catch (StatusRuntimeException e) {
+            System.out.println("ERRO - " + e.getMessage());
+        } 
+    }
+    */
+
+    private static void help() {
+        System.out.print("Pode introduzir os seguintes comandos:\n" +
+        "\n" +
+        "balance\n" + 
+        "top-up [quantia]\n" +
+        "tag [latitude] [longitude] [nomeTag]\n" + 
+        "move [nomeTag]\n" +
+        "move [latitude] [longitude]\n" +
+        "at\n" +
+        "scan [numero de estacoes]\n" +
+        "info [nome da estacao]\n" +
+        "bike-up [nome da estacao\n" +
+        "bike-down [nome da estacao]\n");
+    }
+
+
+
+
+    /**============ AUXILIAR METHODS ============ */
+
+
+    private static void createTag(float newlatitude, float newlongitude, String newloc) {
+        Tag tag = new Tag(newlatitude, newlongitude, newloc);
+        _tags.put(newloc, tag);
+    }
+
     private static void moveTag(Scanner scanner) {
         try {
             newloc = scanner.next();
@@ -248,44 +424,21 @@ public class App {
         }
     }
 
-    private static void at() {
-        System.out.println(_user + " em " + _latitude + "," + _longitude);
-    }
-
-    
-    private static void scan(Scanner scanner) {
-    
-        if ((scanner.findInLine("") == null) || (scanner.findInLine("\t") == null)) {  
-            System.out.println("ERRO - Faltam argumentos: Numero de estacoes!");
-            return;
-        }
-        if (scanner.hasNextInt()) {
-            try {
-                List<String> stations = new ArrayList<String>();
-                int count = scanner.nextInt();
-                LocateStationResponse response = hub.doLocateStationOperation(
-                    _latitude, _longitude, count);
-                stations = response.getStationIdList();
-                for (String station : stations) {
-                    InfoStationResponse infoRes = hub.doInfoStationOperation(station);
-                    float lat = infoRes.getCoordinates().getLatitude();
-                    float lon = infoRes.getCoordinates().getLongitude();
-                    System.out.println(station 
-                    + ", lat " + lat
-                    + ", " + lon
-                    + " long, " + infoRes.getNDocks() + " docas, "
-                    + infoRes.getReward() + " BIC prémio, " 
-                    + infoRes.getNBicycles() + " bicicletas, " 
-                    + "a " + (int)Math.round(distance(_latitude, _longitude, lat, lon)) + " metros");
-                }
+    private static  void moveCoords(Scanner scanner) {
+        try {
+            _latitude = scanner.nextFloat();
                 
-            } catch (InputMismatchException e) {
-                System.out.println("ERRO - Argumentos incorretos para comando scan!");	
-            } catch (StatusRuntimeException e) {
-                System.out.println("ERRO - " + e.getMessage());
-            } 
+            if (scanner.findInLine("") != null) {
+                _longitude = scanner.nextFloat();
+                at();
+            } else {  
+                System.out.println("ERRO - Faltam argumentos: [latitude] [longitude] !"); 
+            }
+            
+        } catch (InputMismatchException e) {
+            System.out.println("ERRO - Argumentos incorretos para comando move!");
+            scanner.nextLine();
         }
-     
     }
 
     public static double distance(float s1Lat, float s1Long, float s2Lat, float s2Long) {		
@@ -311,92 +464,5 @@ public class App {
     public static double haversin(double val) {
         return Math.pow(Math.sin(val / 2), 2);
     }
-    
-    
-
-    private static void info(Scanner scanner) {
-        if ((scanner.findInLine("") == null) || (scanner.findInLine("\t") == null)) { 
-            System.out.println("ERRO - Faltam argumentos: Station!");
-            return;
-        }
-        if (scanner.hasNext()) {
-            try {
-                String station = scanner.next();
-                InfoStationResponse response = hub.doInfoStationOperation(station);
-                System.out.println(response.getName() 
-                    + ", lat " + response.getCoordinates().getLatitude()
-                    + ", " + response.getCoordinates().getLongitude()
-                    + " long, " + response.getNDocks() + " docas, "
-                    + response.getReward() + " BIC prémio, " 
-                    + response.getNBicycles() + " bicicletas, " 
-                    + response.getNPickUps() + " levantamentos, "
-                    + response.getNDeliveries() + " devoluções.");
-                    
-            } catch (InputMismatchException e) {
-                System.out.println("ERRO - Argumentos incorretos para comando info!");
-            } catch (StatusRuntimeException e) {
-                System.out.println("ERRO - " + e.getMessage());
-            } 
-        }
-    }
-    
-
-    private static void bikeup(Scanner scanner) {
-        if ((scanner.findInLine("") == null) || (scanner.findInLine("\t") == null)) {  
-            System.out.println("ERRO - Faltam argumentos: Station!");
-            return;
-        }
-        if (scanner.hasNext()) {
-            try {
-                String station = scanner.next();
-                hub.doBikeUpOperation(_user, _latitude, _longitude, station);
-                System.out.println("OK");
-            } catch (InputMismatchException e) {
-                System.out.println("ERRO - Argumentos incorretos para comando bike-up!");
-            } catch (StatusRuntimeException e) {
-                System.out.println("ERRO - " + e.getMessage());
-            } 
-        }
-    }
-
-    private static void bikedown(Scanner scanner) {
-        if ((scanner.findInLine("") == null) || (scanner.findInLine("\t") == null)) { 
-            System.out.println("ERRO - Faltam argumentos: Station!");
-            return;
-        }
-        if (scanner.hasNext()) {
-            try {
-                String station = scanner.next();
-                hub.doBikeDownOperation(_user, _latitude, _longitude, station);
-                System.out.println("OK");
-            } catch (InputMismatchException e) {
-                System.out.println("ERRO - Argumentos incorretos para comando bike-down!");
-            } catch (StatusRuntimeException e) {
-                System.out.println("ERRO - " + e.getMessage());
-            } 
-        }
-    }
-    
-
-
-
-    private static void ping() {
-        try {
-            PingResponse response = hub.doPingOperation(_user);
-            System.out.println(response.getOutput());
-        } catch (StatusRuntimeException e) {
-            System.out.println("ERRO - " + e.getMessage());
-        } 
-    }
-    /*
-    private static void sysStatus() {
-        try {
-            SysStatusResponse response = hub.doPingOperation(_user);
-            System.out.println(response.getOutput());
-        } catch (StatusRuntimeException e) {
-            System.out.println("ERRO - " + e.getMessage());
-        } 
-    }
-    */
 
 }
