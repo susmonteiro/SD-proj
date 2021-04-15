@@ -22,7 +22,7 @@ public class BaseIT {
                         testProps.load(BaseIT.class.getResourceAsStream(TEST_PROP_FILE));
                         System.out.println("Test properties:");
                         System.out.println(testProps);
-                }catch (IOException e) {
+                } catch (IOException e) {
                         final String msg = String.format("Could not load properties file {}", TEST_PROP_FILE);
                         System.out.println(msg);
                         throw e;

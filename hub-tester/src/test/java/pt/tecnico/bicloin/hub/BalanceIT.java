@@ -19,7 +19,7 @@ public class BalanceIT extends BaseIT {
 
     @Test
     public void balanceNoSuchUserTest() {
-        BalanceRequest request = BalanceRequest.newBuilder().setUserId("f").build();
+        BalanceRequest request = BalanceRequest.newBuilder().setUserId("u").build();
         assertEquals(
             INVALID_ARGUMENT.getCode(),
             assertThrows(StatusRuntimeException.class, () -> frontend.balance(request))

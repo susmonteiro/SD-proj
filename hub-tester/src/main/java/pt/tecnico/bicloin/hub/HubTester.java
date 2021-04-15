@@ -122,7 +122,7 @@ public class HubTester {
 					.build()
 				).setNStations(nStations)
 				.build();
-				LocateStationResponse response = frontend.locateStation(request);
+			LocateStationResponse response = frontend.locateStation(request);
 			System.out.println(response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " +
@@ -142,7 +142,7 @@ public class HubTester {
 					.build()
 				).setStationId(stationId)
 				.build();
-				BikeResponse response = frontend.bikeUp(request);
+			BikeResponse response = frontend.bikeUp(request);
 			System.out.println(response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " +
@@ -162,7 +162,7 @@ public class HubTester {
 					.build()
 				).setStationId(stationId)
 				.build();
-				BikeResponse response = frontend.bikeDown(request);
+			BikeResponse response = frontend.bikeDown(request);
 			System.out.println(response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " +
