@@ -1,6 +1,10 @@
 package pt.tecnico.bicloin.hub.domain;
 
 import java.util.Map; 
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Comparator;
 
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
@@ -8,6 +12,7 @@ import pt.tecnico.rec.grpc.Rec;
 import pt.tecnico.rec.frontend.RecordFrontend;
 
 import pt.tecnico.bicloin.hub.domain.exception.*;
+import pt.tecnico.bicloin.hub.frontend.HubFrontend;
 import io.grpc.StatusRuntimeException;
 
 public class Hub {
@@ -18,6 +23,8 @@ public class Hub {
     private Map<String, User> users;
     private Map<String, Station> stations;
     private RecordFrontend rec;
+
+    private static final int EARTH_RADIUS = 6371;
 
     public Hub(String recIP, int recPORT, Map<String, User> users, Map<String, Station> stations) {
         this.users = users;
@@ -55,13 +62,15 @@ public class Hub {
         }
 	}
     
-    public int balance(String id) throws StatusRuntimeException, InvalidUserException {
+    public AmountResponse balance(String id) throws StatusRuntimeException, InvalidUserException {
         checkUser(id);
     
-        return rec.getBalance(id);
+        return AmountResponse.newBuilder()
+            .setBalance(rec.getBalance(id))
+            .build();
     }
 
-    public synchronized int topUp(String id, int value, String phoneNumber) 
+    public synchronized AmountResponse topUp(String id, int value, String phoneNumber) 
         throws StatusRuntimeException, InvalidArgumentException {
         
         checkUser(id);
@@ -73,10 +82,75 @@ public class Hub {
 
         rec.setBalance(id, newBalance);
 
-        return newBalance;
+        return AmountResponse.newBuilder()
+            .setBalance(newBalance)
+            .build();
     }
 
-    public void bikeUp(String userId, float latitude, float longitude, String stationId)
+    public InfoStationResponse infoStation(String stationId) 
+        throws StatusRuntimeException, InvalidArgumentException {
+        
+        checkStation(stationId);
+
+        Station station = stations.get(stationId);
+        String name = station.getName();
+        float lat = station.getLat();
+        float lon = station.getLong();
+        int nDocks = station.getNDocks();
+        int reward = station.getReward();
+
+        int availableBikes = rec.getNBikes(stationId);
+        int nPickUps = rec.getNPickUps(stationId); 
+        int nDeliveries = rec.getNDeliveries(stationId); 
+
+        InfoStationResponse response = InfoStationResponse.newBuilder()
+            .setCoordinates(Coordinates.newBuilder()
+                .setLatitude(lat)
+                .setLongitude(lon)
+                .build()
+            ).setName(name)
+            .setNDocks(nDocks)
+            .setReward(reward)
+            .setNBicycles(availableBikes)
+            .setNPickUps(nPickUps)
+            .setNDeliveries(nDeliveries)
+            .build();
+        
+        debug(response);
+        
+        return response;
+
+    }
+
+    public LocateStationResponse locateStation (float latitude, float longitude, int count)
+        throws StatusRuntimeException, InvalidArgumentException {
+        
+        Map<Double, String> allDistances = new HashMap<Double, String>();
+		List<Double> lowestDistances = new ArrayList<Double>();
+
+		for (String stationId: stations.keySet()) {
+			float lat = stations.get(stationId).getLat();
+			float lon = stations.get(stationId).getLong();
+			double dist = distance(latitude, longitude, lat, lon);
+            allDistances.put(dist, stationId);
+			lowestDistances.add(dist);
+		}
+		
+        lowestDistances.sort(Comparator.naturalOrder());
+
+		debug(lowestDistances);
+		
+		LocateStationResponse.Builder response = LocateStationResponse.newBuilder();
+		for (int i=0; i<count; i++) {
+			String name = allDistances.get(lowestDistances.get(i));
+			response.addStationId(name);
+			debug(name);
+		}
+		debug(allDistances);
+		return response.build();
+    }
+
+    public BikeResponse bikeUp(String userId, float latitude, float longitude, String stationId)
             throws StatusRuntimeException, InvalidArgumentException, FailedPreconditionException {
         
         checkUser(userId);
@@ -106,6 +180,8 @@ public class Hub {
             rec.setBalance(userId, balance-BIKE_UP_PRICE);
             rec.setOnBike(userId, true);
         }
+
+        return BikeResponse.getDefaultInstance();
     }
 
     public SysStatusResponse getAllServerStatus() {
@@ -133,8 +209,33 @@ public class Hub {
 
     /* Auxiliar */
     /* ======== */
+
     public int getBicFromMoney(int value) {
         return value*BIC_EXCHANGE_RATE;
+    }
+
+    public static double distance(float s1Lat, float s1Long, float s2Lat, float s2Long) {		
+
+        double aLat = (double) s1Lat;
+		double bLat = (double) s2Lat;
+		double aLong = (double) s1Long;
+		double bLong = (double) s2Long;
+		
+		double latitude  = Math.toRadians((bLat - aLat));
+        double longitude = Math.toRadians((bLong - aLong));
+
+		aLat = Math.toRadians(aLat);
+        bLat = Math.toRadians(bLat);
+
+        double a = haversin(latitude) + Math.cos(aLat) * Math.cos(bLat) * haversin(longitude);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        double distance = EARTH_RADIUS * c;
+		return distance; 
+    }
+
+    public static double haversin(double val) {
+        return Math.pow(Math.sin(val / 2), 2);
     }
 
 

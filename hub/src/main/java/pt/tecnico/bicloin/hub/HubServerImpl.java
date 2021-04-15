@@ -40,10 +40,7 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 		String id = request.getUserId();
 
 		try{
-			int value = hub.balance(id);
-			AmountResponse response = AmountResponse.newBuilder()
-				.setBalance(value)
-				.build();
+			AmountResponse response = hub.balance(id);
 		
 			responseObserver.onNext(response);
 			responseObserver.onCompleted();
@@ -68,10 +65,7 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 		String phoneNumber = request.getPhoneNumber();
 
 		try{
-			int newValue = hub.topUp(id, value, phoneNumber);
-			AmountResponse response = AmountResponse.newBuilder()
-				.setBalance(newValue)
-				.build();
+			AmountResponse response = hub.topUp(id, value, phoneNumber);
 		
 			responseObserver.onNext(response);
 			responseObserver.onCompleted();
@@ -85,6 +79,26 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 			responseObserver.onError(UNAVAILABLE
 				.withDescription("Request could not be processed.").asRuntimeException());
 			debug("Got exception:" + e.getStatus().getDescription());
+		} 
+	}
+
+	@Override
+	public void infoStation(InfoStationRequest request, StreamObserver<InfoStationResponse> responseObserver) {
+		String stationId = request.getStationId();
+
+		try{
+			InfoStationResponse response = hub.infoStation(stationId);	
+
+			responseObserver.onNext(response);
+			responseObserver.onCompleted();
+		} catch (InvalidArgumentException e) {
+			responseObserver.onError(INVALID_ARGUMENT
+				.withDescription(e.getMessage()).asRuntimeException());
+			debug("@HubServerImpl Got exception:" + e);
+		} catch (StatusRuntimeException e) {
+			responseObserver.onError(UNAVAILABLE
+				.withDescription("Request could not be processed.").asRuntimeException());
+			debug("@HubServerImpl Got exception:" + e.getStatus().getDescription());
 		}
 	}
 
@@ -96,8 +110,7 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 		String stationId = request.getStationId();
 
 		try{
-			hub.bikeUp(userId, latitude, longitude, stationId);
-			BikeResponse response = BikeResponse.getDefaultInstance();
+			BikeResponse response = hub.bikeUp(userId, latitude, longitude, stationId);
 
 			responseObserver.onNext(response);
 			responseObserver.onCompleted();
@@ -119,6 +132,27 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 		}
 	}
 
+	@Override
+	public void locateStation(LocateStationRequest request, StreamObserver<LocateStationResponse> responseObserver) {
+		int stations = request.getNStations();
+		float latitude = request.getCoordinates().getLatitude();
+		float longitude = request.getCoordinates().getLongitude();
+
+		try{
+			LocateStationResponse response = hub.locateStation(latitude, longitude, stations);	
+
+			responseObserver.onNext(response);
+			responseObserver.onCompleted();
+		} catch (InvalidArgumentException e) {
+			responseObserver.onError(INVALID_ARGUMENT
+				.withDescription(e.getMessage()).asRuntimeException());
+			debug("@HubServerImpl Got exception:" + e);
+		} catch (StatusRuntimeException e) {
+			responseObserver.onError(UNAVAILABLE
+				.withDescription("Request could not be processed.").asRuntimeException());
+			debug("@HubServerImpl Got exception:" + e.getStatus().getDescription());
+		}
+	}
 
 	@Override
     public void ping(PingRequest request, StreamObserver<PingResponse> responseObserver) {
