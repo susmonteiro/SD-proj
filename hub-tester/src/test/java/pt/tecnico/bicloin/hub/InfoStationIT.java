@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
+import static io.grpc.Status.UNIMPLEMENTED;
 import io.grpc.StatusRuntimeException;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
@@ -31,10 +32,10 @@ public class InfoStationIT extends BaseIT{
     @Test
     public void infoStationNoSuchStationTest() {
         InfoStationRequest request = InfoStationRequest.newBuilder()
-		    .setStationId("f")
+		    .setStationId("s")
 		    .build();          
         assertEquals(
-            INVALID_ARGUMENT.getCode(),
+            UNIMPLEMENTED.getCode(),
             assertThrows(StatusRuntimeException.class, () -> frontend.infoStation(request))
             .getStatus().getCode()
         );
@@ -44,7 +45,7 @@ public class InfoStationIT extends BaseIT{
     public void infoStationEmptyStationTest() {
         InfoStationRequest request = InfoStationRequest.newBuilder().build();          
         assertEquals(
-            INVALID_ARGUMENT.getCode(),
+            UNIMPLEMENTED.getCode(),
             assertThrows(StatusRuntimeException.class, () -> frontend.infoStation(request))
             .getStatus().getCode()
         );
