@@ -5,9 +5,12 @@ import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class HubIT {
+import io.grpc.StatusRuntimeException;
+import pt.tecnico.bicloin.hub.grpc.Hub.*;
+
+public class HubIT extends BaseIT {
 	
-	// static members
+	// static members 
 	// TODO	
 	
 	
