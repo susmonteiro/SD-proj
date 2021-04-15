@@ -187,6 +187,40 @@ public class Hub {
         return BikeResponse.getDefaultInstance();
     }
 
+    public BikeResponse bikeDown(String userId, float latitude, float longitude, String stationId)
+            throws StatusRuntimeException, InvalidArgumentException, FailedPreconditionException {
+        
+        checkUser(userId);
+        Station.checkLatitude(latitude);
+        Station.checkLongitude(longitude);
+        checkStation(stationId);
+        checkLocationAllowed(stationId, latitude, longitude);
+
+        /* Always synchronize in this order to avoid DeadLocks */
+        synchronized (users.get(userId)) {
+            // check if not onBike
+            checkUserNotOnBike(userId);
+
+            synchronized (stations.get(stationId)) {
+                // check if docks available
+                int dockedBikes = rec.getNBikes(stationId);
+                checkStationAvailableDocks(stationId, dockedBikes);
+
+                // increase bikes available
+                rec.setNBikes(stationId, dockedBikes+1);
+            }
+
+            // get reward money and change status onBike
+            int reward = stations.get(stationId).getReward();
+            int balance = rec.getBalance(userId);
+            rec.setBalance(userId, balance+reward);
+
+            rec.setOnBike(userId, false);
+        }
+
+        return BikeResponse.getDefaultInstance();
+    }
+
     public SysStatusResponse getAllServerStatus() {
         // TODO zookeper integration
         SysStatusResponse.Builder serverResponse = SysStatusResponse.newBuilder();
@@ -275,9 +309,19 @@ public class Hub {
         if (onBike) throw new UserAlreadyOnBikeException();
     }
 
+    public void checkUserNotOnBike(String id) throws StatusRuntimeException, UserNotOnBikeException {
+        /* Use only with trusted id */
+        boolean onBike = rec.getOnBike(id);
+        if (!onBike) throw new UserNotOnBikeException();
+    }
+
     /* Implemented in function for future conditions (eg. bike reserve) */
     public void checkStationAvailableBikes(int value) throws NoBikeAvailableException {
         if (value <= 0) throw new NoBikeAvailableException();
+    }
+
+    public void checkStationAvailableDocks(String id, int value) throws NoDocksAvailableException {
+        if (value >= stations.get(id).getNDocks()) throw new NoDocksAvailableException();
     }
 
     public void checkLocationAllowed(String stationId, float lat, float lon) throws UserTooFarAwayFromStationException {
@@ -287,6 +331,7 @@ public class Hub {
             throw new UserTooFarAwayFromStationException();
     }
 
+    /* ======================================== */
 
     /** Helper method to print debug messages. */
 	private void debug(Object debugMessage) {
