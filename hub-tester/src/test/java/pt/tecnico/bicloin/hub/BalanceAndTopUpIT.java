@@ -12,9 +12,6 @@ import pt.tecnico.bicloin.hub.domain.exception.InvalidTopUpAmountException;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
 
-import static pt.tecnico.bicloin.hub.frontend.HubFrontend.*;
-
-
 public class BalanceAndTopUpIT extends BaseIT {
 	@Test
 	public void topUpSuccessfulTest() {
