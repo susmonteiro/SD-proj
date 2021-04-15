@@ -84,7 +84,7 @@ public class BikeUpIT extends BaseIT {
             .getStatus().getCode()
         );
 	}
-
+	
 	@Test
 	public void bikeUpEmptyUserIdTest() {
 		BikeRequest request = BikeRequest.newBuilder()

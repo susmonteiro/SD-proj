@@ -18,8 +18,9 @@ import io.grpc.StatusRuntimeException;
 public class Hub {
     private boolean DEBUG = false;
 
-    private static final int BIC_EXCHANGE_RATE = 10;    /* Bic (Bicloin) is the currency */
-    private static final int BIKE_UP_PRICE = 10;    /* Price of bike up in project currency (Bic`s) */ 
+    private static final int BIC_EXCHANGE_RATE = 10;        /* Bic (Bicloin) is the currency */
+    private static final int BIKE_UP_PRICE = 10;            /* Price of bike up in project currency (Bic`s) */
+    private static final int MIN_DIST_FOR_BIKE_UP = 200;    /* Minimun distance to the station to be able to request a bike */
     private Map<String, User> users;
     private Map<String, Station> stations;
     private RecordFrontend rec;
@@ -157,7 +158,7 @@ public class Hub {
         Station.checkLatitude(latitude);
         Station.checkLongitude(longitude);
         checkStation(stationId);
-        // checkLocation(stationId, latitude, longitude); //TODO
+        checkLocationAllowed(stationId, latitude, longitude);
 
         /* Always synchronize in this order to avoid DeadLocks */
         synchronized (users.get(userId)) {
@@ -170,13 +171,11 @@ public class Hub {
                 int availableBikes = rec.getNBikes(stationId);
                 checkStationAvailableBikes(availableBikes);
 
-                // perform bikup - Station
-                    // decrease bikes available
+                // decrease bikes available
                 rec.setNBikes(stationId, availableBikes-1);
             }
-            // perform bikup - User
-                // decrease money
-                // change status onBike
+            
+            // decrease money and change status onBike
             rec.setBalance(userId, balance-BIKE_UP_PRICE);
             rec.setOnBike(userId, true);
         }
@@ -275,6 +274,13 @@ public class Hub {
     /* Implemented in function for future conditions (eg. bike reserve) */
     public void checkStationAvailableBikes(int value) throws NoBikeAvailableException {
         if (value <= 0) throw new NoBikeAvailableException();
+    }
+
+    public void checkLocationAllowed(String stationId, float lat, float lon) throws UserTooFarAwayFromStationException {
+        /* Use only with trusted id */
+        Station station = stations.get(stationId); 
+        if (distance(lat, lon, station.getLat(), station.getLong()) > MIN_DIST_FOR_BIKE_UP)
+            throw new UserTooFarAwayFromStationException();
     }
 
 

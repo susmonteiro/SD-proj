@@ -60,12 +60,12 @@ public class BikeUpAndDownIT extends BaseIT {
 		frontend.doBikeUpOperation("carlos", 38.6867f, -9.3124f, "stao");
 
 		// tries to take another bicycle
-		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.doBikeUpOperation("carlos", 38.6867f, -9.3124f, "stao"));
+		e = assertThrows(StatusRuntimeException.class, () -> frontend.doBikeUpOperation("carlos", 38.6867f, -9.3124f, "stao"));
         assertEquals(FAILED_PRECONDITION.getCode(), e.getStatus().getCode());
         assertEquals(new UserAlreadyOnBikeException().getMessage(), e.getStatus().getDescription());
 
 		// tries to leave bicycle on full station
-		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.doBikeDownOperation("carlos", 38.6867f, -9.3124f, "full"));
+		e = assertThrows(StatusRuntimeException.class, () -> frontend.doBikeDownOperation("carlos", 38.6867f, -9.3124f, "full"));
         assertEquals(FAILED_PRECONDITION.getCode(), e.getStatus().getCode());
         assertEquals(new UserAlreadyOnBikeException().getMessage(), e.getStatus().getDescription());
 
@@ -73,7 +73,7 @@ public class BikeUpAndDownIT extends BaseIT {
 		frontend.doBikeDownOperation("carlos", 38.6867f, -9.3124f, "stao");
 
 		// tries to bike down a bicycle again
-		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.doBikeDownOperation("carlos", 38.6867f, -9.3124f, "stao"));
+		e = assertThrows(StatusRuntimeException.class, () -> frontend.doBikeDownOperation("carlos", 38.6867f, -9.3124f, "stao"));
         assertEquals(FAILED_PRECONDITION.getCode(), e.getStatus().getCode());
         assertEquals(new UserAlreadyOnBikeException().getMessage(), e.getStatus().getDescription());
 	}
