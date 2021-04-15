@@ -125,6 +125,9 @@ public class Hub {
     public LocateStationResponse locateStation (float latitude, float longitude, int count)
         throws StatusRuntimeException, InvalidArgumentException {
         
+        User.checkLatitude(latitude);
+        User.checkLongitude(longitude);
+        
         Map<Double, String> allDistances = new HashMap<Double, String>();
 		List<Double> lowestDistances = new ArrayList<Double>();
 
@@ -137,16 +140,14 @@ public class Hub {
 		}
 		
         lowestDistances.sort(Comparator.naturalOrder());
-
-		debug(lowestDistances);
 		
 		LocateStationResponse.Builder response = LocateStationResponse.newBuilder();
 		for (int i=0; i<count; i++) {
 			String name = allDistances.get(lowestDistances.get(i));
-			response.addStationId(name);
+            //if count > stations only send those that exist
+			if (name != null) response.addStationId(name);
 			debug(name);
 		}
-		debug(allDistances);
 		return response.build();
     }
 

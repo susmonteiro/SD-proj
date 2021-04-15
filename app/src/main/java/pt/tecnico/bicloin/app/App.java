@@ -13,7 +13,7 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
-import pt.tecnico.bicloin.hub.grpc.HubServiceGrpc;
+import pt.tecnico.bicloin.hub.frontend.HubFrontend;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
 
@@ -25,9 +25,13 @@ public class App {
     private static String _user, _phone;
     private static float _latitude, _longitude;
 
+    private static final int EARTH_RADIUS = 6371;
+
     private static float newlatitude, newlongitude;
     private static String newloc;
     private static Map<String, Tag> _tags;
+
+    private static HubFrontend hub;
 
     private static class Tag {
         private float lat;
@@ -51,6 +55,8 @@ public class App {
         _longitude = longitude;
         
         _tags = new HashMap<String, Tag>();
+
+        hub = new HubFrontend(hubIP, hubPORT);
     }
 
     /** Helper method to print debug messages. */
@@ -61,20 +67,7 @@ public class App {
 
     public static void start(){
 
-        final String target = _host + ":" + _port;
-
         System.out.println(App.class.getSimpleName());
-        
-        // Channel is the abstraction to connect to a service endpoint.
-	    // Let us use plaintext communication because we do not have certificates.
-	    final ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
-        
-		// It is up to the client to determine whether to block the call.
-		// Here we create a blocking stub, but an async stub,
-		// or an async stub with Future are always possible.
-		HubServiceGrpc.HubServiceBlockingStub stub = HubServiceGrpc.newBlockingStub(channel);
-        
-        
         
 		try (Scanner scanner = new Scanner(System.in)) {
             String input;
@@ -86,11 +79,10 @@ public class App {
 
                     switch(input) {
                         case "balance":
-                        debug("chose balance");
-                        balance(stub);
+                        balance();
                         break;
                     case "top-up":
-                        topup(stub, scanner);
+                        topup(scanner);
                         break;
                     case "tag":
                         tag(scanner);
@@ -102,19 +94,19 @@ public class App {
                         at();
                         break;
                     case "scan":
-                        scan(stub, scanner);
+                        scan(scanner);
                         break;
                     case "info":
-                        info(stub, scanner);
+                        info(scanner);
                         break;
                     case "bike-up":
-                        bikeup(stub, scanner);
+                        bikeup(scanner);
                         break;
                     case "bike-down":
-                        bikedown(stub, scanner);
+                        bikedown(scanner);
                         break;
                     case "ping":
-                        ping(stub);
+                        ping();
                         break;
                     case "sys-status":
                         break;
@@ -131,24 +123,22 @@ public class App {
 		}
 		
 
-        // A Channel should be shutdown before stopping the process.
-		channel.shutdownNow();
+        hub.close();
         
     }
 
 
-    private static void balance(HubServiceGrpc.HubServiceBlockingStub stub) {
+    private static void balance() {
         try {
-            BalanceRequest request = BalanceRequest.newBuilder().setUserId(_user).build();
-            AmountResponse response = stub.balance(request);
-            System.out.println(_user + response.getBalance() + " BIC");
+            AmountResponse response = hub.doBalanceOperation(_user);
+            System.out.println(_user + " " + response.getBalance() + " BIC");
         } catch (StatusRuntimeException e) {
             System.out.println("ERRO - " + e.getMessage());
         } 
     }
 
-    private static void topup(HubServiceGrpc.HubServiceBlockingStub stub, Scanner scanner) {
-        if (scanner.findInLine("") == null) { 
+    private static void topup(Scanner scanner) {
+        if ((scanner.findInLine("") == null) || (scanner.findInLine("\t") == null)) {  
             System.out.println("ERRO - Faltam argumentos: Quantia a carregar!");
             return;
         }
@@ -156,15 +146,9 @@ public class App {
             if (scanner.hasNextInt()) {
                 int amount = scanner.nextInt();
                 debug(amount);
-            
-         
-            TopUpRequest request = TopUpRequest.newBuilder()
-                .setUserId(_user)
-                .setAmount(amount)
-                .setPhoneNumber(_phone)
-                .build();
-            AmountResponse response = stub.topUp(request);
-            System.out.println(_user + response.getBalance() + " BIC");
+        
+            AmountResponse response = hub.doTopUpOperation(_user, amount, _phone);
+            System.out.println(_user + " " + response.getBalance() + " BIC");
             } else {
                 System.out.println("ERRO - Argumentos incorretos para comando top-up!");
                 scanner.nextLine();
@@ -177,7 +161,7 @@ public class App {
 
 
     private static void tag(Scanner scanner) {
-        if (scanner.findInLine("") == null) { 
+        if ((scanner.findInLine("") == null) || (scanner.findInLine("\t") == null)) {  
             System.out.println("ERRO - Faltam argumentos: Coordenadas e Nome da Tag!");
             return;
         }
@@ -208,7 +192,7 @@ public class App {
 
     private static void move(Scanner scanner) {
         
-        if (scanner.findInLine("") == null) { 
+        if ((scanner.findInLine("") == null) || (scanner.findInLine("\t") == null)) { 
             System.out.println("ERRO - Faltam argumentos: Coordenadas ou Tag!");
             return;
         }
@@ -269,9 +253,9 @@ public class App {
     }
 
     
-    private static void scan(HubServiceGrpc.HubServiceBlockingStub stub, Scanner scanner) {
+    private static void scan(Scanner scanner) {
     
-        if (scanner.findInLine("") == null) { 
+        if ((scanner.findInLine("") == null) || (scanner.findInLine("\t") == null)) {  
             System.out.println("ERRO - Faltam argumentos: Numero de estacoes!");
             return;
         }
@@ -279,40 +263,66 @@ public class App {
             try {
                 List<String> stations = new ArrayList<String>();
                 int count = scanner.nextInt();
-                //for (int i=0; i<count; i++) {
-                    LocateStationRequest request = LocateStationRequest.newBuilder()
-                        .setCoordinates(Coordinates.newBuilder()
-                        .setLatitude(_latitude)
-                        .setLongitude(_longitude)
-                        .build()
-                    ).setNStations(count)
-                    .build();
-                    LocateStationResponse response = stub.locateStation(request);
-                    stations = response.getStationIdList();
-                //}
+                LocateStationResponse response = hub.doLocateStationOperation(
+                    _latitude, _longitude, count);
+                stations = response.getStationIdList();
+                for (String station : stations) {
+                    InfoStationResponse infoRes = hub.doInfoStationOperation(station);
+                    float lat = infoRes.getCoordinates().getLatitude();
+                    float lon = infoRes.getCoordinates().getLongitude();
+                    System.out.println(station 
+                    + ", lat " + lat
+                    + ", " + lon
+                    + " long, " + infoRes.getNDocks() + " docas, "
+                    + infoRes.getReward() + " BIC prémio, " 
+                    + infoRes.getNBicycles() + " bicicletas, " 
+                    + "a " + (int)Math.round(distance(_latitude, _longitude, lat, lon)) + " metros");
+                }
                 
             } catch (InputMismatchException e) {
-                System.out.println("ERRO - Argumentos incorretos para comando scan!");
-                //TO CHECK mensagem de erro que queremos responder	
-            }
+                System.out.println("ERRO - Argumentos incorretos para comando scan!");	
+            } catch (StatusRuntimeException e) {
+                System.out.println("ERRO - " + e.getMessage());
+            } 
         }
      
+    }
+
+    public static double distance(float s1Lat, float s1Long, float s2Lat, float s2Long) {		
+
+        double aLat = (double) s1Lat;
+		double bLat = (double) s2Lat;
+		double aLong = (double) s1Long;
+		double bLong = (double) s2Long;
+		
+		double latitude  = Math.toRadians((bLat - aLat));
+        double longitude = Math.toRadians((bLong - aLong));
+
+		aLat = Math.toRadians(aLat);
+        bLat = Math.toRadians(bLat);
+
+        double a = haversin(latitude) + Math.cos(aLat) * Math.cos(bLat) * haversin(longitude);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        double distance = EARTH_RADIUS * c;
+		return distance * 1000; 
+    }
+
+    public static double haversin(double val) {
+        return Math.pow(Math.sin(val / 2), 2);
     }
     
     
 
-    private static void info(HubServiceGrpc.HubServiceBlockingStub stub, Scanner scanner) {
-        if (scanner.findInLine("") == null) { 
+    private static void info(Scanner scanner) {
+        if ((scanner.findInLine("") == null) || (scanner.findInLine("\t") == null)) { 
             System.out.println("ERRO - Faltam argumentos: Station!");
             return;
         }
         if (scanner.hasNext()) {
             try {
                 String station = scanner.next();
-                InfoStationRequest request = InfoStationRequest.newBuilder()
-                    .setStationId(station)
-				    .build();
-                InfoStationResponse response = stub.infoStation(request);
+                InfoStationResponse response = hub.doInfoStationOperation(station);
                 System.out.println(response.getName() 
                     + ", lat " + response.getCoordinates().getLatitude()
                     + ", " + response.getCoordinates().getLongitude()
@@ -323,77 +333,70 @@ public class App {
                     + response.getNDeliveries() + " devoluções.");
                     
             } catch (InputMismatchException e) {
-                //System.out.println("ERRO - Argumentos incorretos para comando info!");
-                System.out.println("ERRO fora de alcance");
-                //TO CHECK mensagem de erro que queremos responder e excecao que recebemos
+                System.out.println("ERRO - Argumentos incorretos para comando info!");
             } catch (StatusRuntimeException e) {
-                System.out.println(e.getMessage());
-            }
+                System.out.println("ERRO - " + e.getMessage());
+            } 
         }
     }
     
 
-    private static void bikeup(HubServiceGrpc.HubServiceBlockingStub stub, Scanner scanner) {
-        if (scanner.findInLine("") == null) { 
+    private static void bikeup(Scanner scanner) {
+        if ((scanner.findInLine("") == null) || (scanner.findInLine("\t") == null)) {  
             System.out.println("ERRO - Faltam argumentos: Station!");
             return;
         }
         if (scanner.hasNext()) {
             try {
                 String station = scanner.next();
-                BikeRequest request = BikeRequest.newBuilder()
-                    .setUserId(_user)
-                    .setCoordinates(Coordinates.newBuilder()
-					    .setLatitude(_latitude)
-					    .setLongitude(_longitude)
-					    .build()
-				    ).setStationId(station)
-				    .build();
-                BikeResponse response = stub.bikeUp(request);
+                hub.doBikeUpOperation(_user, _latitude, _longitude, station);
                 System.out.println("OK");
             } catch (InputMismatchException e) {
                 System.out.println("ERRO - Argumentos incorretos para comando bike-up!");
-                //TO CHECK mensagem de erro que queremos responder	
-            }
+            } catch (StatusRuntimeException e) {
+                System.out.println("ERRO - " + e.getMessage());
+            } 
         }
     }
 
-    private static void bikedown(HubServiceGrpc.HubServiceBlockingStub stub, Scanner scanner) {
-        if (scanner.findInLine("") == null) { 
+    private static void bikedown(Scanner scanner) {
+        if ((scanner.findInLine("") == null) || (scanner.findInLine("\t") == null)) { 
             System.out.println("ERRO - Faltam argumentos: Station!");
             return;
         }
         if (scanner.hasNext()) {
             try {
                 String station = scanner.next();
-                BikeRequest request = BikeRequest.newBuilder()
-                    .setUserId(_user)
-                    .setCoordinates(Coordinates.newBuilder()
-					    .setLatitude(_latitude)
-					    .setLongitude(_longitude)
-					    .build()
-				    ).setStationId(station)
-				    .build();
-                BikeResponse response = stub.bikeDown(request);
+                hub.doBikeDownOperation(_user, _latitude, _longitude, station);
                 System.out.println("OK");
             } catch (InputMismatchException e) {
-                //System.out.println("ERRO - Argumentos incorretos para comando bike-down!");
-                System.out.println("ERRO fora de alcance");
-                //TO CHECK mensagem de erro que queremos responder e excecao que recebemos
-            }
+                System.out.println("ERRO - Argumentos incorretos para comando bike-down!");
+            } catch (StatusRuntimeException e) {
+                System.out.println("ERRO - " + e.getMessage());
+            } 
         }
     }
     
 
 
 
-    private static void ping(HubServiceGrpc.HubServiceBlockingStub stub) {
-        
-        PingRequest request = PingRequest.newBuilder().setInput(_user).build();
-        debug(request);
-        PingResponse response = stub.ping(request);
-        System.out.println(response.getOutput());
-        
+    private static void ping() {
+        try {
+            PingResponse response = hub.doPingOperation(_user);
+            System.out.println(response.getOutput());
+        } catch (StatusRuntimeException e) {
+            System.out.println("ERRO - " + e.getMessage());
+        } 
     }
+    /*
+    private static void sysStatus() {
+        try {
+            SysStatusResponse response = hub.doPingOperation(_user);
+            System.out.println(response.getOutput());
+        } catch (StatusRuntimeException e) {
+            System.out.println("ERRO - " + e.getMessage());
+        } 
+    }
+    */
 
 }
