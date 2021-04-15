@@ -5,11 +5,12 @@ import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import static io.grpc.Status.UNIMPLEMENTED;
 import static io.grpc.Status.INVALID_ARGUMENT;
+import static io.grpc.Status.FAILED_PRECONDITION;
 import io.grpc.StatusRuntimeException;
 import pt.tecnico.bicloin.hub.domain.exception.InvalidStationException;
 import pt.tecnico.bicloin.hub.domain.exception.InvalidUserException;
+import pt.tecnico.bicloin.hub.domain.exception.UserTooFarAwayFromStationException;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
 import static pt.tecnico.bicloin.hub.frontend.HubFrontend.*;
@@ -42,7 +43,7 @@ public class BikeUpIT extends BaseIT {
 
 	@Test
 	public void bikeUpInvalidLatitudeTest() {
-		BikeRequest request = getBikeRequest("alice", 238.6867f, -9.3124f, "stao");
+		BikeRequest request = getBikeRequest("alice", 91.6867f, -9.3124f, "stao");
 
 		assertEquals(
             INVALID_ARGUMENT.getCode(),
@@ -51,10 +52,9 @@ public class BikeUpIT extends BaseIT {
         );
 	}
 
-	@Disabled // working, but needs change in HUB
 	@Test
 	public void bikeUpInvalidLongitudeTest() {
-		BikeRequest request = getBikeRequest("alice", 38.6867f, -99.3124f, "stao");
+		BikeRequest request = getBikeRequest("alice", 38.6867f, -199.3124f, "stao");
 
 		assertEquals(
             INVALID_ARGUMENT.getCode(),
@@ -62,7 +62,6 @@ public class BikeUpIT extends BaseIT {
             .getStatus().getCode()
         );
 	}
-
 
 	@Test
 	public void bikeUpInvalidStationIdTest() {
@@ -73,17 +72,15 @@ public class BikeUpIT extends BaseIT {
         assertEquals(new InvalidStationException().getMessage(), e.getStatus().getDescription());
 	}
 
-	@Disabled
 	@Test
-	public void bikeUpUserTooFarAwayIdTest() {
-		BikeRequest request = getBikeRequest("alice", 138.6867f, -59.3124f, "stao");
+	public void bikeUpUserTooFarAwayTest() {
+		BikeRequest request = getBikeRequest("alice", 88.6867f, -59.3124f, "stao");
 
-		assertEquals(
-            UNIMPLEMENTED.getCode(),
-            assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request))
-            .getStatus().getCode()
-        );
+		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request));
+        assertEquals(FAILED_PRECONDITION.getCode(), e.getStatus().getCode());
+        assertEquals(new UserTooFarAwayFromStationException().getMessage(), e.getStatus().getDescription());
 	}
+
 	@Test
 	public void bikeUpEmptyUserIdTest() {
 		BikeRequest request = BikeRequest.newBuilder()
@@ -97,21 +94,6 @@ public class BikeUpIT extends BaseIT {
 		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request));
 		assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
 		assertEquals(new InvalidUserException().getMessage(), e.getStatus().getDescription());
-	}
-
-	@Disabled // working, but needs change in HUB
-	@Test
-	public void bikeUpEmptyCoordinatesTest() {
-		BikeRequest request = BikeRequest.newBuilder()
-				.setUserId("alice")
-				.setStationId("stao")
-				.build();
-		
-		assertEquals(
-            INVALID_ARGUMENT.getCode(),
-            assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request))
-            .getStatus().getCode()
-        );
 	}
 
 	@Test
