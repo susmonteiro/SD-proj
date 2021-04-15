@@ -1,8 +1,5 @@
 package pt.tecnico.bicloin.app;
 
-import java.io.InputStream;
-import java.util.InputMismatchException;
-import java.util.Scanner;
 
 public class AppMain {
 	private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
@@ -27,7 +24,7 @@ public class AppMain {
 		
 		App app = new App(hubIP, hubPORT, userID, userPhoneNumber, latitude, longitude);
 		app.start();
-	
+		
 		
 	}
 
