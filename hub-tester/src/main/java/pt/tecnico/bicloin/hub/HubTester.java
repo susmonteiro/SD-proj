@@ -37,29 +37,29 @@ public class HubTester {
 		System.out.println("=== Tests ===\n");
 
 		/* Balance */
-		balanceTest("friend");
+		balanceTest("alice");
 
 		/* TopUp */
-		topUpTest("friend", 10, "+351123456789");
+		// topUpTest("friend", 10, "+351123456789");
 
-		/* InfoStation */
-		infoStationTest("ista");
+		// /* InfoStation */
+		// infoStationTest("ista");
 
-		/* LocateStation */
-		locateStationTest(11.1111f, 22.2222f, 3);
+		// /* LocateStation */
+		// locateStationTest(11.1111f, 22.2222f, 3);
 
-		/* BikeUp */
-		bikeUpTest("friend", 11.1111f, 22.2222f, "ista");
+		// /* BikeUp */
+		// bikeUpTest("friend", 11.1111f, 22.2222f, "ista");
 
-		/* BikeDown */
-		bikeDownTest("friend", 11.1111f, 22.2222f, "ista");
+		// /* BikeDown */
+		// bikeDownTest("friend", 11.1111f, 22.2222f, "ista");
 
-		/* Ping */
-		pingTest("boss");
-		pingTest("");
+		// /* Ping */
+		// pingTest("boss");
+		// pingTest("");
 
 		/* SysStatus */
-		sysStatusTest();
+		// sysStatusTest();
 		
 
 		frontend.close();
