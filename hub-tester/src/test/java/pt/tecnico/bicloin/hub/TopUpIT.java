@@ -18,13 +18,16 @@ public class TopUpIT extends BaseIT {
 				.setPhoneNumber("+35193334444")
 				.build();
 		AmountResponse response = frontend.topUp(request);
-		assertEquals(10, response.getBalance());
+		assertEquals(100, response.getBalance());
+
+		response = frontend.topUp(request);
+		assertEquals(200, response.getBalance());
 	}
 
 	@Test
 	public void topUpInvalidUserTest() {
 		TopUpRequest request = TopUpRequest.newBuilder()
-				.setUserId("f")
+				.setUserId("u")
 				.setAmount(10)
 				.setPhoneNumber("+35193334444")
 				.build();
