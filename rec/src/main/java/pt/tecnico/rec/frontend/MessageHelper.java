@@ -23,26 +23,45 @@ public class MessageHelper {
             response.getRegBalance().getBalance() : Default.BALANCE;
     }
 
+	public static int getBalanceDefaultValue() {
+		return Default.BALANCE;
+	}
+
     public static boolean getOnBikeValue(RegisterValue response) {
         return response.hasRegOnBike() ?
             response.getRegOnBike().getOnBike() : Default.ON_BIKE;
     }
+
+	public static boolean getOnBikeDefaultValue() {
+		return Default.ON_BIKE;
+	}
 
     public static int getNBikesValue(RegisterValue response) {
         return response.hasRegNBikes() ?
             response.getRegNBikes().getNBikes() : Default.N_BIKES;
     }
 
+	public static int getNBikesDefaultValue() {
+		return Default.N_BIKES;
+	}
+
     public static int getNPickUpsValue(RegisterValue response) {
         return response.hasRegNPickUps() ?
             response.getRegNPickUps().getNPickUps() : Default.N_PICK_UPS;
     }
+
+	public static int getNPickUpsDefaultValue() {
+		return Default.N_PICK_UPS;
+	}
 
     public static int getNDeliveriesValue(RegisterValue response) {
         return response.hasRegNDeliveries() ?
             response.getRegNDeliveries().getNDeliveries() : Default.N_DELIVERIES;
     }
 
+	public static int getNDeliveriesDefaultValue() {
+		return Default.N_DELIVERIES;
+	}
 	
 	/* Message Building */
 	/* ++++++++++++++++ */
