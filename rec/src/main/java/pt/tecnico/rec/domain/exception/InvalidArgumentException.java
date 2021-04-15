@@ -1,0 +1,7 @@
+package pt.tecnico.rec.domain.exception;
+
+public class InvalidArgumentException extends Exception{
+    public InvalidArgumentException(String message) {
+		super(message);
+	}
+}
