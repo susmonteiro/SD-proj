@@ -47,7 +47,7 @@ public class Hub {
     public void initializeRec() {
         // Users lazy loaded (registers only initialized on first access)
         debug("@Hub Initializing Rec...");
-		for (String stationId: stations.keySet()) {
+        for (String stationId: stations.keySet()) {
             debug("id: " + stationId + "\n" + stations.get(stationId.toString()));
             int nBicycles = stations.get(stationId).getNBicycles();
             
@@ -61,7 +61,7 @@ public class Hub {
 
             rec.write(request);
         }
-	}
+    }
     
     public int balance(String id) throws StatusRuntimeException, InvalidUserException {
         checkUser(id);
@@ -122,28 +122,28 @@ public class Hub {
         throws StatusRuntimeException, InvalidArgumentException {
         
         Map<Double, String> allDistances = new HashMap<Double, String>();
-		List<Double> lowestDistances = new ArrayList<Double>();
+        List<Double> lowestDistances = new ArrayList<Double>();
 
-		for (String stationId: stations.keySet()) {
-			float lat = stations.get(stationId).getLat();
-			float lon = stations.get(stationId).getLong();
-			double dist = distance(latitude, longitude, lat, lon);
+        for (String stationId: stations.keySet()) {
+            float lat = stations.get(stationId).getLat();
+            float lon = stations.get(stationId).getLong();
+            double dist = distance(latitude, longitude, lat, lon);
             allDistances.put(dist, stationId);
-			lowestDistances.add(dist);
-		}
-		
+            lowestDistances.add(dist);
+        }
+        
         lowestDistances.sort(Comparator.naturalOrder());
 
-		debug(lowestDistances);
-		
-		LocateStationResponse.Builder response = LocateStationResponse.newBuilder();
-		for (int i=0; i<count; i++) {
-			String name = allDistances.get(lowestDistances.get(i));
-			response.addStationId(name);
-			debug(name);
-		}
-		debug(allDistances);
-		return response.build();
+        debug(lowestDistances);
+        
+        LocateStationResponse.Builder response = LocateStationResponse.newBuilder();
+        for (int i=0; i<count; i++) {
+            String name = allDistances.get(lowestDistances.get(i));
+            response.addStationId(name);
+            debug(name);
+        }
+        debug(allDistances);
+        return response.build();
     }
 
     public static double distance(float s1Lat, float s1Long, float s2Lat, float s2Long) {		
@@ -362,7 +362,7 @@ public class Hub {
     }
 
 
-	/* Record Communication */
+    /* Record Communication */
     /* ==================== */
 
         /* Message analysis */
@@ -397,9 +397,9 @@ public class Hub {
         /* Message building */
         /* ++++++++++++++++ */
 
-	private static Rec.PingRequest getPingRequest(String input) {
-		return Rec.PingRequest.newBuilder().setInput(input).build();
-	}
+    private static Rec.PingRequest getPingRequest(String input) {
+        return Rec.PingRequest.newBuilder().setInput(input).build();
+    }
 
     private static Rec.RegisterRequest getRegisterRequest(String id, Rec.RegisterValue value) {
         return Rec.RegisterRequest.newBuilder()
@@ -408,58 +408,58 @@ public class Hub {
                 .build();
     }
 
-	private static Rec.RegisterValue getRegisterBalanceAsRegisterValue(int value) {
-		return Rec.RegisterValue.newBuilder().setRegBalance(
-				Rec.RegisterBalance.newBuilder().setBalance(value).build()
-			).build();
-	}
-	private static Rec.RegisterValue getRegisterBalanceAsRegisterValue() {
-		return Rec.RegisterValue.newBuilder().setRegBalance(
-				Rec.RegisterBalance.getDefaultInstance()
-			).build();
-	}
+    private static Rec.RegisterValue getRegisterBalanceAsRegisterValue(int value) {
+        return Rec.RegisterValue.newBuilder().setRegBalance(
+                Rec.RegisterBalance.newBuilder().setBalance(value).build()
+            ).build();
+    }
+    private static Rec.RegisterValue getRegisterBalanceAsRegisterValue() {
+        return Rec.RegisterValue.newBuilder().setRegBalance(
+                Rec.RegisterBalance.getDefaultInstance()
+            ).build();
+    }
 
-	private static Rec.RegisterValue getRegisterOnBikeAsRegisterValue(boolean value) {
-		return Rec.RegisterValue.newBuilder().setRegOnBike(
-				Rec.RegisterOnBike.newBuilder().setOnBike(value).build()
-			).build();
-	}
-	private static Rec.RegisterValue getRegisterOnBikeAsRegisterValue() {
-		return Rec.RegisterValue.newBuilder().setRegOnBike(
-				Rec.RegisterOnBike.getDefaultInstance()
-			).build();
-	}
-	
-	private static Rec.RegisterValue getRegisterNBikesAsRegisterValue(int value) {
-		return Rec.RegisterValue.newBuilder().setRegNBikes(
-				Rec.RegisterNBikes.newBuilder().setNBikes(value).build()
-			).build();
-	}
-	private static Rec.RegisterValue getRegisterNBikesAsRegisterValue() {
-		return Rec.RegisterValue.newBuilder().setRegNBikes(
-				Rec.RegisterNBikes.getDefaultInstance()
-			).build();
-	}
+    private static Rec.RegisterValue getRegisterOnBikeAsRegisterValue(boolean value) {
+        return Rec.RegisterValue.newBuilder().setRegOnBike(
+                Rec.RegisterOnBike.newBuilder().setOnBike(value).build()
+            ).build();
+    }
+    private static Rec.RegisterValue getRegisterOnBikeAsRegisterValue() {
+        return Rec.RegisterValue.newBuilder().setRegOnBike(
+                Rec.RegisterOnBike.getDefaultInstance()
+            ).build();
+    }
+    
+    private static Rec.RegisterValue getRegisterNBikesAsRegisterValue(int value) {
+        return Rec.RegisterValue.newBuilder().setRegNBikes(
+                Rec.RegisterNBikes.newBuilder().setNBikes(value).build()
+            ).build();
+    }
+    private static Rec.RegisterValue getRegisterNBikesAsRegisterValue() {
+        return Rec.RegisterValue.newBuilder().setRegNBikes(
+                Rec.RegisterNBikes.getDefaultInstance()
+            ).build();
+    }
 
-	private static Rec.RegisterValue getRegisterNPickUpsAsRegisterValue(int value) {
-		return Rec.RegisterValue.newBuilder().setRegNPickUps(
-				Rec.RegisterNPickUps.newBuilder().setNPickUps(value).build()
-			).build();
-	}
-	private static Rec.RegisterValue getRegisterNPickUpsAsRegisterValue() {
-		return Rec.RegisterValue.newBuilder().setRegNPickUps(
-				Rec.RegisterNPickUps.getDefaultInstance()
-			).build();
-	}
+    private static Rec.RegisterValue getRegisterNPickUpsAsRegisterValue(int value) {
+        return Rec.RegisterValue.newBuilder().setRegNPickUps(
+                Rec.RegisterNPickUps.newBuilder().setNPickUps(value).build()
+            ).build();
+    }
+    private static Rec.RegisterValue getRegisterNPickUpsAsRegisterValue() {
+        return Rec.RegisterValue.newBuilder().setRegNPickUps(
+                Rec.RegisterNPickUps.getDefaultInstance()
+            ).build();
+    }
 
-	private static Rec.RegisterValue getRegisterNDeliveriesAsRegisterValue(int value) {
-		return Rec.RegisterValue.newBuilder().setRegNDeliveries(
-				Rec.RegisterNDeliveries.newBuilder().setNDeliveries(value).build()
-			).build();
-	}
-	private static Rec.RegisterValue getRegisterNDeliveriesAsRegisterValue() {
-		return Rec.RegisterValue.newBuilder().setRegNDeliveries(
-				Rec.RegisterNDeliveries.getDefaultInstance()
-			).build();
-	}
+    private static Rec.RegisterValue getRegisterNDeliveriesAsRegisterValue(int value) {
+        return Rec.RegisterValue.newBuilder().setRegNDeliveries(
+                Rec.RegisterNDeliveries.newBuilder().setNDeliveries(value).build()
+            ).build();
+    }
+    private static Rec.RegisterValue getRegisterNDeliveriesAsRegisterValue() {
+        return Rec.RegisterValue.newBuilder().setRegNDeliveries(
+                Rec.RegisterNDeliveries.getDefaultInstance()
+            ).build();
+    }
 }
