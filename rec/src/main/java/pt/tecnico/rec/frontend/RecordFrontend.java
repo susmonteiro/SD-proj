@@ -47,6 +47,7 @@ public class RecordFrontend extends MessageHelper implements AutoCloseable {
 		return stub.ping(request);
 	}
 
+
     @Override
 	public final void close() {
 		channel.shutdown();

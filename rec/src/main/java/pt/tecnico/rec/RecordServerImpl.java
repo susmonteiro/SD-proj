@@ -5,6 +5,7 @@ import pt.tecnico.rec.grpc.RecordServiceGrpc;
 import pt.tecnico.rec.grpc.Rec.*;
 import io.grpc.stub.StreamObserver;
 import pt.tecnico.rec.domain.*;
+import pt.tecnico.rec.domain.exception.InvalidArgumentException;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
 
@@ -16,14 +17,18 @@ public class RecordServerImpl extends RecordServiceGrpc.RecordServiceImplBase {
     public void read(RegisterRequest request, StreamObserver<ReadResponse> responseObserver) {
 		String id = request.getId();
 		RegisterValue.ValueCase type = request.getData().getValueCase();
+		try {
+			RegisterValue value = rec.getRegister(id, type);
 
-		RegisterValue value = rec.getRegister(id, type);
+			ReadResponse response = ReadResponse.newBuilder().setData(value).build();
+			
+			responseObserver.onNext(response);
+			responseObserver.onCompleted();
 
-		ReadResponse response = ReadResponse.newBuilder().setData(value).build();
-		
-		responseObserver.onNext(response);
-		responseObserver.onCompleted();
-		
+		} catch (InvalidArgumentException e) {
+			responseObserver.onError(INVALID_ARGUMENT
+				.withDescription(e.getMessage()).asRuntimeException());
+		}
 	}
 
 	@Override
@@ -32,12 +37,17 @@ public class RecordServerImpl extends RecordServiceGrpc.RecordServiceImplBase {
 		RegisterValue value = request.getData();
 		RegisterValue.ValueCase type = value.getValueCase();
 
-		rec.setRegister(id, type, value);
+		try {
+			rec.setRegister(id, type, value);
 
-		WriteResponse response = WriteResponse.getDefaultInstance();
-		
-		responseObserver.onNext(response);
-		responseObserver.onCompleted();
+			WriteResponse response = WriteResponse.getDefaultInstance();
+			responseObserver.onNext(response);
+			responseObserver.onCompleted();
+
+		} catch (InvalidArgumentException e) {
+			responseObserver.onError(INVALID_ARGUMENT
+				.withDescription(e.getMessage()).asRuntimeException());
+		}	
 	}
 
 	@Override
