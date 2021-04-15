@@ -270,7 +270,7 @@ public class App {
 
     
     private static void scan(HubServiceGrpc.HubServiceBlockingStub stub, Scanner scanner) {
-    /*
+    
         if (scanner.findInLine("") == null) { 
             System.out.println("ERRO - Faltam argumentos: Numero de estacoes!");
             return;
@@ -279,7 +279,7 @@ public class App {
             try {
                 List<String> stations = new ArrayList<String>();
                 int count = scanner.nextInt();
-                for (int i=0; i<count; i++) {
+                //for (int i=0; i<count; i++) {
                     LocateStationRequest request = LocateStationRequest.newBuilder()
                         .setCoordinates(Coordinates.newBuilder()
                         .setLatitude(_latitude)
@@ -289,14 +289,14 @@ public class App {
                     .build();
                     LocateStationResponse response = stub.locateStation(request);
                     stations = response.getStationIdList();
-                }
+                //}
                 
             } catch (InputMismatchException e) {
                 System.out.println("ERRO - Argumentos incorretos para comando scan!");
                 //TO CHECK mensagem de erro que queremos responder	
             }
         }
-     */
+     
     }
     
     
@@ -306,17 +306,17 @@ public class App {
             System.out.println("ERRO - Faltam argumentos: Station!");
             return;
         }
-        if (scanner.hasNextInt()) {
+        if (scanner.hasNext()) {
             try {
                 String station = scanner.next();
                 InfoStationRequest request = InfoStationRequest.newBuilder()
                     .setStationId(station)
 				    .build();
                 InfoStationResponse response = stub.infoStation(request);
-                System.out.println(station 
+                System.out.println(response.getName() 
                     + ", lat " + response.getCoordinates().getLatitude()
                     + ", " + response.getCoordinates().getLongitude()
-                    + " long," + response.getNDocks() + "docas, "
+                    + " long, " + response.getNDocks() + " docas, "
                     + response.getReward() + " BIC prémio, " 
                     + response.getNBicycles() + " bicicletas, " 
                     + response.getNPickUps() + " levantamentos, "
@@ -326,7 +326,9 @@ public class App {
                 //System.out.println("ERRO - Argumentos incorretos para comando info!");
                 System.out.println("ERRO fora de alcance");
                 //TO CHECK mensagem de erro que queremos responder e excecao que recebemos
-            } 
+            } catch (StatusRuntimeException e) {
+                System.out.println(e.getMessage());
+            }
         }
     }
     

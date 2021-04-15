@@ -1,6 +1,10 @@
 package pt.tecnico.bicloin.hub.domain;
 
 import java.util.Map; 
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Comparator;
 
 import static pt.tecnico.bicloin.hub.HubMain.debug;
 
@@ -28,6 +32,8 @@ public class Hub {
     private Map<String, User> users;
     private Map<String, Station> stations;
     private RecordFrontend rec;
+
+    private static final int EARTH_RADIUS = 6371;
 
     public Hub(String recIP, int recPORT, Map<String, User> users, Map<String, Station> stations) {
         this.users = users;
@@ -76,6 +82,92 @@ public class Hub {
         setUserBalance(id, newBalance);
 
         return newBalance;
+    }
+
+    public InfoStationResponse infoStation(String stationId) 
+        throws StatusRuntimeException, InvalidArgumentException {
+        
+        checkStation(stationId);
+
+        Station station = stations.get(stationId);
+        String name = station.getName();
+        float lat = station.getLat();
+        float lon = station.getLong();
+        int nDocks = station.getNDocks();
+        int reward = station.getReward();
+        int availableBikes = getStationAvailableBikes(stationId);
+        int nPickUps = getStationPickUps(stationId); 
+        int nDeliveries = getStationDeliveries(stationId); 
+
+        InfoStationResponse response = InfoStationResponse.newBuilder()
+            .setCoordinates(Coordinates.newBuilder()
+                .setLatitude(lat)
+                .setLongitude(lon)
+                .build()
+            ).setName(name)
+            .setNDocks(nDocks)
+            .setReward(reward)
+            .setNBicycles(availableBikes)
+            .setNPickUps(nPickUps)
+            .setNDeliveries(nDeliveries)
+            .build();
+        
+        debug(response);
+        
+        return response;
+
+    }
+
+    public LocateStationResponse locateStation (float latitude, float longitude, int count)
+        throws StatusRuntimeException, InvalidArgumentException {
+        
+        Map<Double, String> allDistances = new HashMap<Double, String>();
+		List<Double> lowestDistances = new ArrayList<Double>();
+
+		for (String stationId: stations.keySet()) {
+			float lat = stations.get(stationId).getLat();
+			float lon = stations.get(stationId).getLong();
+			double dist = distance(latitude, longitude, lat, lon);
+            allDistances.put(dist, stationId);
+			lowestDistances.add(dist);
+		}
+		
+        lowestDistances.sort(Comparator.naturalOrder());
+
+		debug(lowestDistances);
+		
+		LocateStationResponse.Builder response = LocateStationResponse.newBuilder();
+		for (int i=0; i<count; i++) {
+			String name = allDistances.get(lowestDistances.get(i));
+			response.addStationId(name);
+			debug(name);
+		}
+		debug(allDistances);
+		return response.build();
+    }
+
+    public static double distance(float s1Lat, float s1Long, float s2Lat, float s2Long) {		
+
+        double aLat = (double) s1Lat;
+		double bLat = (double) s2Lat;
+		double aLong = (double) s1Long;
+		double bLong = (double) s2Long;
+		
+		double latitude  = Math.toRadians((bLat - aLat));
+        double longitude = Math.toRadians((bLong - aLong));
+
+		aLat = Math.toRadians(aLat);
+        bLat = Math.toRadians(bLat);
+
+        double a = haversin(latitude) + Math.cos(aLat) * Math.cos(bLat) * haversin(longitude);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        double distance = EARTH_RADIUS * c;
+		return distance; 
+    }
+
+    public static double haversin(double val) {
+        return Math.pow(Math.sin(val / 2), 2);
     }
 
     public void bikeUp(String userId, float latitude, float longitude, String stationId)
@@ -198,6 +290,34 @@ public class Hub {
         debug("@Hub #setUserOnBike\n**Request:\n" + request);
         
         rec.write(request);
+    }
+
+    public int getStationPickUps(String id) throws StatusRuntimeException {
+        /* Use only with trusted id */
+        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterNPickUpsAsRegisterValue());
+        debug("@Hub #getStationPickUps\n**Request:\n" + request);
+        
+        Rec.ReadResponse response = rec.read(request);
+        debug("@Hub #getStationPickUps\n**Response:\n" + response);
+        
+        int value = getNDeliveriesValue(response.getData());
+        debug("@Hub #getStationPickUps\n**Value:\n" + value);
+
+        return value;
+    }
+
+    public int getStationDeliveries(String id) throws StatusRuntimeException {
+        /* Use only with trusted id */
+        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterNDeliveriesAsRegisterValue());
+        debug("@Hub #getStationDeliveries\n**Request:\n" + request);
+        
+        Rec.ReadResponse response = rec.read(request);
+        debug("@Hub #getStationDeliveries\n**Response:\n" + response);
+        
+        int value = getNPickUpsValue(response.getData());
+        debug("@Hub #getStationDeliveries\n**Value:\n" + value);
+
+        return value;
     }
 
     /* Data checks */

@@ -146,5 +146,5 @@ public class HubMain {
 	
 	public static String path() {
 		return IP + ":" + PORT;
-	}	
+	}
 }
