@@ -43,7 +43,6 @@ public class LocateStationIT extends BaseIT{
         assertEquals(stations, response.getStationIdList());
     }
 
-    @Disabled
     @Test
     public void LocateStationNumberSuccessTest() {
 		LocateStationRequest request = getLocateStationRequest(38.7369f, -9.1366f, 20);   
@@ -53,7 +52,6 @@ public class LocateStationIT extends BaseIT{
         assertEquals(11, response.getStationIdList().size());
     }
 
-    @Disabled
     @Test
     public void LocateStationInvalidNumberTest() {
 		LocateStationRequest request = getLocateStationRequest(38.7369f, -9.1366f, -1);   
@@ -65,7 +63,6 @@ public class LocateStationIT extends BaseIT{
         );
     }
     
-    @Disabled
     @Test
     public void LocateStationInvalidLatitudeTest() {
 		LocateStationRequest request = getLocateStationRequest(238.7633f, -9.0953f, 3);   

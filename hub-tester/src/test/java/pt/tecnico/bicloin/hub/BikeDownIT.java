@@ -84,7 +84,6 @@ public class BikeDownIT extends BaseIT {
 				assertEquals(new InvalidUserException().getMessage(), e.getStatus().getDescription());
 	}
 	
-	@Disabled
 	@Test
 	public void bikeDownEmptyStationIdTest() {
 		BikeRequest request = BikeRequest.newBuilder()
