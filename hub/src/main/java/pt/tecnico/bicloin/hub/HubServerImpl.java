@@ -133,6 +133,36 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 	}
 
 	@Override
+	public void bikeDown(BikeRequest request, StreamObserver<BikeResponse> responseObserver) {
+		String userId = request.getUserId();
+		float latitude = request.getCoordinates().getLatitude();
+		float longitude = request.getCoordinates().getLongitude();
+		String stationId = request.getStationId();
+
+		try{
+			BikeResponse response = hub.bikeDown(userId, latitude, longitude, stationId);
+
+			responseObserver.onNext(response);
+			responseObserver.onCompleted();
+
+		} catch (InvalidArgumentException e) {
+			responseObserver.onError(INVALID_ARGUMENT
+				.withDescription(e.getMessage()).asRuntimeException());
+			debug("Got exception:" + e);
+
+		} catch (FailedPreconditionException e) {
+			responseObserver.onError(FAILED_PRECONDITION
+				.withDescription(e.getMessage()).asRuntimeException());
+			debug("Got exception:" + e);
+
+		} catch (StatusRuntimeException e) {
+			responseObserver.onError(UNAVAILABLE
+				.withDescription("Request could not be processed.").asRuntimeException());
+			debug("Got exception:" + e.getStatus().getDescription());
+		}
+	}
+
+	@Override
 	public void locateStation(LocateStationRequest request, StreamObserver<LocateStationResponse> responseObserver) {
 		int stations = request.getNStations();
 		float latitude = request.getCoordinates().getLatitude();
