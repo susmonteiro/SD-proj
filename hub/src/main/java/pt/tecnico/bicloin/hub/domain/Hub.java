@@ -12,7 +12,6 @@ import pt.tecnico.rec.grpc.Rec;
 import pt.tecnico.rec.frontend.RecordFrontend;
 
 import pt.tecnico.bicloin.hub.domain.exception.*;
-import pt.tecnico.bicloin.hub.frontend.HubFrontend;
 import io.grpc.StatusRuntimeException;
 
 public class Hub {
@@ -71,17 +70,22 @@ public class Hub {
             .build();
     }
 
-    public synchronized AmountResponse topUp(String id, int value, String phoneNumber) 
+    public AmountResponse topUp(String id, int value, String phoneNumber) 
         throws StatusRuntimeException, InvalidArgumentException {
         
         checkUser(id);
         checkUserPhoneNumber(id, phoneNumber);
         checkValidTopUpAmout(value);
+        
+        int newBalance;
 
-        int oldBalance = rec.getBalance(id);
-        int newBalance = oldBalance + getBicFromMoney(value);
+        // only synchronize the user
+        synchronized (users.get(id)) {
+            int oldBalance = rec.getBalance(id);
+            newBalance = oldBalance + getBicFromMoney(value);
 
-        rec.setBalance(id, newBalance);
+            rec.setBalance(id, newBalance);
+        }
 
         return AmountResponse.newBuilder()
             .setBalance(newBalance)
@@ -174,7 +178,7 @@ public class Hub {
                 // decrease bikes available
                 rec.setNBikes(stationId, availableBikes-1);
             }
-            
+
             // decrease money and change status onBike
             rec.setBalance(userId, balance-BIKE_UP_PRICE);
             rec.setOnBike(userId, true);
