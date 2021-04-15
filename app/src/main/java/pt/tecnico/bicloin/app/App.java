@@ -1,10 +1,9 @@
 package pt.tecnico.bicloin.app;
 
-import java.io.IOException;
+import java.util.InputMismatchException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.InputMismatchException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -103,9 +102,10 @@ public class App {
 		try (Scanner scanner = new Scanner(System.in)) {
             String input;
             System.out.println("Insira um comando ou escreva exit para sair");
+            
             do {
                 System.out.print(">");
-                    input = scanner.next();
+                input = scanner.next();
 
                     switch(input) {
                         case "balance":
@@ -143,17 +143,22 @@ public class App {
                     case "help":
                         help();
                         break;
-                    case "#":
-                        scanner.nextLine();
+                    case "exit":
+                        scanner.close();
+                        hub.close();
+                        System.exit(0);
                         break;
                     case "zzz":
                         TimeUnit.MILLISECONDS.sleep(scanner.nextInt());
                         break;
+                    default:
+                        System.out.println("\b");
+                        scanner.nextLine();
+                        break;
                 }
     
             //App closes when user enters command 'exit' or it reaches the EOF
-            } while (!input.equals("exit"));
-            scanner.close();		
+            } while (true);		
         } catch (NoSuchElementException e) {
             System.out.println("Chegou ao fim. Terminando a app...");
             hub.close();
@@ -193,7 +198,9 @@ public class App {
             System.out.println(_user + " " + response.getBalance() + " BIC");
             } else {
                 System.out.println("ERRO - Argumentos incorretos para comando top-up!");
-                scanner.nextLine();
+                //System.out.println("3");
+                //scanner.nextLine();
+                return;
             }
         } catch (StatusRuntimeException e) {
             System.out.println("ERRO - " + e.getMessage());
@@ -223,7 +230,9 @@ public class App {
             System.out.println("OK");
         } catch (InputMismatchException e) {
             System.out.println("ERRO - Argumentos incorretos para comando tag!");
+            //System.out.println("4");
             scanner.nextLine();
+            return;
         }
     }
 
@@ -243,6 +252,7 @@ public class App {
         // if we want to move to previously created tag
         } else if (scanner.hasNext()) {
             moveTag(scanner);
+
     
         } else {
             System.out.println("ERRO - Argumentos incorretos para comando move!");
@@ -333,8 +343,14 @@ public class App {
                 System.out.println("OK");
             } catch (InputMismatchException e) {
                 System.out.println("ERRO - Argumentos incorretos para comando bike-up!");
+                //System.out.println("5");
+                //scanner.nextLine();
+                return;
             } catch (StatusRuntimeException e) {
                 System.out.println("ERRO - " + e.getMessage());
+                //System.out.println("6");
+                //scanner.nextLine();
+                return;
             } 
         }
     }
@@ -351,8 +367,14 @@ public class App {
                 System.out.println("OK");
             } catch (InputMismatchException e) {
                 System.out.println("ERRO - Argumentos incorretos para comando bike-down!");
+                //System.out.println("7");
+                //scanner.nextLine();
+                return;
             } catch (StatusRuntimeException e) {
                 System.out.println("ERRO - " + e.getMessage());
+                //System.out.println("8");
+                //scanner.nextLine();
+                return;
             } 
         }
     }
@@ -413,14 +435,17 @@ public class App {
                     _longitude = _tags.get(newloc).lon;
     
                     at();
-                    scanner.nextLine();
                 } else {
                     System.out.println("ERRO - Localizacao nao esta guardada!");
-                    scanner.nextLine();
+                    //System.out.println("9");
+                    //scanner.nextLine();
+                    return;
                 }
         } catch (InputMismatchException e) {
             System.out.println("ERRO - Argumentos incorretos para comando move!");
-            scanner.nextLine();
+            //System.out.println("10");
+            //scanner.nextLine();
+            return;
         }
     }
 
@@ -437,7 +462,9 @@ public class App {
             
         } catch (InputMismatchException e) {
             System.out.println("ERRO - Argumentos incorretos para comando move!");
-            scanner.nextLine();
+            //System.out.println("11");
+            //scanner.nextLine();
+            return;
         }
     }
 
