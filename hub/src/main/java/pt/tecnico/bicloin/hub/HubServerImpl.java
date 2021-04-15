@@ -4,7 +4,6 @@ import io.grpc.stub.StreamObserver;
 import pt.tecnico.bicloin.hub.grpc.HubServiceGrpc;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
-import static pt.tecnico.bicloin.hub.HubMain.debug;
 import pt.tecnico.bicloin.hub.domain.*;
 
 import pt.tecnico.bicloin.hub.domain.exception.FailedPreconditionException;
@@ -17,6 +16,7 @@ import static io.grpc.Status.FAILED_PRECONDITION;
 import java.util.Map;
 
 public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
+	private boolean DEBUG = false;
 
 	/* Server Implementation */
 	private Hub hub;
@@ -24,6 +24,12 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 	public HubServerImpl(String recIP, int recPORT, Map<String, User> users, Map<String, Station> stations) {
 		super();
 		this.hub = new Hub(recIP, recPORT, users, stations);
+	}
+	
+	public HubServerImpl(String recIP, int recPORT, Map<String, User> users, Map<String, Station> stations, boolean debug) {
+		super();
+		this.DEBUG = debug;
+		this.hub = new Hub(recIP, recPORT, users, stations, DEBUG);
 	}
 
 	public Hub getHub() { return hub; }
@@ -45,12 +51,12 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 		} catch (InvalidArgumentException e) {
 			responseObserver.onError(INVALID_ARGUMENT
 				.withDescription(e.getMessage()).asRuntimeException());
-			debug("@HubServerImpl Got exception:" + e);
+			debug("Got exception:" + e);
 
 		} catch (StatusRuntimeException e) {
 			responseObserver.onError(UNAVAILABLE
 				.withDescription("Request could not be processed.").asRuntimeException());
-			debug("@HubServerImpl Got exception:" + e.getStatus().getDescription());
+			debug("Got exception:" + e.getStatus().getDescription());
 		}
 		
 	}
@@ -73,12 +79,12 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 		} catch (InvalidArgumentException e) {
 			responseObserver.onError(INVALID_ARGUMENT
 				.withDescription(e.getMessage()).asRuntimeException());
-			debug("@HubServerImpl Got exception:" + e);
+			debug("Got exception:" + e);
 
 		} catch (StatusRuntimeException e) {
 			responseObserver.onError(UNAVAILABLE
 				.withDescription("Request could not be processed.").asRuntimeException());
-			debug("@HubServerImpl Got exception:" + e.getStatus().getDescription());
+			debug("Got exception:" + e.getStatus().getDescription());
 		}
 	}
 
@@ -99,17 +105,17 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 		} catch (InvalidArgumentException e) {
 			responseObserver.onError(INVALID_ARGUMENT
 				.withDescription(e.getMessage()).asRuntimeException());
-			debug("@HubServerImpl Got exception:" + e);
+			debug("Got exception:" + e);
 
 		} catch (FailedPreconditionException e) {
 			responseObserver.onError(FAILED_PRECONDITION
 				.withDescription(e.getMessage()).asRuntimeException());
-			debug("@HubServerImpl Got exception:" + e);
+			debug("Got exception:" + e);
 
 		} catch (StatusRuntimeException e) {
 			responseObserver.onError(UNAVAILABLE
 				.withDescription("Request could not be processed.").asRuntimeException());
-			debug("@HubServerImpl Got exception:" + e.getStatus().getDescription());
+			debug("Got exception:" + e.getStatus().getDescription());
 		}
 	}
 
@@ -136,6 +142,13 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 	public void sysStatus(SysStatusRequest request, StreamObserver<SysStatusResponse> responseObserver) {
 		responseObserver.onNext(hub.getAllServerStatus());
 		responseObserver.onCompleted();
+	}
+
+
+	/** Helper method to print debug messages. */
+	private void debug(Object debugMessage) {
+		if (DEBUG)
+			System.err.println("@HubServerImpl\t" +  debugMessage);
 	}
     
 }
