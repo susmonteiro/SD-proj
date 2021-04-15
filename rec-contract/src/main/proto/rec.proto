@@ -5,19 +5,14 @@ syntax = "proto3";
 package pt.tecnico.rec.grpc;
 
 
-
-message RegisterRequest {
-  // defined seperatly for future additions
-  string id = 1;
-}
-
+// Specific Values
 message RegisterValue {
   oneof value {
-    RegisterBalance RegBalance = 2;
-    RegisterOnBike RegOnBike = 3;
-    RegisterNBikes RegNBikes = 4;
-    RegisterNPickUps RegNPickUps = 5;
-    RegisterNDeliveries RegNDeliveries = 6;
+    RegisterBalance RegBalance = 1;
+    RegisterOnBike RegOnBike = 2;
+    RegisterNBikes RegNBikes = 3;
+    RegisterNPickUps RegNPickUps = 4;
+    RegisterNDeliveries RegNDeliveries = 5;
   }
 }
 
@@ -41,17 +36,14 @@ message RegisterNDeliveries {
   int32 nDeliveries = 1;
 }
 
-message ReadRequest {
-  RegisterRequest register = 1;
+// Used messages
+message RegisterRequest {
+  string id = 1;
+  RegisterValue data = 2;
 }
 
 message ReadResponse {
   RegisterValue data = 1;
-}
-
-message WriteRequest {
-  RegisterRequest register = 1;
-  RegisterValue data = 2;
 }
 
 message WriteResponse {
@@ -66,7 +58,7 @@ message PingResponse {
 }
   
 service RecordService {
-  rpc read(ReadRequest) returns (ReadResponse);
-  rpc write(WriteRequest) returns (WriteResponse);
+  rpc read(RegisterRequest) returns (ReadResponse);
+  rpc write(RegisterRequest) returns (WriteResponse);
   rpc ping(PingRequest) returns (PingResponse);
 }

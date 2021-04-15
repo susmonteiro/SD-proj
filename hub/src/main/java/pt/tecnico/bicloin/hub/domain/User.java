@@ -1,5 +1,6 @@
 package pt.tecnico.bicloin.hub.domain;
 
+import pt.tecnico.bicloin.hub.domain.exception.InvalidArgumentException;
 import pt.tecnico.bicloin.hub.domain.exception.InvalidFileInputException;
 
 public class User {
@@ -12,12 +13,13 @@ public class User {
     private String _phoneNumber;    // variavel -> verificar se começa com '+'
 
     public User(String id, String name, String phoneNumber) throws InvalidFileInputException {
-        if (id.length() < 3 || id.length() > 10) 
-            throw new InvalidFileInputException("ID " + id + " is invalid.\nID has to be between 3 and 10 characters.");
-        if (name.length() > 30)
-            throw new InvalidFileInputException("Name " + name + " is invalid\n.Name cannot have more than 30 characters.");
-        if (!phoneNumber.startsWith("+"))
-            throw new InvalidFileInputException("Phone number " + phoneNumber + " is invalid.\nPhone number has to contain a country code.");
+        try {
+            checkId(id);
+            checkName(name);
+            checkPhoneNumber(phoneNumber);
+        } catch (InvalidArgumentException e) {
+            throw new InvalidFileInputException(e.getMessage());
+        }
 
         _id = id;
         _name = name;
@@ -25,7 +27,17 @@ public class User {
     }
 
     public User(String[] fields) throws InvalidFileInputException {
-        this(fields[0], fields[1], fields[2]);
+        this(fields[ID_IDX], fields[NAME_IDX], fields[PHONENUMBER_IDX]);
+    }
+
+    public static void checkId(String id) throws InvalidArgumentException {
+        if (id.length() < 3 || id.length() > 10) throw new InvalidArgumentException("ID " + id + " is invalid.\nID has to be between 3 and 10 characters.");
+    }
+    public static void checkName(String name) throws InvalidArgumentException {
+        if (name.length() > 30) throw new InvalidArgumentException("Name " + name + " is invalid\n.Name cannot have more than 30 characters.");
+    }
+    public static void checkPhoneNumber(String phoneNumber) throws InvalidArgumentException {
+        if (!phoneNumber.startsWith("+")) throw new InvalidArgumentException("Phone number " + phoneNumber + " is invalid.\nPhone number has to contain a country code}.");
     }
 
     public String getId() { return _id; }

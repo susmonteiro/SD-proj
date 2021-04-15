@@ -1,4 +1,4 @@
-package pt.tecnico.bicloin.hub;
+package pt.tecnico.bicloin.hub.frontend;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -16,6 +16,30 @@ public class HubFrontend implements AutoCloseable {
 
 		// Create a blocking stub.
 		stub = HubServiceGrpc.newBlockingStub(channel);
+	}
+
+	public AmountResponse balance(BalanceRequest request) {
+		return stub.balance(request);
+	}
+
+	public AmountResponse topUp(TopUpRequest request) {
+		return stub.topUp(request);
+	}
+
+	public InfoStationResponse infoStation(InfoStationRequest request) {
+		return stub.infoStation(request);
+	}
+
+	public LocateStationResponse locateStation(LocateStationRequest request) {
+		return stub.locateStation(request);
+	}
+
+	public BikeResponse bikeUp(BikeRequest request) {
+		return stub.bikeUp(request);
+	}
+
+	public BikeResponse bikeDown(BikeRequest request) {
+		return stub.bikeDown(request);
 	}
 
 	public PingResponse ping(PingRequest request) {
