@@ -32,6 +32,10 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 		this.hub = new Hub(recIP, recPORT, users, stations, DEBUG);
 	}
 
+	public void shutdown() {
+		hub.shutdown();
+	}
+
 	public Hub getHub() { return hub; }
 
 

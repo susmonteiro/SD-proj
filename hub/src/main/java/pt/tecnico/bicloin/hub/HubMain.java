@@ -49,6 +49,7 @@ public class HubMain {
 			new Scanner(System.in).nextLine();
 
 			server.shutdown();
+			impl.shutdown();		// close runtime connections (Record frontend)
 		}).start();
 
 		// Do not exit the main thread. Wait until server is terminated.

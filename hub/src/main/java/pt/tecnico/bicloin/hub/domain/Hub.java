@@ -41,6 +41,10 @@ public class Hub {
         rec = new RecordFrontend(recIP, recPORT, DEBUG);
     }
 
+    public void shutdown() {
+        rec.close();
+    }
+
     /* Methods */
     /* ======= */
     
