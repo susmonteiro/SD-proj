@@ -6,23 +6,27 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
-import static io.grpc.Status.UNIMPLEMENTED;
 import io.grpc.StatusRuntimeException;
+import pt.tecnico.bicloin.hub.domain.exception.InvalidStationException;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
+import static pt.tecnico.bicloin.hub.frontend.HubFrontend.*;
+
+import java.text.DecimalFormat;
+
+
 public class InfoStationIT extends BaseIT{
-    @Disabled	
 	@Test
     public void infoStationSuccessTest() {
-		InfoStationRequest request = InfoStationRequest.newBuilder()
-		.setStationId("ocea")
-		.build();     
+		InfoStationRequest request = getInfoStationRequest("ocea");     
 
 		InfoStationResponse response = frontend.infoStation(request);
 
+        DecimalFormat df = new DecimalFormat("#.####");
+
         assertEquals("Oceanário", response.getName());
-		assertEquals(38.7633, response.getCoordinates().getLatitude());
-		assertEquals(-9.0950, response.getCoordinates().getLongitude());
+		assertEquals(Float.toString(38.7633f), df.format(response.getCoordinates().getLatitude()));
+		assertEquals(Float.toString(-9.0950f), df.format(response.getCoordinates().getLongitude()));
 		assertEquals(20, response.getNDocks());
 		assertEquals(2, response.getReward());
 		assertEquals(15, response.getNBicycles());
@@ -30,28 +34,31 @@ public class InfoStationIT extends BaseIT{
 		assertEquals(0, response.getNDeliveries());
     }
 
-    @Disabled
     @Test
     public void infoStationNoSuchStationTest() {
-        InfoStationRequest request = InfoStationRequest.newBuilder()
-		    .setStationId("s")
-		    .build();          
-        assertEquals(
-            UNIMPLEMENTED.getCode(),
-            assertThrows(StatusRuntimeException.class, () -> frontend.infoStation(request))
-            .getStatus().getCode()
-        );
+        InfoStationRequest request = getInfoStationRequest("stat");     
+       
+        StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.infoStation(request));
+        assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
+        assertEquals(new InvalidStationException().getMessage(), e.getStatus().getDescription());
     }
 
-    @Disabled
+    @Test
+    public void infoStationInvalidStationIdTest() {
+        InfoStationRequest request = getInfoStationRequest("s");     
+       
+        StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.infoStation(request));
+        assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
+        assertEquals(new InvalidStationException().getMessage(), e.getStatus().getDescription());
+    }
+
     @Test
     public void infoStationEmptyStationTest() {
-        InfoStationRequest request = InfoStationRequest.newBuilder().build();          
-        assertEquals(
-            UNIMPLEMENTED.getCode(),
-            assertThrows(StatusRuntimeException.class, () -> frontend.infoStation(request))
-            .getStatus().getCode()
-        );
+        InfoStationRequest request = InfoStationRequest.newBuilder().build(); 
+
+        StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.infoStation(request));
+        assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
+        assertEquals(new InvalidStationException().getMessage(), e.getStatus().getDescription());
     }
 
 }

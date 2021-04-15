@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static io.grpc.Status.UNIMPLEMENTED;
 import static io.grpc.Status.INVALID_ARGUMENT;
 import io.grpc.StatusRuntimeException;
+import pt.tecnico.bicloin.hub.domain.exception.InvalidStationException;
 import pt.tecnico.bicloin.hub.domain.exception.InvalidUserException;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
@@ -15,7 +16,22 @@ import static pt.tecnico.bicloin.hub.frontend.HubFrontend.*;
 
 
 public class BikeUpIT extends BaseIT {
-	@Disabled
+	@BeforeEach
+	private void init() {
+		// the user must have money in order to perform a bikeUp operation
+		frontend.doTopUpOperation("alice", 20, "+35191102030");
+	}
+
+	@Test
+	public void bikeUpSuccessTest() {
+		BikeRequest request = getBikeRequest("alice", 38.6867f, -9.3124f, "stao");
+
+		BikeResponse response = frontend.bikeUp(request);
+
+		// BikeResponse should be empty
+		assertEquals(BikeResponse.newBuilder().build(), response);	
+	}
+
 	@Test
 	public void bikeUpNoSuchUserTest() {
 		BikeRequest request = getBikeRequest("u", 38.6867f, -9.3124f, "stao");
@@ -23,43 +39,44 @@ public class BikeUpIT extends BaseIT {
         assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
         assertEquals(new InvalidUserException().getMessage(), e.getStatus().getDescription());
 	}
-@Disabled
+
 	@Test
 	public void bikeUpInvalidLatitudeTest() {
-		BikeRequest request = getBikeRequest("carlos", 238.6867f, -9.3124f, "stao");
+		BikeRequest request = getBikeRequest("alice", 238.6867f, -9.3124f, "stao");
 
 		assertEquals(
-            UNIMPLEMENTED.getCode(),
+            INVALID_ARGUMENT.getCode(),
             assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request))
             .getStatus().getCode()
         );
 	}
-@Disabled
+
+	@Disabled // working, but needs change in HUB
 	@Test
 	public void bikeUpInvalidLongitudeTest() {
-		BikeRequest request = getBikeRequest("carlos", 38.6867f, -99.3124f, "stao");
+		BikeRequest request = getBikeRequest("alice", 38.6867f, -99.3124f, "stao");
 
 		assertEquals(
-            UNIMPLEMENTED.getCode(),
+            INVALID_ARGUMENT.getCode(),
             assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request))
             .getStatus().getCode()
         );
 	}
-@Disabled
+
+
 	@Test
 	public void bikeUpInvalidStationIdTest() {
-		BikeRequest request = getBikeRequest("carlos", 38.6867f, -9.3124f, "s");
+		BikeRequest request = getBikeRequest("alice", 38.6867f, -9.3124f, "s");
 
-		assertEquals(
-            UNIMPLEMENTED.getCode(),
-            assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request))
-            .getStatus().getCode()
-        );
+		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request));
+        assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
+        assertEquals(new InvalidStationException().getMessage(), e.getStatus().getDescription());
 	}
-@Disabled
+
+	@Disabled
 	@Test
 	public void bikeUpUserTooFarAwayIdTest() {
-		BikeRequest request = getBikeRequest("carlos", 138.6867f, -59.3124f, "stao");
+		BikeRequest request = getBikeRequest("alice", 138.6867f, -59.3124f, "stao");
 
 		assertEquals(
             UNIMPLEMENTED.getCode(),
@@ -67,18 +84,7 @@ public class BikeUpIT extends BaseIT {
             .getStatus().getCode()
         );
 	}
-@Disabled
-	@Test
-	public void bikeUpEmptyDockTest() {
-		BikeRequest request = getBikeRequest("carlos", 38.6867f, -9.3124f, "empt");
-		
-		assertEquals(
-            UNIMPLEMENTED.getCode(),
-            assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request))
-            .getStatus().getCode()
-        );
-	}
-@Disabled
+
 	@Test
 	public void bikeUpEmptyUserIdTest() {
 		BikeRequest request = BikeRequest.newBuilder()
@@ -89,43 +95,39 @@ public class BikeUpIT extends BaseIT {
 				).setStationId("stao")
 				.build();
 		
-		assertEquals(
-            UNIMPLEMENTED.getCode(),
-            assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request))
-            .getStatus().getCode()
-        );
+		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request));
+		assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
+		assertEquals(new InvalidUserException().getMessage(), e.getStatus().getDescription());
 	}
-@Disabled
+
+	@Disabled // working, but needs change in HUB
 	@Test
 	public void bikeUpEmptyCoordinatesTest() {
 		BikeRequest request = BikeRequest.newBuilder()
-				.setUserId("carlos")
+				.setUserId("alice")
 				.setStationId("stao")
 				.build();
 		
 		assertEquals(
-            UNIMPLEMENTED.getCode(),
+            INVALID_ARGUMENT.getCode(),
             assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request))
             .getStatus().getCode()
         );
 	}
-	@Disabled
+
 	@Test
 	public void bikeUpEmptyStationIdTest() {
 		BikeRequest request = BikeRequest.newBuilder()
-				.setUserId("carlos")
+				.setUserId("alice")
 				.setCoordinates(Coordinates.newBuilder()
 					.setLatitude(38.6867f)
 					.setLongitude(-9.3124f)
 					.build()
 				).build();
 		
-		assertEquals(
-            UNIMPLEMENTED.getCode(),
-            assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request))
-            .getStatus().getCode()
-        );
+		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request));
+		assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
+		assertEquals(new InvalidStationException().getMessage(), e.getStatus().getDescription());
 	}
 	
-
 }
