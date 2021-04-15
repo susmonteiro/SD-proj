@@ -15,7 +15,7 @@ import static io.grpc.Status.INVALID_ARGUMENT;
 public class ReadIT extends BaseIT {
 
     @Test
-    public void readExistingBalance() {
+    public void readExistingRegister_Balance() {
         RegisterValue balanceRequest = getRegisterBalanceAsRegisterValue();
         RegisterRequest request = getRegisterRequest("alice", balanceRequest);
         
@@ -27,9 +27,9 @@ public class ReadIT extends BaseIT {
     }
 
     @Test
-    public void readNotExistingOnBike() {
+    public void readNewRegister_OnBike() {
         RegisterValue onBikeRequest = getRegisterOnBikeAsRegisterValue();
-        RegisterRequest request = getRegisterRequest("thisIdSupposedlyDoestExist-ReadIT", onBikeRequest);
+        RegisterRequest request = getRegisterRequest("thisIdSupposedlyDoestExist-ReadIT-readNewRegister_OnBike", onBikeRequest);
         
         ReadResponse response = frontend.read(request);
         boolean value = getOnBikeValue(response.getData());
@@ -39,9 +39,9 @@ public class ReadIT extends BaseIT {
     }
     
     @Test
-    public void readRequestFilled() {
+    public void readNewRegister_RequestFilled() {
         RegisterValue nPickUpsRequest = getRegisterNPickUpsAsRegisterValue(1);
-        RegisterRequest request = getRegisterRequest("thisIdSupposedlyDoestExist-ReadIT", nPickUpsRequest);
+        RegisterRequest request = getRegisterRequest("thisIdSupposedlyDoestExist-ReadIT-readNewRegister_RequestFilled", nPickUpsRequest);
        
         ReadResponse response = frontend.read(request);
         int value = getNPickUpsValue(response.getData());
@@ -53,7 +53,7 @@ public class ReadIT extends BaseIT {
     }
 
     @Test
-    public void readEmptyRequestValue() {
+    public void readExisting_EmptyRequestValue() {
         RegisterValue emptyVal = RegisterValue.newBuilder().build();
         RegisterRequest request = getRegisterRequest("alice", emptyVal);
        
