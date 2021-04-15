@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import static pt.tecnico.rec.frontend.RecordFrontend.*;
 
+import pt.tecnico.rec.domain.exception.*;
 import pt.tecnico.rec.grpc.Rec.*;
 import io.grpc.StatusRuntimeException;
 import static io.grpc.Status.INVALID_ARGUMENT;
@@ -35,7 +36,6 @@ public class WriteIT extends BaseIT {
         getNDeliveriesValue(response.getData());
     }
 
-    @Disabled
     @Test
     public void writeExistingRegister_EmptyRequestValueExistingId() {
         RegisterValue emptyVal = RegisterValue.newBuilder().build();
@@ -44,10 +44,9 @@ public class WriteIT extends BaseIT {
         StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.write(request));
 
         assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
-        // TODO assertEquals(new XXX().getMessage(), e.getStatus().getDescription());
+        assertEquals(new NoRegisterValueSetException().getMessage(), e.getStatus().getDescription());
     }
 
-    @Disabled
     @Test
     public void writeNewRegister_EmptyRequestValueNotExistingId() {
         RegisterValue emptyVal = RegisterValue.newBuilder().build();
@@ -56,18 +55,18 @@ public class WriteIT extends BaseIT {
         StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.write(request));
 
         assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
-        // TODO assertEquals(new XXX().getMessage(), e.getStatus().getDescription());
+        assertEquals(new NoRegisterValueSetException().getMessage(), e.getStatus().getDescription());
     }
 
-    @Disabled
     @Test
     public void writeEmptyRegisterRequest() {
         RegisterRequest request = RegisterRequest.newBuilder().build();
        
         StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.write(request));
 
+        // Id should be tested first
         assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
-        // TODO assertEquals(new XXX().getMessage(), e.getStatus().getDescription());
+        assertEquals(new InvalidIdException().getMessage(), e.getStatus().getDescription());
     }
 
 }

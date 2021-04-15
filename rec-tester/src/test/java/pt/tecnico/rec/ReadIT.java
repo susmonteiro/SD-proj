@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import static pt.tecnico.rec.frontend.RecordFrontend.*;
 
+import pt.tecnico.rec.domain.exception.*;
 import pt.tecnico.rec.grpc.Rec.*;
 import io.grpc.StatusRuntimeException;
 import static io.grpc.Status.INVALID_ARGUMENT;
@@ -52,7 +53,6 @@ public class ReadIT extends BaseIT {
         assertEquals(getNPickUpsDefaultValue(), value);
     }
     
-    @Disabled
     @Test
     public void readExisting_EmptyRequestValue() {
         RegisterValue emptyVal = RegisterValue.newBuilder().build();
@@ -61,18 +61,18 @@ public class ReadIT extends BaseIT {
         StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.read(request));
 
         assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
-        // TODO assertEquals(new XXX().getMessage(), e.getStatus().getDescription());
+        assertEquals(new NoRegisterValueSetException().getMessage(), e.getStatus().getDescription());
     }
-    
-    @Disabled
+
     @Test
     public void readEmptyRegisterRequest() {
         RegisterRequest request = RegisterRequest.newBuilder().build();
        
         StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.read(request));
 
+        // Id should be tested first
         assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
-        // TODO assertEquals(new XXX().getMessage(), e.getStatus().getDescription());
+        assertEquals(new InvalidIdException().getMessage(), e.getStatus().getDescription());
     }
 
 }
