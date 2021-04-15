@@ -12,6 +12,7 @@ import pt.tecnico.rec.grpc.Rec;
 import pt.tecnico.rec.frontend.RecordFrontend;
 
 import pt.tecnico.bicloin.hub.domain.exception.*;
+import pt.tecnico.bicloin.hub.frontend.HubFrontend;
 import io.grpc.StatusRuntimeException;
 
 public class Hub {

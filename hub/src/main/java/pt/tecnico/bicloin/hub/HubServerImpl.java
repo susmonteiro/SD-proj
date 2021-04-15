@@ -155,10 +155,6 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 				.withDescription(e.getMessage()).asRuntimeException());
 			debug("Got exception:" + e);
 
-		} catch (StatusRuntimeException e) {
-			responseObserver.onError(UNAVAILABLE
-				.withDescription("Request could not be processed.").asRuntimeException());
-			debug("Got exception:" + e.getStatus().getDescription());
 		}
 	}
 

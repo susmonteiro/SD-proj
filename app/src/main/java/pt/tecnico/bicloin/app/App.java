@@ -252,7 +252,6 @@ public class App {
         // if we want to move to previously created tag
         } else if (scanner.hasNext()) {
             moveTag(scanner);
-
     
         } else {
             System.out.println("ERRO - Argumentos incorretos para comando move!");
