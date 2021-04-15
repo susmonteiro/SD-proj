@@ -7,33 +7,34 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
 import io.grpc.StatusRuntimeException;
+import pt.tecnico.bicloin.hub.domain.exception.InvalidUserException;
+
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
+
+import static pt.tecnico.bicloin.hub.frontend.HubFrontend.*;
+
 
 public class BalanceIT extends BaseIT {
     @Test
     public void balanceSuccessTest() {
-        BalanceRequest request = BalanceRequest.newBuilder().setUserId("alice").build();
+        BalanceRequest request = getBalanceRequest("alice");
         AmountResponse response = frontend.balance(request);
         assertEquals(0, response.getBalance());
     }
 
     @Test
     public void balanceNoSuchUserTest() {
-        BalanceRequest request = BalanceRequest.newBuilder().setUserId("u").build();
-        assertEquals(
-            INVALID_ARGUMENT.getCode(),
-            assertThrows(StatusRuntimeException.class, () -> frontend.balance(request))
-            .getStatus().getCode()
-        );
+        BalanceRequest request = getBalanceRequest("u");
+        StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.balance(request));
+        assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
+        assertEquals(new InvalidUserException().getMessage(), e.getStatus().getDescription());
     }
 
     @Test
     public void balanceEmptyUserTest() {
         BalanceRequest request = BalanceRequest.newBuilder().build();
-        assertEquals(
-            INVALID_ARGUMENT.getCode(),
-            assertThrows(StatusRuntimeException.class, () -> frontend.balance(request))
-            .getStatus().getCode()
-        );
+        StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.balance(request));
+        assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
+        assertEquals(new InvalidUserException().getMessage(), e.getStatus().getDescription());
     }
 }
