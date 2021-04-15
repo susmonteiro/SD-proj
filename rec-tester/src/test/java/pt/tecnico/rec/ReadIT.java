@@ -29,19 +29,19 @@ public class ReadIT extends BaseIT {
     @Test
     public void readNotExistingOnBike() {
         RegisterValue onBikeRequest = getRegisterOnBikeAsRegisterValue();
-        RegisterRequest request = getRegisterRequest("thisIdSupposedlyDoestExist", onBikeRequest);
+        RegisterRequest request = getRegisterRequest("thisIdSupposedlyDoestExist-ReadIT", onBikeRequest);
         
         ReadResponse response = frontend.read(request);
         boolean value = getOnBikeValue(response.getData());
 
-        // Supposedly a new user is created, and returned a default value
+        // Supposedly a new register is created, and returned a default value
         assertEquals(getOnBikeDefaultValue(), value);
     }
     
     @Test
     public void readRequestFilled() {
         RegisterValue nPickUpsRequest = getRegisterNPickUpsAsRegisterValue(1);
-        RegisterRequest request = getRegisterRequest("thisIdSupposedlyDoestExist", nPickUpsRequest);
+        RegisterRequest request = getRegisterRequest("thisIdSupposedlyDoestExist-ReadIT", nPickUpsRequest);
        
         ReadResponse response = frontend.read(request);
         int value = getNPickUpsValue(response.getData());
