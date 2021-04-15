@@ -24,6 +24,7 @@ class Default {
 }
 
 public class Hub {
+    private static final int BIC_EXCHANGE_RATE = 10;    /* Bic (Bicloin) is the currency */
     private Map<String, User> users;
     private Map<String, Station> stations;
     private RecordFrontend rec;
@@ -51,9 +52,12 @@ public class Hub {
 
     /* Methods */
     /* ======= */
+    public int getBicFromMoney(int value) {
+        return value*BIC_EXCHANGE_RATE;
+    }
 
     public void initializeRec() {
-        // Users lazy loaded (registers only initialized on first access)
+        /* Users lazy loaded (registers only initialized on first access) */
         debug("@Hub Initializing Rec...");
 		for (String stationId: stations.keySet()) {
             debug("id: " + stationId + "\n" + stations.get(stationId.toString()));
@@ -95,9 +99,9 @@ public class Hub {
         checkValidTopUpAmout(value);
 
         int oldBalance = balance(id);
-        int newBalance = oldBalance + value;
+        int newBalance = oldBalance + getBicFromMoney(value);
 
-        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue(value));
+        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue(newBalance));
         debug("@Hub #TopUp\n**Request:\n" + request);
 
         rec.write(request);
