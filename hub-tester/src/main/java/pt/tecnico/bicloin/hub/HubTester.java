@@ -4,6 +4,7 @@ import pt.tecnico.bicloin.hub.grpc.Hub.*;
 import io.grpc.StatusRuntimeException;
 
 import pt.tecnico.bicloin.hub.frontend.HubFrontend;
+import static pt.tecnico.bicloin.hub.frontend.HubFrontend.*;
 
 
 public class HubTester {
@@ -70,12 +71,11 @@ public class HubTester {
 		System.out.println("@BalanceTest('" + userId + "')");
 
 		try {
-			BalanceRequest request = BalanceRequest.newBuilder().setUserId(userId).build();
-			AmountResponse response = frontend.balance(request);
+			AmountResponse response = frontend.doBalanceOperation(userId);
 			System.out.println(response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " +
-			e.getStatus().getDescription());
+			e.getStatus().getDescription() + "\n");
 		}
 	}
 
@@ -83,12 +83,7 @@ public class HubTester {
 		System.out.println("@TopUpTest('" + userId + "', " + amount + ", '" + phoneNumber + "')");
 
 		try {
-			TopUpRequest request = TopUpRequest.newBuilder()
-				.setUserId(userId)
-				.setAmount(amount)
-				.setPhoneNumber(phoneNumber)
-				.build();
-			AmountResponse response = frontend.topUp(request);
+			AmountResponse response = frontend.doTopUpOperation(userId, amount, phoneNumber);
 			System.out.println(response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " +
@@ -100,10 +95,7 @@ public class HubTester {
 		System.out.println("@InfoStationTest('" + stationId + "')");
 
 		try {
-			InfoStationRequest request = InfoStationRequest.newBuilder()
-				.setStationId(stationId)
-				.build();
-			InfoStationResponse response = frontend.infoStation(request);
+			InfoStationResponse response = frontend.doInfoStationOperation(stationId);
 			System.out.println(response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " +
@@ -115,14 +107,7 @@ public class HubTester {
 		System.out.println("@LocateStationTest(" + latitude + ", " + longitude + ", " + nStations + ")");
 
 		try {
-			LocateStationRequest request = LocateStationRequest.newBuilder()
-				.setCoordinates(Coordinates.newBuilder()
-					.setLatitude(latitude)
-					.setLongitude(longitude)
-					.build()
-				).setNStations(nStations)
-				.build();
-				LocateStationResponse response = frontend.locateStation(request);
+			LocateStationResponse response = frontend.doLocateStationOperation(latitude, longitude, nStations);
 			System.out.println(response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " +
@@ -134,16 +119,7 @@ public class HubTester {
 		System.out.println("@BikeUpTest('" + userId + "', " + latitude + ", " + longitude + ", '" + stationId + "')");
 
 		try {
-			BikeRequest request = BikeRequest.newBuilder()
-				.setUserId(userId)
-				.setCoordinates(Coordinates.newBuilder()
-					.setLatitude(latitude)
-					.setLongitude(longitude)
-					.build()
-				).setStationId(stationId)
-				.build();
-				BikeResponse response = frontend.bikeUp(request);
-			System.out.println(response);
+			frontend.doBikeUpOperation(userId, latitude, longitude, stationId);
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " +
 			e.getStatus().getDescription() + "\n");
@@ -154,16 +130,7 @@ public class HubTester {
 		System.out.println("@BikeDownTest'" + userId + "', " + latitude + ", " + longitude + ", '" + stationId + "')");
 
 		try {
-			BikeRequest request = BikeRequest.newBuilder()
-				.setUserId(userId)
-				.setCoordinates(Coordinates.newBuilder()
-					.setLatitude(latitude)
-					.setLongitude(longitude)
-					.build()
-				).setStationId(stationId)
-				.build();
-				BikeResponse response = frontend.bikeDown(request);
-			System.out.println(response);
+			frontend.doBikeDownOperation(userId, latitude, longitude, stationId);
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " +
 			e.getStatus().getDescription() + "\n");
@@ -174,8 +141,7 @@ public class HubTester {
 		System.out.println("@PingTest('" + input + "')");
 
 		try {
-			PingRequest request = PingRequest.newBuilder().setInput(input).build();
-			PingResponse response = frontend.ping(request);
+			PingResponse response = frontend.doPingOperation(input);
 			System.out.println(response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " +
@@ -187,9 +153,7 @@ public class HubTester {
 		System.out.println("@SysStatusTest()");
 
 		try {
-			SysStatusRequest request = SysStatusRequest.newBuilder().build();
-			SysStatusResponse response = frontend.sysStatus(request);
-			System.out.println(response);
+			frontend.doSysStatusOperation();
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " +
 			e.getStatus().getDescription() + "\n");

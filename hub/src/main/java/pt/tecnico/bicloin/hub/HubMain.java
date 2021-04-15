@@ -14,7 +14,7 @@ import io.grpc.ServerBuilder;
 import pt.tecnico.bicloin.hub.domain.*;
 
 public class HubMain {
-	private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
+	private static final boolean DEBUG = (System.getProperty("debug") != null);
 	private static final int USER_FILE_FIELDS = 3;
 	private static final int STATION_FILE_FIELDS = 7;
 	
@@ -24,11 +24,6 @@ public class HubMain {
 	private static String usersFile, stationsFile;
 	private static boolean initRec = false;
 
-	/** Helper method to print debug messages. */
-	public static void debug(Object debugMessage) {
-		if (DEBUG_FLAG)
-			System.err.println(debugMessage);
-	}
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		System.out.println(HubMain.class.getSimpleName());
@@ -36,7 +31,7 @@ public class HubMain {
 		parseArgs(args);
 
 		// Initialize service (and Load data)
-		final HubServerImpl impl = new HubServerImpl(recIP, recPORT, parseUsers(usersFile), parseStations(stationsFile));
+		final HubServerImpl impl = new HubServerImpl(recIP, recPORT, parseUsers(usersFile), parseStations(stationsFile), DEBUG);
 
 		// Initilize register in Record
 		if (initRec) impl.getHub().initializeRec();
@@ -146,5 +141,11 @@ public class HubMain {
 	
 	public static String path() {
 		return IP + ":" + PORT;
+	}	
+
+	/** Helper method to print debug messages. */
+	private static void debug(Object debugMessage) {
+		if (DEBUG)
+			System.err.println("@HubMain\t" + debugMessage);
 	}
 }
