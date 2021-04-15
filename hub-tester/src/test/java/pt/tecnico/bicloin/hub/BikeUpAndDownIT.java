@@ -5,8 +5,6 @@ import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import static io.grpc.Status.UNIMPLEMENTED;
-import static io.grpc.Status.INVALID_ARGUMENT;
 import static io.grpc.Status.FAILED_PRECONDITION;
 import io.grpc.StatusRuntimeException;
 import pt.tecnico.bicloin.hub.domain.exception.NoBikeAvailableException;
@@ -15,9 +13,6 @@ import pt.tecnico.bicloin.hub.domain.exception.NotEnoughMoneyException;
 import pt.tecnico.bicloin.hub.domain.exception.UserAlreadyOnBikeException;
 import pt.tecnico.bicloin.hub.domain.exception.UserNotOnBikeException;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
-
-import static pt.tecnico.bicloin.hub.frontend.HubFrontend.*;
-
 
 public class BikeUpAndDownIT extends BaseIT {
 	@Test

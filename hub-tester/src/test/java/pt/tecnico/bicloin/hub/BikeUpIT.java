@@ -5,7 +5,6 @@ import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import static io.grpc.Status.UNIMPLEMENTED;
 import static io.grpc.Status.INVALID_ARGUMENT;
 import static io.grpc.Status.FAILED_PRECONDITION;
 import io.grpc.StatusRuntimeException;
