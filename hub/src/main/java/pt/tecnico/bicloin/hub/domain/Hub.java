@@ -1,8 +1,10 @@
 package pt.tecnico.bicloin.hub.domain;
 
 import java.util.Map; 
-
-import static pt.tecnico.bicloin.hub.HubMain.debug;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Comparator;
 
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
@@ -10,55 +12,40 @@ import pt.tecnico.rec.grpc.Rec;
 import pt.tecnico.rec.frontend.RecordFrontend;
 
 import pt.tecnico.bicloin.hub.domain.exception.*;
+import pt.tecnico.bicloin.hub.frontend.HubFrontend;
 import io.grpc.StatusRuntimeException;
 
-class Default {
-    /* Normaly this will be the same as GRPC defaults
-     *  but was implemented this way to be 
-     *  independent from the library */
-    public static final int BALANCE = 0;
-    public static final boolean ON_BIKE = false;
-    public static final int N_BIKES = 0;
-    public static final int N_PICK_UPS = 0;
-    public static final int N_DELIVERIES = 0;
-}
-
 public class Hub {
+    private boolean DEBUG = false;
+
     private static final int BIC_EXCHANGE_RATE = 10;    /* Bic (Bicloin) is the currency */
+    private static final int BIKE_UP_PRICE = 10;    /* Price of bike up in project currency (Bic`s) */ 
     private Map<String, User> users;
     private Map<String, Station> stations;
     private RecordFrontend rec;
+
+    private static final int EARTH_RADIUS = 6371;
 
     public Hub(String recIP, int recPORT, Map<String, User> users, Map<String, Station> stations) {
         this.users = users;
         this.stations = stations;
         rec = new RecordFrontend(recIP, recPORT);
     }
+    
+    public Hub(String recIP, int recPORT, Map<String, User> users, Map<String, Station> stations, boolean debug) {
+        DEBUG = debug;
 
-    /* Data checks */
-    /* =========== */
-
-    public void checkUser(String id) throws InvalidUserException {
-        if (!users.containsKey(id)) { throw new InvalidUserException(); }
-    }
-
-    public void checkUserPhoneNumber(String id, String phoneNumber) throws InvalidPhoneNumberException {
-        if (!users.get(id).getPhoneNumber().equals(phoneNumber)) { throw new InvalidPhoneNumberException(); }
-    }
-
-    public void checkValidTopUpAmout(int value) throws InvalidTopUpAmountException {
-        if (!(value >= 1 && value <= 20)) { throw new InvalidTopUpAmountException(); }
+        this.users = users;
+        this.stations = stations;
+        rec = new RecordFrontend(recIP, recPORT, DEBUG);
     }
 
     /* Methods */
     /* ======= */
-    public int getBicFromMoney(int value) {
-        return value*BIC_EXCHANGE_RATE;
-    }
-
+    
     public void initializeRec() {
         /* Users lazy loaded (registers only initialized on first access) */
-        debug("@Hub Initializing Rec...");
+        debug("Initializing Rec...");
 		for (String stationId: stations.keySet()) {
             debug("id: " + stationId + "\n" + stations.get(stationId.toString()));
             int nBicycles = stations.get(stationId).getNBicycles();
@@ -74,39 +61,127 @@ public class Hub {
             rec.write(request);
         }
 	}
-
-    public int balance(String id) throws StatusRuntimeException, InvalidUserException {
+    
+    public AmountResponse balance(String id) throws StatusRuntimeException, InvalidUserException {
         checkUser(id);
-        
-        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue());
-        debug("@Hub #Balance\n**Request:\n" + request);
-        
-        Rec.ReadResponse response = rec.read(request);
-        debug("@Hub #Balance\n**Response:\n" + response);
-        
-        int value = getBalanceValue(response.getData());
-        debug("@Hub #Balance\n**Value:\n" + value);
-
-        return value;
+    
+        return AmountResponse.newBuilder()
+            .setBalance(rec.getBalance(id))
+            .build();
     }
 
-    public int topUp(String id, int value, String phoneNumber) 
-        throws StatusRuntimeException, InvalidUserException, 
-            InvalidPhoneNumberException, InvalidTopUpAmountException {
+    public synchronized AmountResponse topUp(String id, int value, String phoneNumber) 
+        throws StatusRuntimeException, InvalidArgumentException {
         
         checkUser(id);
         checkUserPhoneNumber(id, phoneNumber);
         checkValidTopUpAmout(value);
 
-        int oldBalance = balance(id);
+        int oldBalance = rec.getBalance(id);
         int newBalance = oldBalance + getBicFromMoney(value);
 
-        Rec.RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue(newBalance));
-        debug("@Hub #TopUp\n**Request:\n" + request);
+        rec.setBalance(id, newBalance);
 
-        rec.write(request);
+        return AmountResponse.newBuilder()
+            .setBalance(newBalance)
+            .build();
+    }
 
-        return newBalance;
+    public InfoStationResponse infoStation(String stationId) 
+        throws StatusRuntimeException, InvalidArgumentException {
+        
+        checkStation(stationId);
+
+        Station station = stations.get(stationId);
+        String name = station.getName();
+        float lat = station.getLat();
+        float lon = station.getLong();
+        int nDocks = station.getNDocks();
+        int reward = station.getReward();
+
+        int availableBikes = rec.getNBikes(stationId);
+        int nPickUps = rec.getNPickUps(stationId); 
+        int nDeliveries = rec.getNDeliveries(stationId); 
+
+        InfoStationResponse response = InfoStationResponse.newBuilder()
+            .setCoordinates(Coordinates.newBuilder()
+                .setLatitude(lat)
+                .setLongitude(lon)
+                .build()
+            ).setName(name)
+            .setNDocks(nDocks)
+            .setReward(reward)
+            .setNBicycles(availableBikes)
+            .setNPickUps(nPickUps)
+            .setNDeliveries(nDeliveries)
+            .build();
+        
+        debug(response);
+        
+        return response;
+
+    }
+
+    public LocateStationResponse locateStation (float latitude, float longitude, int count)
+        throws StatusRuntimeException, InvalidArgumentException {
+        
+        Map<Double, String> allDistances = new HashMap<Double, String>();
+		List<Double> lowestDistances = new ArrayList<Double>();
+
+		for (String stationId: stations.keySet()) {
+			float lat = stations.get(stationId).getLat();
+			float lon = stations.get(stationId).getLong();
+			double dist = distance(latitude, longitude, lat, lon);
+            allDistances.put(dist, stationId);
+			lowestDistances.add(dist);
+		}
+		
+        lowestDistances.sort(Comparator.naturalOrder());
+
+		debug(lowestDistances);
+		
+		LocateStationResponse.Builder response = LocateStationResponse.newBuilder();
+		for (int i=0; i<count; i++) {
+			String name = allDistances.get(lowestDistances.get(i));
+			response.addStationId(name);
+			debug(name);
+		}
+		debug(allDistances);
+		return response.build();
+    }
+
+    public BikeResponse bikeUp(String userId, float latitude, float longitude, String stationId)
+            throws StatusRuntimeException, InvalidArgumentException, FailedPreconditionException {
+        
+        checkUser(userId);
+        Station.checkLatitude(latitude);
+        Station.checkLongitude(longitude);
+        checkStation(stationId);
+        // checkLocation(stationId, latitude, longitude); //TODO
+
+        /* Always synchronize in this order to avoid DeadLocks */
+        synchronized (users.get(userId)) {
+            // check if already onBike and has enought money
+            int balance = rec.getBalance(userId);
+            checkUserCanBikeUp(userId, balance);
+
+            synchronized (stations.get(stationId)) {
+                // check if bikes available
+                int availableBikes = rec.getNBikes(stationId);
+                checkStationAvailableBikes(availableBikes);
+
+                // perform bikup - Station
+                    // decrease bikes available
+                rec.setNBikes(stationId, availableBikes-1);
+            }
+            // perform bikup - User
+                // decrease money
+                // change status onBike
+            rec.setBalance(userId, balance-BIKE_UP_PRICE);
+            rec.setOnBike(userId, true);
+        }
+
+        return BikeResponse.getDefaultInstance();
     }
 
     public SysStatusResponse getAllServerStatus() {
@@ -114,11 +189,11 @@ public class Hub {
         SysStatusResponse.Builder serverResponse = SysStatusResponse.newBuilder();
         boolean status = true;
         try {
-            Rec.PingRequest request = getPingRequest("friend");
+            Rec.PingRequest request = RecordFrontend.getPingRequest("friend");
             rec.ping(request);
 
         } catch (StatusRuntimeException e) {
-            debug("@Hub #GetAllServerStatus:\nCaught exception with description: " +
+            debug("#GetAllServerStatus:\nCaught exception with description: " +
                 e.getStatus().getDescription());
             status = false;
         } // comms
@@ -132,104 +207,80 @@ public class Hub {
         return serverResponse.build();
     }
 
-	/* Record Communication */
-    /* ==================== */
+    /* Auxiliar */
+    /* ======== */
 
-        /* Message analysis */
-        /* ++++++++++++++++ */
-
-    private int getBalanceValue(Rec.RegisterValue response) {
-        return response.hasRegBalance() ?
-            response.getRegBalance().getBalance() : Default.BALANCE;
+    public int getBicFromMoney(int value) {
+        return value*BIC_EXCHANGE_RATE;
     }
 
-    private boolean getOnBikeValue(Rec.RegisterValue response) {
-        return response.hasRegOnBike() ?
-            response.getRegOnBike().getOnBike() : Default.ON_BIKE;
+    public static double distance(float s1Lat, float s1Long, float s2Lat, float s2Long) {		
+
+        double aLat = (double) s1Lat;
+		double bLat = (double) s2Lat;
+		double aLong = (double) s1Long;
+		double bLong = (double) s2Long;
+		
+		double latitude  = Math.toRadians((bLat - aLat));
+        double longitude = Math.toRadians((bLong - aLong));
+
+		aLat = Math.toRadians(aLat);
+        bLat = Math.toRadians(bLat);
+
+        double a = haversin(latitude) + Math.cos(aLat) * Math.cos(bLat) * haversin(longitude);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        double distance = EARTH_RADIUS * c;
+		return distance; 
     }
 
-    private int getNBikesValue(Rec.RegisterValue response) {
-        return response.hasRegNBikes() ?
-            response.getRegNBikes().getNBikes() : Default.N_BIKES;
-    }
-
-    private int getNPickUpsValue(Rec.RegisterValue response) {
-        return response.hasRegNPickUps() ?
-            response.getRegNPickUps().getNPickUps() : Default.N_PICK_UPS;
-    }
-
-    private int getNDeliveriesValue(Rec.RegisterValue response) {
-        return response.hasRegNDeliveries() ?
-            response.getRegNDeliveries().getNDeliveries() : Default.N_DELIVERIES;
+    public static double haversin(double val) {
+        return Math.pow(Math.sin(val / 2), 2);
     }
 
 
-        /* Message building */
-        /* ++++++++++++++++ */
+    /* Data checks */
+    /* =========== */
 
-	private static Rec.PingRequest getPingRequest(String input) {
-		return Rec.PingRequest.newBuilder().setInput(input).build();
-	}
-
-    private static Rec.RegisterRequest getRegisterRequest(String id, Rec.RegisterValue value) {
-        return Rec.RegisterRequest.newBuilder()
-                .setId(id)
-                .setData(value)
-                .build();
+    public void checkUser(String id) throws InvalidUserException {
+        if (!users.containsKey(id)) { throw new InvalidUserException(); }
+    }
+    
+    public void checkStation(String id) throws InvalidStationException {
+        if (!stations.containsKey(id)) { throw new InvalidStationException(); }
     }
 
-	private static Rec.RegisterValue getRegisterBalanceAsRegisterValue(int value) {
-		return Rec.RegisterValue.newBuilder().setRegBalance(
-				Rec.RegisterBalance.newBuilder().setBalance(value).build()
-			).build();
-	}
-	private static Rec.RegisterValue getRegisterBalanceAsRegisterValue() {
-		return Rec.RegisterValue.newBuilder().setRegBalance(
-				Rec.RegisterBalance.getDefaultInstance()
-			).build();
-	}
+    public void checkUserPhoneNumber(String id, String phoneNumber) throws InvalidPhoneNumberException {
+        if (!users.get(id).getPhoneNumber().equals(phoneNumber)) { throw new InvalidPhoneNumberException(); }
+    }
 
-	private static Rec.RegisterValue getRegisterOnBikeAsRegisterValue(boolean value) {
-		return Rec.RegisterValue.newBuilder().setRegOnBike(
-				Rec.RegisterOnBike.newBuilder().setOnBike(value).build()
-			).build();
-	}
-	private static Rec.RegisterValue getRegisterOnBikeAsRegisterValue() {
-		return Rec.RegisterValue.newBuilder().setRegOnBike(
-				Rec.RegisterOnBike.getDefaultInstance()
-			).build();
-	}
-	
-	private static Rec.RegisterValue getRegisterNBikesAsRegisterValue(int value) {
-		return Rec.RegisterValue.newBuilder().setRegNBikes(
-				Rec.RegisterNBikes.newBuilder().setNBikes(value).build()
-			).build();
-	}
-	private static Rec.RegisterValue getRegisterNBikesAsRegisterValue() {
-		return Rec.RegisterValue.newBuilder().setRegNBikes(
-				Rec.RegisterNBikes.getDefaultInstance()
-			).build();
-	}
+    public void checkValidTopUpAmout(int value) throws InvalidTopUpAmountException {
+        if (!(value >= 1 && value <= 20)) { throw new InvalidTopUpAmountException(); }
+    }
 
-	private static Rec.RegisterValue getRegisterNPickUpsAsRegisterValue(int value) {
-		return Rec.RegisterValue.newBuilder().setRegNPickUps(
-				Rec.RegisterNPickUps.newBuilder().setNPickUps(value).build()
-			).build();
-	}
-	private static Rec.RegisterValue getRegisterNPickUpsAsRegisterValue() {
-		return Rec.RegisterValue.newBuilder().setRegNPickUps(
-				Rec.RegisterNPickUps.getDefaultInstance()
-			).build();
-	}
+    public void checkUserCanBikeUp(String id, int money) throws FailedPreconditionException {
+        /* Use only with trusted id */
+        checkUserOnBike(id);
 
-	private static Rec.RegisterValue getRegisterNDeliveriesAsRegisterValue(int value) {
-		return Rec.RegisterValue.newBuilder().setRegNDeliveries(
-				Rec.RegisterNDeliveries.newBuilder().setNDeliveries(value).build()
-			).build();
-	}
-	private static Rec.RegisterValue getRegisterNDeliveriesAsRegisterValue() {
-		return Rec.RegisterValue.newBuilder().setRegNDeliveries(
-				Rec.RegisterNDeliveries.getDefaultInstance()
-			).build();
+        // checkUserHasMoney
+        if (money < BIKE_UP_PRICE) throw new NotEnoughMoneyException();
+}
+
+    public void checkUserOnBike(String id) throws StatusRuntimeException, UserAlreadyOnBikeException {
+        /* Use only with trusted id */
+        boolean onBike = rec.getOnBike(id);
+        if (onBike) throw new UserAlreadyOnBikeException();
+    }
+
+    /* Implemented in function for future conditions (eg. bike reserve) */
+    public void checkStationAvailableBikes(int value) throws NoBikeAvailableException {
+        if (value <= 0) throw new NoBikeAvailableException();
+    }
+
+
+    /** Helper method to print debug messages. */
+	private void debug(Object debugMessage) {
+		if (DEBUG)
+			System.err.println("@Hub\t" + debugMessage);
 	}
 }
