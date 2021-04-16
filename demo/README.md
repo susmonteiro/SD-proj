@@ -98,6 +98,17 @@ $ mvn verify
 
 > Para manter a consistência dos testes, é necessário reiniciar o servidor a para cada execução total da bateria de testes de integração.
 
+Os ficheiros a usar para que os testes corram bem são os `demo/data/users.csv` e `demo/data/stations.csv` para os users e as estações, respetivamente.
+É de notar que ao executar o hub com o comando `mvn compile exec:java`, estes são os ficheiros passados como argumento.200m
+
+Em relação a alterações aos ficheiros iniciais:
+
+- `users.csv` - foram adicionados novos users, sem nenhuma característica particular. A razão para esta adição é que diferentes ficheiros de testes usem sempre diferentes users, garantindo independência entre os testes
+
+- `stations.csv` - foram adicionadas duas estações:
+    - `empt` - estação com zero bicicletas disponíveis. Permite testar o caso em que um user tenta fazer um bikeUp quando não há bicicletas disponíveis.
+    - `full` - estação com todas as docas ocupadas. Permite testar o caso em que um user tenta fazer um bikeDown quando não há docas disponíveis.
+
 Todos os testes devem ser executados sem erros.
 
 ### 1.5. *App*
