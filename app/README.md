@@ -7,17 +7,10 @@ Group A24
 
 ### Lead developer 
 
-... ... ...
+92437 Catarina Gonçalves @ist192437 (commits might appear as 'root')
 
-*(fill-in line above with student number, name, and @GitHub identity of module leader; and then delete this line)*
 
 ### Contributors
-
-... ... ...
-
-... ... ...
-
-*(fill-in lines above with student number, name, and @GitHub identity of module contributors; and then delete this line)*
 
 
 ## About
