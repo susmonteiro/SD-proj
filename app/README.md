@@ -7,7 +7,8 @@ Group A24
 
 ### Lead developer 
 
-92437 Catarina Gonçalves @ist192437 (commits might appear as 'root')
+92437 Catarina Gonçalves [@ist192437](https://git.rnl.tecnico.ulisboa.pt/ist192437) 
+(commits might appear as 'root')
 
 
 ### Contributors

@@ -10,12 +10,12 @@ Sistemas Distribuídos 2020-2021, segundo semestre
 
 | Número | Nome              | Utilizador                                   | Correio eletrónico                  |
 | -------|-------------------|----------------------------------------------| ------------------------------------|
-| 11111  | Alice Distributed | <https://git.rnl.tecnico.ulisboa.pt/ist1...> | <mailto:alice@tecnico.ulisboa.pt>   |
+| 92437  | Catarina Gonçalves | <https://git.rnl.tecnico.ulisboa.pt/ist192437> | <mailto:catarina.g.goncalves@tecnico.ulisboa.pt>   |
 | 92456  | Duarte Bento       | <https://git.rnl.tecnico.ulisboa.pt/ist192456> | <mailto:duarte.bento@tecnico.ulisboa.pt>     |
 | 33333  | Charlie Rules     | <https://git.rnl.tecnico.ulisboa.pt/ist1...> | <mailto:charlie@tecnico.ulisboa.pt> |
 
 *(usar imagens com 150px de altura; e depois apagar esta linha)*  
-![Alice](alice.png) ![Duarte](ist192456.png) ![Charlie](charlie.png)
+![Catarina](ist192437.png) ![Duarte](ist192456.png) ![Charlie](charlie.png)
 
 
 ## Melhorias da primeira parte
