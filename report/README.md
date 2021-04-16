@@ -4,19 +4,18 @@ Sistemas Distribuídos 2020-2021, segundo semestre
 
 ## Autores
 
-*(preencher linha abaixo com identificador de grupo, por exemplo, A07 ou T22; e depois apagar esta linha)*  
-**Grupo CXX**
+**Grupo A24**
 
-*(preencher a tabela abaixo com dados da equipa; e depois apagar esta linha)*  
+*(preencher a tabela abaixo W dados da equipa; e depois apagar esta linha)*  
 
 | Número | Nome              | Utilizador                                   | Correio eletrónico                  |
 | -------|-------------------|----------------------------------------------| ------------------------------------|
 | 11111  | Alice Distributed | <https://git.rnl.tecnico.ulisboa.pt/ist1...> | <mailto:alice@tecnico.ulisboa.pt>   |
-| 22222  | Bob Systems       | <https://git.rnl.tecnico.ulisboa.pt/ist1...> | <mailto:bob@tecnico.ulisboa.pt>     |
+| 92456  | Duarte Bento       | <https://git.rnl.tecnico.ulisboa.pt/ist192456> | <mailto:duarte.bento@tecnico.ulisboa.pt>     |
 | 33333  | Charlie Rules     | <https://git.rnl.tecnico.ulisboa.pt/ist1...> | <mailto:charlie@tecnico.ulisboa.pt> |
 
 *(usar imagens com 150px de altura; e depois apagar esta linha)*  
-![Alice](alice.png) ![duarte](ist192456.jpg) ![Charlie](charlie.png)
+![Alice](alice.png) ![Duarte](ist192456.png) ![Charlie](charlie.png)
 
 
 ## Melhorias da primeira parte
