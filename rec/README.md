@@ -7,17 +7,14 @@ Group A24
 
 ### Lead developer 
 
-... ... ...
+92560 Susana Monteiro [@ist192560](https://git.rnl.tecnico.ulisboa.pt/ist192560)
 
-*(fill-in line above with student number, name, and @GitHub identity of module leader; and then delete this line)*
 
 ### Contributors
 
-... ... ...
+92437 Catarina Gonçalves [@ist192437](https://git.rnl.tecnico.ulisboa.pt/ist192437)
 
-... ... ...
-
-*(fill-in lines above with student number, name, and @GitHub identity of module contributors; and then delete this line)*
+92456 Duarte Bento [@ist192456](https://git.rnl.tecnico.ulisboa.pt/ist192456)
 
 
 ## About
