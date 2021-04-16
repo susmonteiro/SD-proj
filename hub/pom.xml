@@ -26,8 +26,8 @@
 		<hub.ZKport>2181</hub.ZKport> -->
 		<hub.rechost>localhost</hub.rechost>
 		<hub.recport>8091</hub.recport>
-		<hub.users_csv>../data/users.csv</hub.users_csv>
-		<hub.stations_csv>../data/stations.csv</hub.stations_csv>
+		<hub.users_csv>../demo/data/users.csv</hub.users_csv>
+		<hub.stations_csv>../demo/data/stations.csv</hub.stations_csv>
 		<hub.initRec>initRec</hub.initRec>
 	</properties>
 
