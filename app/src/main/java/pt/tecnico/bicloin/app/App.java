@@ -213,10 +213,6 @@ public class App {
             newlatitude = Float.parseFloat(inputs[1]);
             newlongitude = Float.parseFloat(inputs[2]);
             newloc = inputs[3];
-
-           
-            System.out.println("ERRO - Faltam argumentos: [Coordenadas] e [Nome da Tag]");
-           
                 
             if (!(_tags.containsKey(newloc))) createTag(newlatitude, newlongitude, newloc);
             
@@ -387,7 +383,7 @@ public class App {
         "at\n" +
         "scan [numero de estacoes]\n" +
         "info [nome da estacao]\n" +
-        "bike-up [nome da estacao\n" +
+        "bike-up [nome da estacao]\n" +
         "bike-down [nome da estacao]\n");
     }
 
