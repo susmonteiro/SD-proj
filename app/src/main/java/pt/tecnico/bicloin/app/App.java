@@ -156,7 +156,6 @@ public class App {
                         scanner.nextLine();
                         break;
                 }
-    
             //App closes when user enters command 'exit' or it reaches the EOF
             } while (true);		
         } catch (NoSuchElementException e) {
