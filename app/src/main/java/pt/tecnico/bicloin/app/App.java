@@ -12,8 +12,6 @@ import java.util.NoSuchElementException;
 import java.lang.NumberFormatException;
 
 import io.grpc.StatusRuntimeException;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 
 import pt.tecnico.bicloin.hub.frontend.HubFrontend;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
@@ -112,7 +110,6 @@ public class App {
                 
                     switch(inputs[0]) {
                         case "balance":
-                        
                         balance();
                         break;
                     case "top-up":
@@ -153,6 +150,7 @@ public class App {
                         System.exit(0);
                         break;
                     case "zzz":
+                        System.out.print("\b");
                         TimeUnit.MILLISECONDS.sleep(Integer.parseInt(inputs[1]));
                         break;
                     default:

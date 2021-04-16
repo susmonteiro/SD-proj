@@ -52,14 +52,20 @@ TODO
 Iniciar a aplicação com a utilizadora alice:
 
 ```sh
-$ app localhost 2181 alice +35191102030 38.7380 -9.3000
+$ app localhost 2181 alice +35191102030 38.7380 -9.3000 [-Ddebug]
 ```
+
+> Opção "-Ddebug" opcional ativa método de depuramento com *logs* de execução
+> Também é possível enviar o conteúdo de um ficheiro de texto para o programa, com o operador de redirecionamento < da shell do sistema operativo. Para isso pode utilizar o nosso ficheiro de demonstração comandos.txt adicionando `< ../demo/comandos.txt`.
 
 **Nota:** Para poder correr o script *app* diretamente é necessário fazer `mvn install` e adicionar ao *PATH* ou utilizar diretamente os executáveis gerados na pasta `target/appassembler/bin/`.
 
 Abrir outra consola, e iniciar a aplicação com o utilizador bruno.
 
 Depois de lançar todos os componentes, tal como descrito acima, já temos o que é necessário para usar o sistema através dos comandos.
+
+Quando quiser sair da aplicação, introduza o comando 'exit'.
+
 
 ## 2. Teste dos comandos
 
