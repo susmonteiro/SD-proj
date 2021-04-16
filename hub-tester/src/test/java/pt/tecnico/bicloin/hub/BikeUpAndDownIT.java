@@ -48,31 +48,31 @@ public class BikeUpAndDownIT extends BaseIT {
 	@Test
 	public void bikeUpAndBikeDownBicyclesChecksTest() {
 		// the user must have money in order to perform a bikeUp operation
-		frontend.doTopUpOperation("diana", 1, "+34010203");
+		frontend.doTopUpOperation("bruno", 1, "+35193334444");
 
 		// tries bike up in empty station
-		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.doBikeUpOperation("diana", 38.6867f, -9.3124f, "empt"));
+		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.doBikeUpOperation("bruno", 38.6867f, -9.3124f, "empt"));
         assertEquals(FAILED_PRECONDITION.getCode(), e.getStatus().getCode());
         assertEquals(new NoBikeAvailableException().getMessage(), e.getStatus().getDescription());
 
 		// takes a bicycle
-		frontend.doBikeUpOperation("diana", 38.6867f, -9.3124f, "stao");
+		frontend.doBikeUpOperation("bruno", 38.6867f, -9.3124f, "stao");
 
 		// tries to take another bicycle
-		e = assertThrows(StatusRuntimeException.class, () -> frontend.doBikeUpOperation("diana", 38.6867f, -9.3124f, "stao"));
+		e = assertThrows(StatusRuntimeException.class, () -> frontend.doBikeUpOperation("bruno", 38.6867f, -9.3124f, "stao"));
         assertEquals(FAILED_PRECONDITION.getCode(), e.getStatus().getCode());
         assertEquals(new UserAlreadyOnBikeException().getMessage(), e.getStatus().getDescription());
 
 		// tries to leave bicycle on full station
-		e = assertThrows(StatusRuntimeException.class, () -> frontend.doBikeDownOperation("diana", 38.6867f, -9.3124f, "full"));
+		e = assertThrows(StatusRuntimeException.class, () -> frontend.doBikeDownOperation("bruno", 38.6867f, -9.3124f, "full"));
         assertEquals(FAILED_PRECONDITION.getCode(), e.getStatus().getCode());
         assertEquals(new NoDocksAvailableException().getMessage(), e.getStatus().getDescription());
 
 		// leaves bicycle on another station
-		frontend.doBikeDownOperation("diana", 38.6867f, -9.3124f, "stao");
+		frontend.doBikeDownOperation("bruno", 38.6867f, -9.3124f, "stao");
 
 		// tries to bike down a bicycle again
-		e = assertThrows(StatusRuntimeException.class, () -> frontend.doBikeDownOperation("diana", 38.6867f, -9.3124f, "stao"));
+		e = assertThrows(StatusRuntimeException.class, () -> frontend.doBikeDownOperation("bruno", 38.6867f, -9.3124f, "stao"));
         assertEquals(FAILED_PRECONDITION.getCode(), e.getStatus().getCode());
         assertEquals(new UserNotOnBikeException().getMessage(), e.getStatus().getDescription());
 	}
