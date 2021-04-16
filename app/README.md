@@ -37,13 +37,13 @@ mvn install
 To run using appassembler plugin on Linux:
 
 ```
-./target/appassembler/bin/spotter localhost 8081 alice +35191102030 38.7380 -9.3000
+./target/appassembler/bin/spotter hubIP hubPort username phoneNumber latitude longitude
 ```
 
 To run using appassembler plugin on Windows:
 
 ```
-target\appassembler\bin\spotter localhost 8081 alice +35191102030 38.7380 -9.3000
+target\appassembler\bin\spotter hubIP hubPort username phoneNumber latitude longitude
 ```
 
 
