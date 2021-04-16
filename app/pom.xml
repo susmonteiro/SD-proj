@@ -16,6 +16,14 @@
 	<!-- Properties are variables used to customize the behavior of Maven and its plug-ins. -->
 	<properties>
 		<mainclass>pt.tecnico.bicloin.app.AppMain</mainclass>
+
+		<hub.port>8081</hub.port>
+		<hub.host>localhost</hub.host>
+		<username>alice</username>
+		<phone>+35191102030</phone>
+		<latitude>38.7380</latitude>
+		<longitude>-9.3000</longitude>
+		
 	</properties>
 
 	<!-- Dependencies are code archives - JARs - on which your current module needs in order to compile, build, test, and/or to run. 
@@ -92,6 +100,12 @@
 				<configuration>
 					<mainClass>${mainclass}</mainClass>
 					<arguments>
+						<argument>${hub.host}</argument>
+						<argument>${hub.port}</argument>
+						<argument>${username}</argument>
+						<argument>${phone}</argument>
+						<argument>${latitude}</argument>
+						<argument>${longitude}</argument>
 					</arguments>
 				</configuration>
 			</plugin>
