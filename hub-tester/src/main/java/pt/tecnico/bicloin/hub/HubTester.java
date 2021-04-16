@@ -153,7 +153,8 @@ public class HubTester {
 		System.out.println("@SysStatusTest()");
 
 		try {
-			frontend.doSysStatusOperation();
+			SysStatusResponse response = frontend.doSysStatusOperation();
+			System.out.println(response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " +
 			e.getStatus().getDescription() + "\n");

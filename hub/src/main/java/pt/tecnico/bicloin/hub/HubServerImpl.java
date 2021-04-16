@@ -188,18 +188,16 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
     public void ping(PingRequest request, StreamObserver<PingResponse> responseObserver) {
 		String input = request.getInput();
 		
-		// Checks
-		if (input == null || input.isBlank()) {
-			responseObserver.onError(INVALID_ARGUMENT
-				.withDescription("Input cannot be empty.").asRuntimeException());	
-			return;
-		}
+		try{
+			PingResponse response = hub.ping(input);	
 
-		// Response
-		String output = "Hello " + input + "! " + HubMain.identity();
-		PingResponse response = PingResponse.newBuilder().setOutput(output).build();
-		responseObserver.onNext(response);
-		responseObserver.onCompleted();
+			responseObserver.onNext(response);
+			responseObserver.onCompleted();
+		} catch (InvalidArgumentException e) {
+			responseObserver.onError(INVALID_ARGUMENT
+				.withDescription(e.getMessage()).asRuntimeException());
+			debug("@HubServerImpl Got exception:" + e);
+		}
 	}
 
 	@Override

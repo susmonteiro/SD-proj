@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Comparator;
 
+import pt.tecnico.bicloin.hub.HubMain;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
 import pt.tecnico.rec.grpc.Rec;
@@ -230,19 +231,48 @@ public class Hub {
         return BikeResponse.getDefaultInstance();
     }
 
+    public PingResponse ping(String input) throws InvalidArgumentException {
+		checkEmptyInput(input);
+
+		String output = "Hello " + input + "! " + HubMain.identity();
+        debug("#ping\tResponse: " + output);
+
+		return PingResponse.newBuilder().setOutput(output).build();
+    }
+
     public SysStatusResponse getAllServerStatus() {
         // TODO zookeper integration
         SysStatusResponse.Builder serverResponse = SysStatusResponse.newBuilder();
+        // Hub (Self)
         boolean status = true;
         try {
-            Rec.PingRequest request = RecordFrontend.getPingRequest("friend");
-            rec.ping(request);
+            ping("Myself");
 
         } catch (StatusRuntimeException e) {
             debug("#GetAllServerStatus:\nCaught exception with description: " +
                 e.getStatus().getDescription());
-            status = false;
-        } // comms
+            status = false;     // log on error
+        } catch (InvalidArgumentException e) { 
+            // This should not happen
+            debug("#GetAllServerStatus:\nCaught exception with description: " +
+                e.getMessage());
+        }
+
+        serverResponse.addServerStatus(SysStatusResponse.StatusResponse.newBuilder()
+                .setPath(HubMain.path())
+                .setStatus(status)
+                .build());
+
+        // Rec
+        status = true;
+        try {
+            rec.getPing("friend");
+
+        } catch (StatusRuntimeException e) {
+            debug("#GetAllServerStatus:\nCaught exception with description: " +
+                e.getStatus().getDescription());
+            status = false;     // log on error
+        }
         
         serverResponse.addServerStatus(SysStatusResponse.StatusResponse.newBuilder()
             .setPath(rec.getPath())
@@ -343,6 +373,10 @@ public class Hub {
 
     public void checkCount(int count) throws InvalidArgumentException {
         if (count < 0) throw new InvalidStationCountException();
+    }
+
+    public void checkEmptyInput(String input) throws EmptyInputException {
+        if (input == null || input.isBlank()) throw new EmptyInputException();
     }
 
 

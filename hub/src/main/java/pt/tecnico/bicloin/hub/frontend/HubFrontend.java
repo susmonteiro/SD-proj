@@ -133,13 +133,12 @@ public class HubFrontend extends MessageHelper implements AutoCloseable {
         return response;
     }
 	
-	public void doSysStatusOperation() throws StatusRuntimeException {
+	public SysStatusResponse doSysStatusOperation() throws StatusRuntimeException {
         SysStatusRequest request = getSysStatusRequest();
         debug("#doSysStatusOperation\n**Request:\n" + request);
 
-		sysStatus(request);
+		return sysStatus(request);
     }
-
 
 
 	/** Helper method to print debug messages. */
