@@ -12,10 +12,10 @@ Sistemas Distribuídos 2020-2021, segundo semestre
 | -------|-------------------|----------------------------------------------| ------------------------------------|
 | 92437  | Catarina Gonçalves | <https://git.rnl.tecnico.ulisboa.pt/ist192437> | <mailto:catarina.g.goncalves@tecnico.ulisboa.pt>   |
 | 92456  | Duarte Bento       | <https://git.rnl.tecnico.ulisboa.pt/ist192456> | <mailto:duarte.bento@tecnico.ulisboa.pt>     |
-| 33333  | Charlie Rules     | <https://git.rnl.tecnico.ulisboa.pt/ist1...> | <mailto:charlie@tecnico.ulisboa.pt> |
+| 92560  | Susana Monteiro    | <https://git.rnl.tecnico.ulisboa.pt/ist192560> | <mailto:s.moreno.monteiro@tecnico.ulisboa.pt> |
 
 *(usar imagens com 150px de altura; e depois apagar esta linha)*  
-![Catarina](ist192437.png) ![Duarte](ist192456.png) ![Charlie](charlie.png)
+![Catarina](ist192437.png) ![Duarte](ist192456.png) ![Susana](ist192560.png)
 
 
 ## Melhorias da primeira parte
