@@ -9,10 +9,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.NoSuchElementException;
-<<<<<<< HEAD
 import java.lang.NumberFormatException;
-=======
->>>>>>> hub-t3v2
 
 import io.grpc.StatusRuntimeException;
 import io.grpc.ManagedChannel;
@@ -106,7 +103,6 @@ public class App {
 		try (Scanner scanner = new Scanner(System.in)) {
             String input;
             System.out.println("Insira um comando ou escreva exit para sair");
-<<<<<<< HEAD
             System.out.print(">");
             do {
                 
@@ -121,19 +117,6 @@ public class App {
                         break;
                     case "top-up":
                         topup(inputs);
-=======
-            
-            do {
-                System.out.print(">");
-                input = scanner.next();
-
-                    switch(input) {
-                        case "balance":
-                        balance();
-                        break;
-                    case "top-up":
-                        topup(scanner);
->>>>>>> hub-t3v2
                         break;
                     case "tag":
                         tag(inputs);
