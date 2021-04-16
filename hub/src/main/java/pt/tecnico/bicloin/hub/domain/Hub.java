@@ -51,23 +51,28 @@ public class Hub {
     /* ======= */
     
     public void initializeRec() {
-        debug("Initializing Rec...");
-        debug("Users:");
-        for (String id : users.keySet()) {
-            debug("id: " + id + "\n" + users.get(id));
-            rec.setBalance(id, getBalanceDefaultValue());
-            rec.setOnBike(id, getOnBikeDefaultValue());
-        }
+        try {
+            debug("Initializing Rec...");
+            debug("Users:");
+            for (String id : users.keySet()) {
+                debug("id: " + id + "\n" + users.get(id));
+                rec.setBalance(id, getBalanceDefaultValue());
+                rec.setOnBike(id, getOnBikeDefaultValue());
+            }
 
-        debug("Stations:");
-		for (String id: stations.keySet()) {
-            debug("id: " + id + "\n" + stations.get(id));
-            int nBicycles = stations.get(id).getNBicycles();
-            
-            rec.setNBikes(id, nBicycles);
-            rec.setNPickUps(id, getNPickUpsDefaultValue());
-            rec.setNDeliveries(id, getNDeliveriesDefaultValue());
-        }
+            debug("Stations:");
+            for (String id: stations.keySet()) {
+                debug("id: " + id + "\n" + stations.get(id));
+                int nBicycles = stations.get(id).getNBicycles();
+                
+                rec.setNBikes(id, nBicycles);
+                rec.setNPickUps(id, getNPickUpsDefaultValue());
+                rec.setNDeliveries(id, getNDeliveriesDefaultValue());
+            }
+        } catch (StatusRuntimeException e) {
+			System.err.println("Could not initialize rec. Rec is down.");
+			debug("Got exception:" + e.getStatus().getDescription());
+		}
 	}
     
     public AmountResponse balance(String id) throws StatusRuntimeException, InvalidUserException {
