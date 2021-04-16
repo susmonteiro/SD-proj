@@ -16,6 +16,42 @@ $ mvn clean install -DskipTests
 ### 1.3. Lançar e testar o *rec*
 
 Para proceder aos testes, é preciso em primeiro lugar lançar o servidor *rec* .
+Para isso:
+
+-  Basta ir à pasta *rec* e executar:
+    ```sh
+    $ mvn compile exec:java [-Ddebug]
+    ```
+
+    Este comando vai colocar o *rec* no endereço *localhost*, na porta *8091* e com número de instância *1*.
+    > Opção "-Ddebug" opcional ativa método de depuramento com *logs* de execução
+
+- Ou diretamente fazendo `mvn install` e adicionar ao *PATH* ou utilizar diretamente os executáveis gerados na pasta `target/appassembler/bin/`.
+    ```sh
+    $ rec servidor_ZooKeeper porto_ZooKeeper servidor_próprio porto_próprio número_instância
+    ```
+
+Para confirmar o funcionamento do servidor com um *ping*, fazer:
+
+```sh
+$ cd rec-tester
+$ mvn compile exec:java
+```
+
+    > É possivel editar facilemento `rec-tester` para testar todos os outros metodos do *Rec* (descomentar templates)
+
+    Para executar toda a bateria de testes de integração, fazer:
+
+    ```sh
+    $ mvn verify
+    ```
+
+Todos os testes devem ser executados sem erros.
+
+
+### 1.4. Lançar e testar o *hub*
+
+Para proceder aos testes, é preciso em primeiro lugar lançar o servidor *rec* .
 Para isso basta ir à pasta *rec* e executar:
 
 ```sh
@@ -41,11 +77,6 @@ $ mvn verify
 ```
 
 Todos os testes devem ser executados sem erros.
-
-
-### 1.4. Lançar e testar o *hub*
-
-TODO
 
 ### 1.5. *App*
 
