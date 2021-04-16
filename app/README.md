@@ -36,13 +36,13 @@ mvn install
 To run using appassembler plugin on Linux:
 
 ```
-./target/appassembler/bin/spotter arg0 arg1 arg2
+./target/appassembler/bin/spotter localhost 8081 alice +35191102030 38.7380 -9.3000
 ```
 
 To run using appassembler plugin on Windows:
 
 ```
-target\appassembler\bin\spotter arg0 arg1 arg2
+target\appassembler\bin\spotter localhost 8081 alice +35191102030 38.7380 -9.3000
 ```
 
 

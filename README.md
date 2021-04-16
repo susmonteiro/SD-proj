@@ -8,11 +8,11 @@ Distributed Systems 2020-2021, 2nd semester project
 **Group A24**
 
 
-92437 [Catarina Gonçalves](catarina.g.goncalves@tecnico.ulisboa.pt)
+92437 [Catarina Gonçalves](mailto:catarina.g.goncalves@tecnico.ulisboa.pt)
 
-92456 [Duarte Bento](duarte.bento@tecnico.ulisboa.pt)
+92456 [Duarte Bento](mailto:duarte.bento@tecnico.ulisboa.pt)
 
-92560 [Susana Monteiro](s.moreno.monteiro@tecnico.ulisboa.pt)
+92560 [Susana Monteiro](mailto:s.moreno.monteiro@tecnico.ulisboa.pt)
 
 
 ### Module leaders
