@@ -19,7 +19,7 @@ import static pt.tecnico.bicloin.hub.frontend.HubFrontend.*;
 public class TopUpIT extends BaseIT {
 	@Test
 	public void topUpInvalidUserTest() {
-		TopUpRequest request = getTopUpRequest("u", 10, "+35193334444");
+		TopUpRequest request = getTopUpRequest("u", 10, "+34203040");
 		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.topUp(request));
 		assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
 		assertEquals(new InvalidUserException().getMessage(), e.getStatus().getDescription());
@@ -27,7 +27,7 @@ public class TopUpIT extends BaseIT {
 
 	@Test
 	public void topUpInvalidPhoneNumberTest() {
-		TopUpRequest request = getTopUpRequest("bruno", 10, "+3519333444");
+		TopUpRequest request = getTopUpRequest("carlos", 10, "+3519333444");
 		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.topUp(request));
 		assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
 		assertEquals(new InvalidPhoneNumberException().getMessage(), e.getStatus().getDescription());
@@ -35,7 +35,7 @@ public class TopUpIT extends BaseIT {
 
 	@Test
 	public void topUpTooHighValueTest() {
-		TopUpRequest request = getTopUpRequest("bruno", 21, "+35193334444");
+		TopUpRequest request = getTopUpRequest("carlos", 21, "+34203040");
 		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.topUp(request));
 		assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
 		assertEquals(new InvalidTopUpAmountException().getMessage(), e.getStatus().getDescription());
@@ -43,7 +43,7 @@ public class TopUpIT extends BaseIT {
 
 	@Test
 	public void topUpTooLowValueTest() {
-		TopUpRequest request = getTopUpRequest("bruno", 0, "+35193334444");
+		TopUpRequest request = getTopUpRequest("carlos", 0, "+34203040");
 		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.topUp(request));
 		assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
 		assertEquals(new InvalidTopUpAmountException().getMessage(), e.getStatus().getDescription());
@@ -52,8 +52,8 @@ public class TopUpIT extends BaseIT {
 	@Test
 	public void topUpEmptyAmountTest() {
 		TopUpRequest request = TopUpRequest.newBuilder()
-				.setUserId("bruno")
-				.setPhoneNumber("+3519333444")
+				.setUserId("carlos")
+				.setPhoneNumber("+34203040")
 				.build();
 		assertEquals(
 			INVALID_ARGUMENT.getCode(),
@@ -65,7 +65,7 @@ public class TopUpIT extends BaseIT {
 	@Test
 	public void topUpEmptyPhoneNumberTest() {
 		TopUpRequest request = TopUpRequest.newBuilder()
-				.setUserId("bruno")
+				.setUserId("carlos")
 				.setAmount(10)
 				.build();
 		assertEquals(

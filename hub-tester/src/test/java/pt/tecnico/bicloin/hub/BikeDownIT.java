@@ -30,7 +30,7 @@ public class BikeDownIT extends BaseIT {
 
 	@Test
 	public void bikeDownInvalidLatitudeTest() {
-		BikeRequest request = getBikeRequest("alice", 238.6867f, -9.3124f, "stao");
+		BikeRequest request = getBikeRequest("frans", 238.6867f, -9.3124f, "stao");
 
 		assertEquals(
             INVALID_ARGUMENT.getCode(),
@@ -41,7 +41,7 @@ public class BikeDownIT extends BaseIT {
 
 	@Test
 	public void bikeDownInvalidLongitudeTest() {
-		BikeRequest request = getBikeRequest("alice", 38.6867f, -199.3124f, "stao");
+		BikeRequest request = getBikeRequest("frans", 38.6867f, -199.3124f, "stao");
 
 		assertEquals(
             INVALID_ARGUMENT.getCode(),
@@ -52,7 +52,7 @@ public class BikeDownIT extends BaseIT {
 
 	@Test
 	public void bikeDownInvalidStationIdTest() {
-		BikeRequest request = getBikeRequest("alice", 38.6867f, -9.3124f, "s");
+		BikeRequest request = getBikeRequest("frans", 38.6867f, -9.3124f, "s");
 
 		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.bikeDown(request));
         assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
@@ -61,7 +61,7 @@ public class BikeDownIT extends BaseIT {
 
 	@Test
 	public void bikeDownUserTooFarAwayIdTest() {
-		BikeRequest request = getBikeRequest("alice", 38.6867f, -59.3124f, "stao");
+		BikeRequest request = getBikeRequest("frans", 38.6867f, -59.3124f, "stao");
 
 		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.bikeDown(request));
         assertEquals(FAILED_PRECONDITION.getCode(), e.getStatus().getCode());
@@ -86,7 +86,7 @@ public class BikeDownIT extends BaseIT {
 	@Test
 	public void bikeDownEmptyStationIdTest() {
 		BikeRequest request = BikeRequest.newBuilder()
-				.setUserId("alice")
+				.setUserId("frans")
 				.setCoordinates(Coordinates.newBuilder()
 					.setLatitude(38.6867f)
 					.setLongitude(-9.3124f)

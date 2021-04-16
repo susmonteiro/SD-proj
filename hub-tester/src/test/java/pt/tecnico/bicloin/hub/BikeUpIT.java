@@ -20,12 +20,12 @@ public class BikeUpIT extends BaseIT {
 	@BeforeEach
 	private void init() {
 		// the user must have money in order to perform a bikeUp operation
-		frontend.doTopUpOperation("alice", 20, "+35191102030");
+		frontend.doTopUpOperation("ines", 20, "+458029302");
 	}
 
 	@Test
 	public void bikeUpSuccessTest() {
-		BikeRequest request = getBikeRequest("alice", 38.6867f, -9.3124f, "stao");
+		BikeRequest request = getBikeRequest("ines", 38.6867f, -9.3124f, "stao");
 
 		BikeResponse response = frontend.bikeUp(request);
 
@@ -43,7 +43,7 @@ public class BikeUpIT extends BaseIT {
 
 	@Test
 	public void bikeUpInvalidLatitudeTest() {
-		BikeRequest request = getBikeRequest("alice", 91.6867f, -9.3124f, "stao");
+		BikeRequest request = getBikeRequest("ines", 91.6867f, -9.3124f, "stao");
 
 		assertEquals(
             INVALID_ARGUMENT.getCode(),
@@ -54,7 +54,7 @@ public class BikeUpIT extends BaseIT {
 
 	@Test
 	public void bikeUpInvalidLongitudeTest() {
-		BikeRequest request = getBikeRequest("alice", 38.6867f, -199.3124f, "stao");
+		BikeRequest request = getBikeRequest("ines", 38.6867f, -199.3124f, "stao");
 
 		assertEquals(
             INVALID_ARGUMENT.getCode(),
@@ -65,7 +65,7 @@ public class BikeUpIT extends BaseIT {
 
 	@Test
 	public void bikeUpInvalidStationIdTest() {
-		BikeRequest request = getBikeRequest("alice", 38.6867f, -9.3124f, "s");
+		BikeRequest request = getBikeRequest("ines", 38.6867f, -9.3124f, "s");
 
 		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request));
         assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
@@ -74,7 +74,7 @@ public class BikeUpIT extends BaseIT {
 
 	@Test
 	public void bikeUpUserTooFarAwayTest() {
-		BikeRequest request = getBikeRequest("alice", 88.6867f, -59.3124f, "stao");
+		BikeRequest request = getBikeRequest("ines", 88.6867f, -59.3124f, "stao");
 
 		StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.bikeUp(request));
         assertEquals(FAILED_PRECONDITION.getCode(), e.getStatus().getCode());
@@ -99,7 +99,7 @@ public class BikeUpIT extends BaseIT {
 	@Test
 	public void bikeUpEmptyStationIdTest() {
 		BikeRequest request = BikeRequest.newBuilder()
-				.setUserId("alice")
+				.setUserId("ines")
 				.setCoordinates(Coordinates.newBuilder()
 					.setLatitude(38.6867f)
 					.setLongitude(-9.3124f)

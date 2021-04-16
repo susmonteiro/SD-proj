@@ -48,7 +48,7 @@ public class HubIT extends BaseIT {
 		assertEquals(info.getNDocks(), newInfo.getNDocks());
 		assertEquals(info.getReward(), newInfo.getReward());
 		assertEquals(info.getNBicycles() - 1, newInfo.getNBicycles());
-		//assertEquals(info.getNPickUps() + 1, newInfo.getNPickUps());
+		assertEquals(info.getNPickUps() + 1, newInfo.getNPickUps());
 		assertEquals(info.getNDeliveries(), newInfo.getNDeliveries());
 
 		info = newInfo;
@@ -69,7 +69,7 @@ public class HubIT extends BaseIT {
 		assertEquals(info.getNDocks(), newInfo.getNDocks());
 		assertEquals(info.getReward(), newInfo.getReward());
 		assertEquals(info.getNBicycles() - 1, newInfo.getNBicycles());
-		//assertEquals(info.getNPickUps() + 1, newInfo.getNPickUps());
+		assertEquals(info.getNPickUps() + 1, newInfo.getNPickUps());
 		assertEquals(info.getNDeliveries(), newInfo.getNDeliveries());
 
 		info = newInfo;
@@ -112,7 +112,7 @@ public class HubIT extends BaseIT {
 		assertEquals(info2.getReward(), newInfo2.getReward());
 		assertEquals(info2.getNBicycles() + 1, newInfo2.getNBicycles());
 		assertEquals(info2.getNPickUps(), newInfo2.getNPickUps());
-		//assertEquals(info2.getNDeliveries() + 1, newInfo2.getNDeliveries());
+		assertEquals(info2.getNDeliveries() + 1, newInfo2.getNDeliveries());
 
 		info2 = newInfo2;
 
@@ -133,7 +133,7 @@ public class HubIT extends BaseIT {
 		assertEquals(info.getReward(), newInfo.getReward());
 		assertEquals(info.getNBicycles() + 1, newInfo.getNBicycles());
 		assertEquals(info.getNPickUps(), newInfo.getNPickUps());
-		//assertEquals(info.getNDeliveries() + 1, newInfo.getNDeliveries());
+		assertEquals(info.getNDeliveries() + 1, newInfo.getNDeliveries());
     }
 
 	@Test
@@ -204,7 +204,7 @@ public class HubIT extends BaseIT {
 		assertEquals(infoGulb.getNDocks(), newInfoGulb.getNDocks());
 		assertEquals(infoGulb.getReward(), newInfoGulb.getReward());
 		assertEquals(infoGulb.getNBicycles() - 1, newInfoGulb.getNBicycles());
-		// assertEquals(infoGulb.getNPickUps() + 1, newInfoGulb.getNPickUps());
+		assertEquals(infoGulb.getNPickUps() + 1, newInfoGulb.getNPickUps());
 		assertEquals(infoGulb.getNDeliveries(), newInfoGulb.getNDeliveries());
 
 		infoGulb = newInfoGulb;
@@ -229,7 +229,7 @@ public class HubIT extends BaseIT {
 		assertEquals(infoEmpt.getReward(), newInfoEmpt.getReward());
 		assertEquals(infoEmpt.getNBicycles() + 1, newInfoEmpt.getNBicycles());
 		assertEquals(infoEmpt.getNPickUps(), newInfoEmpt.getNPickUps());
-		// assertEquals(infoEmpt.getNDeliveries() + 1, newInfoEmpt.getNDeliveries());
+		assertEquals(infoEmpt.getNDeliveries() + 1, newInfoEmpt.getNDeliveries());
 
 		infoEmpt = newInfoEmpt;
 
@@ -252,7 +252,7 @@ public class HubIT extends BaseIT {
 		assertEquals(infoEmpt.getNDocks(), newInfoEmpt.getNDocks());
 		assertEquals(infoEmpt.getReward(), newInfoEmpt.getReward());
 		assertEquals(infoEmpt.getNBicycles() - 1, newInfoEmpt.getNBicycles());
-		// assertEquals(infoEmpt.getNPickUps() + 1, newInfoEmpt.getNPickUps());
+		assertEquals(infoEmpt.getNPickUps() + 1, newInfoEmpt.getNPickUps());
 		assertEquals(infoEmpt.getNDeliveries(), newInfoEmpt.getNDeliveries());
 
 
@@ -300,7 +300,7 @@ public class HubIT extends BaseIT {
 		assertEquals(infoFull.getNDocks(), newInfoFull.getNDocks());
 		assertEquals(infoFull.getReward(), newInfoFull.getReward());
 		assertEquals(infoFull.getNBicycles() - 1, newInfoFull.getNBicycles());
-		// assertEquals(infoFull.getNPickUps() + 1, newInfoFull.getNPickUps());
+		assertEquals(infoFull.getNPickUps() + 1, newInfoFull.getNPickUps());
 		assertEquals(infoFull.getNDeliveries(), newInfoFull.getNDeliveries());
 
 		infoFull = newInfoFull;
@@ -324,8 +324,8 @@ public class HubIT extends BaseIT {
 		assertEquals(infoFull.getNDocks(), newInfoFull.getNDocks());
 		assertEquals(infoFull.getReward(), newInfoFull.getReward());
 		assertEquals(infoFull.getNBicycles() + 1, newInfoFull.getNBicycles());
-		// assertEquals(infoFull.getNPickUps() + 1, newInfoFull.getNPickUps());
-		assertEquals(infoFull.getNDeliveries(), newInfoFull.getNDeliveries());
+		assertEquals(infoFull.getNPickUps(), newInfoFull.getNPickUps());
+		assertEquals(infoFull.getNDeliveries() + 1, newInfoFull.getNDeliveries());
 
 		infoFull = newInfoFull;
 
@@ -349,7 +349,7 @@ public class HubIT extends BaseIT {
 		assertEquals(infoGulb.getReward(), newInfoGulb.getReward());
 		assertEquals(infoGulb.getNBicycles() + 1, newInfoGulb.getNBicycles());
 		assertEquals(infoGulb.getNPickUps(), newInfoGulb.getNPickUps());
-		// assertEquals(infoGulb.getNDeliveries() + 1, newInfoGulb.getNDeliveries());
+		assertEquals(infoGulb.getNDeliveries() + 1, newInfoGulb.getNDeliveries());
     }
 		
 }
