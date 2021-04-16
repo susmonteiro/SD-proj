@@ -5,22 +5,9 @@
 
 Group A24
 
-*(fill-in line above with group identifier e.g. A07 or T22; and then delete this line)*
-
 ### Lead developer 
 
-... ... ...
-
-*(fill-in line above with student number, name, and @GitHub identity of module leader; and then delete this line)*
-
-### Contributors
-
-... ... ...
-
-... ... ...
-
-*(fill-in lines above with student number, name, and @GitHub identity of module contributors; and then delete this line)*
-
+92456 Duarte Bento [@ist192456](https://git.rnl.tecnico.ulisboa.pt/ist192456)
 
 ## About
 
