@@ -143,6 +143,7 @@ public class App {
                         ping();
                         break;
                     case "sys-status":
+                        sysStatus();
                         break;
                     case "help":
                         help();
@@ -361,16 +362,21 @@ public class App {
             System.out.println("ERRO - " + e.getMessage());
         } 
     }
-    /*
+    
     private static void sysStatus() {
         try {
-            SysStatusResponse response = hub.doSysStatusOperation(_user);
-            System.out.println(response.getOutput());
+            SysStatusResponse response = hub.doSysStatusOperation();
+            int len = response.getServerStatusList().size();
+            for (int i=0; i<len; i++) {
+                boolean status = (response.getServerStatus(i).getStatus()) ? true : false; 
+                System.out.println("Path: " + response.getServerStatus(i).getPath() +
+                    " Status: " + status);
+            }
         } catch (StatusRuntimeException e) {
             System.out.println("ERRO - " + e.getMessage());
         } 
     }
-    */
+    
 
     private static void help() {
         System.out.print("Pode introduzir os seguintes comandos:\n" +
