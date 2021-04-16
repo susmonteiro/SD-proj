@@ -28,6 +28,7 @@
 		<hub.recport>8091</hub.recport>
 		<hub.users_csv>../data/users.csv</hub.users_csv>
 		<hub.stations_csv>../data/stations.csv</hub.stations_csv>
+		<hub.initRec>initRec</hub.initRec>
 	</properties>
 
 	<!-- Dependencies are code archives - JARs - on which your current module needs in order to compile, build, test, and/or to run. 
@@ -106,7 +107,8 @@
 						<argument>${hub.port}</argument>
 						<argument>${hub.i}</argument>
 						<argument>${hub.users_csv}</argument>
-						<argument>${hub.stations_csv}</argument>						
+						<argument>${hub.stations_csv}</argument>
+						<argument>${hub.initRec}</argument>					
 					</arguments>
 				</configuration>
 			</plugin>
