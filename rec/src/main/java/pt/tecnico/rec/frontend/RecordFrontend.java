@@ -126,7 +126,7 @@ public class RecordFrontend extends MessageHelper implements AutoCloseable {
 
 	public int getNPickUps(String id) throws StatusRuntimeException {
         /* Use only with trusted id */
-        RegisterRequest request = getRegisterRequest(id, getRegisterNBikesAsRegisterValue());
+        RegisterRequest request = getRegisterRequest(id, getRegisterNPickUpsAsRegisterValue());
         debug("#getNPickUps\n**Request:\n" + request);
         
         ReadResponse response = read(request);

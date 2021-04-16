@@ -190,9 +190,10 @@ public class Hub {
                 // decrease bikes available
                 rec.setNBikes(stationId, availableBikes-1);
 
-                // increse bike pickups
-                int nPickUps = rec.getNPickUps(stationId);
-                rec.setNPickUps(stationId, nPickUps+1);
+                // increase bike pickups
+                int newNPickUps = 1 + rec.getNPickUps(stationId);
+                rec.setNPickUps(stationId, newNPickUps);
+                debug("increasing nPickUps to: " + newNPickUps);
             }
             
             // decrease money and change status onBike
@@ -226,8 +227,9 @@ public class Hub {
                 rec.setNBikes(stationId, dockedBikes+1);
 
                 // increse bike deliveries
-                int nDeliveries = rec.getNDeliveries(stationId);
-                rec.setNDeliveries(stationId, nDeliveries+1); 
+                int newNDeliveries = 1 + rec.getNDeliveries(stationId);
+                rec.setNDeliveries(stationId, newNDeliveries); 
+                debug("new nDeliveries: " + newNDeliveries);
             }
 
             // get reward money and change status onBike

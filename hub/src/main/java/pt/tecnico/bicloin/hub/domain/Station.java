@@ -20,8 +20,6 @@ public class Station {
     private int _nBicycles;
     private int _reward;
 
-    // TODO permitir que o servidor possa arrancar sem stations
-
     public Station(String name, String id, float latitude, float longitude, int nDocks,
             int nBicycles, int reward) throws InvalidFileInputException {
         try {
