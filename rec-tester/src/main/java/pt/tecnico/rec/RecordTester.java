@@ -36,21 +36,21 @@ public class RecordTester {
 
 		/* Ping */
 		pingTest(getPingRequest("friend"));
-		pingTest(getPingRequest(""));
+		// pingTest(getPingRequest(""));
 
 		/* Write */
-		writeTest(registerIdDefault, getRegisterBalanceAsRegisterValue(0));
-		writeTest(registerIdDefault, getRegisterOnBikeAsRegisterValue(true));
-		writeTest(registerIdDefault, getRegisterNBikesAsRegisterValue(2));
-		writeTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue(3));
-		writeTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue(4));
+		// writeTest(registerIdDefault, getRegisterBalanceAsRegisterValue(0));
+		// writeTest(registerIdDefault, getRegisterOnBikeAsRegisterValue(true));
+		// writeTest(registerIdDefault, getRegisterNBikesAsRegisterValue(2));
+		// writeTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue(3));
+		// writeTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue(4));
 
 		/* Read */
-		readTest(registerIdDefault, getRegisterBalanceAsRegisterValue());
-		readTest(registerIdDefault, getRegisterOnBikeAsRegisterValue());
-		readTest(registerIdDefault, getRegisterNBikesAsRegisterValue());
-		readTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue());
-		readTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue());
+		// readTest(registerIdDefault, getRegisterBalanceAsRegisterValue());
+		// readTest(registerIdDefault, getRegisterOnBikeAsRegisterValue());
+		// readTest(registerIdDefault, getRegisterNBikesAsRegisterValue());
+		// readTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue());
+		// readTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue());
 
 		frontend.close();
 	}

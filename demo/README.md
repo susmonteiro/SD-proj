@@ -1,17 +1,8 @@
 # Guião de Demonstração
 
-(incompleto -- **compete ao grupo completar o guião** -- ver TODOs)
-
 ## 1. Preparação do sistema
 
 Para testar o sistema e todos os seus componentes, é necessário preparar um ambiente com dados para proceder à verificação dos testes.
-
-### 1.1. Lançar o *registry*
-
-Para lançar o *ZooKeeper*, ir à pasta `zookeeper/bin` e correr o comando  
-`./zkServer.sh start` (Linux) ou `zkServer.cmd` (Windows).
-
-É possível também lançar a consola de interação com o *ZooKeeper*, novamente na pasta `zookeeper/bin` e correr `./zkCli.sh` (Linux) ou `zkCli.cmd` (Windows).
 
 ### 1.2. Compilar o projeto
 
@@ -28,10 +19,11 @@ Para proceder aos testes, é preciso em primeiro lugar lançar o servidor *rec* 
 Para isso basta ir à pasta *rec* e executar:
 
 ```sh
-$ mvn compile exec:java
+$ mvn compile exec:java [-Ddebug]
 ```
 
-Este comando vai colocar o *rec* no endereço *localhost* e na porta *8091*.
+Este comando vai colocar o *rec* no endereço *localhost*, na porta *8091* e com número de instância *1*.
+> Opção "-Ddebug" opcional ativa método de depuramento com *logs* de execução
 
 Para confirmar o funcionamento do servidor com um *ping*, fazer:
 
@@ -39,6 +31,8 @@ Para confirmar o funcionamento do servidor com um *ping*, fazer:
 $ cd rec-tester
 $ mvn compile exec:java
 ```
+
+> É possivel editar facilemento `rec-tester` para testar todos os outros metodos do *Rec* (descomentar templates)
 
 Para executar toda a bateria de testes de integração, fazer:
 
