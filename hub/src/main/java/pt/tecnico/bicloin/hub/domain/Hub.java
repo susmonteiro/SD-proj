@@ -11,6 +11,7 @@ import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
 import pt.tecnico.rec.grpc.Rec;
 import pt.tecnico.rec.frontend.RecordFrontend;
+import static pt.tecnico.rec.frontend.RecordFrontend.*;
 
 import pt.tecnico.bicloin.hub.domain.exception.*;
 import pt.tecnico.bicloin.hub.frontend.HubFrontend;
@@ -50,21 +51,22 @@ public class Hub {
     /* ======= */
     
     public void initializeRec() {
-        /* Users lazy loaded (registers only initialized on first access) */
         debug("Initializing Rec...");
-		for (String stationId: stations.keySet()) {
-            debug("id: " + stationId + "\n" + stations.get(stationId));
-            int nBicycles = stations.get(stationId).getNBicycles();
-            
-            Rec.RegisterRequest request = Rec.RegisterRequest.newBuilder()
-                .setId(stationId)
-                .setData(Rec.RegisterValue.newBuilder()
-                    .setRegNBikes(Rec.RegisterNBikes.newBuilder()
-                        .setNBikes(nBicycles)))
-                .build();
-            debug(request);
+        debug("Users:");
+        for (String id : users.keySet()) {
+            debug("id: " + id + "\n" + users.get(id));
+            rec.setBalance(id, getBalanceDefaultValue());
+            rec.setOnBike(id, getOnBikeDefaultValue());
+        }
 
-            rec.write(request);
+        debug("Stations:");
+		for (String id: stations.keySet()) {
+            debug("id: " + id + "\n" + stations.get(id));
+            int nBicycles = stations.get(id).getNBicycles();
+            
+            rec.setNBikes(id, nBicycles);
+            rec.setNPickUps(id, getNPickUpsDefaultValue());
+            rec.setNDeliveries(id, getNDeliveriesDefaultValue());
         }
 	}
     
