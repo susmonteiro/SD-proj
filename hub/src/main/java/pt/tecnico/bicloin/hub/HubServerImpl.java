@@ -128,7 +128,6 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 			responseObserver.onError(FAILED_PRECONDITION
 				.withDescription(e.getMessage()).asRuntimeException());
 			debug("Got exception:" + e);
-
 		} catch (StatusRuntimeException e) {
 			responseObserver.onError(UNAVAILABLE
 				.withDescription("Request could not be processed.").asRuntimeException());
