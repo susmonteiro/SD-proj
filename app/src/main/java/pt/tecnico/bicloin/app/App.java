@@ -245,7 +245,7 @@ public class App {
 
     
     private static void at() {
-        System.out.println(_user + " em " + String.format("%.04f", _latitude) 
+        System.out.println(_user + " em https://www.google.com/maps/place/" + String.format("%.04f", _latitude) 
             + "," + String.format("%.04f", _longitude));
     }
 
