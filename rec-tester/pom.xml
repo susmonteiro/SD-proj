@@ -20,7 +20,12 @@
 		<mainclass>pt.tecnico.rec.RecordTester</mainclass>
 
 		<rec.host>localhost</rec.host>
-		<rec.port>8091</rec.port>
+		<rec.i>1</rec.i><!-- instance number -->
+		<rec.port>809${rec.i}</rec.port>
+		<rec.path>/grpc/bicloin/rec/${rec.i}</rec.path>
+		<recT.ZKhost>localhost</recT.ZKhost>
+		<recT.ZKport>2181</recT.ZKport>
+
 	</properties>
 
 	<!-- Dependencies are code archives - JARs - on which your current module needs in order to compile, build, test, and/or to run. 
@@ -37,6 +42,12 @@
 			<groupId>${project.groupId}</groupId>
 			<artifactId>rec</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+		<!-- zookeeper dependencies -->
+		<dependency>
+			<groupId>pt.ulisboa.tecnico.sdis</groupId>
+			<artifactId>zk-naming</artifactId>
+			<version>1.0.4</version>
 		</dependency>
 		<!-- JUnit is a unit testing framework for the Java programming language. -->
 		<dependency>
@@ -103,8 +114,9 @@
 				<configuration>
 					<mainClass>${mainclass}</mainClass>
 					<arguments>
-						<argument>${rec.host}</argument>
-						<argument>${rec.port}</argument>
+						<argument>${recT.ZKhost}</argument>
+						<argument>${recT.ZKport}</argument>
+						<argument>${rec.path}</argument>
 					</arguments>
 				</configuration>
 			</plugin>

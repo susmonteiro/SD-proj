@@ -13,6 +13,7 @@ import pt.tecnico.rec.grpc.Rec;
 import pt.tecnico.rec.frontend.RecordFrontend;
 import static pt.tecnico.rec.frontend.RecordFrontend.*;
 
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.tecnico.bicloin.hub.domain.exception.*;
 import pt.tecnico.bicloin.hub.frontend.HubFrontend;
 import io.grpc.StatusRuntimeException;
@@ -29,18 +30,20 @@ public class Hub {
 
     private static final int EARTH_RADIUS = 6371;
 
-    public Hub(String recIP, int recPORT, Map<String, User> users, Map<String, Station> stations) {
+    public Hub(String zooHost, int zooPort, Map<String, User> users, Map<String, Station> stations) throws ZKNamingException {
         this.users = users;
         this.stations = stations;
-        rec = new RecordFrontend(recIP, recPORT);
+        // TODO change me
+        rec = new RecordFrontend(zooHost, zooPort, "/grpc/bicloin/rec/1");
     }
     
-    public Hub(String recIP, int recPORT, Map<String, User> users, Map<String, Station> stations, boolean debug) {
+    public Hub(String zooHost, int zooPort, Map<String, User> users, Map<String, Station> stations, boolean debug) throws ZKNamingException {
         DEBUG = debug;
 
         this.users = users;
         this.stations = stations;
-        rec = new RecordFrontend(recIP, recPORT, DEBUG);
+        // TODO change me
+        rec = new RecordFrontend(zooHost, zooPort, "/grpc/bicloin/rec/1", DEBUG);
     }
 
     public void shutdown() {

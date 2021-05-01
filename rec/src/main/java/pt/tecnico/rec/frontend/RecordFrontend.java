@@ -5,16 +5,46 @@ import io.grpc.ManagedChannelBuilder;
 import pt.tecnico.rec.grpc.RecordServiceGrpc;
 import pt.tecnico.rec.grpc.Rec.*;
 
+import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
+import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
+
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import io.grpc.StatusRuntimeException;
 
 public class RecordFrontend extends MessageHelper implements AutoCloseable {
 	private boolean DEBUG = false;
 	private final ManagedChannel channel;
 	private final RecordServiceGrpc.RecordServiceBlockingStub stub;
-	private final String host;
-	private final int port;
-	
-	public RecordFrontend(String host, int port) {
+	private String path;
+    
+    // Constructors when using zookeeper
+	public RecordFrontend(String zooHost, int zooPort, String path) throws ZKNamingException {
+
+        // Lookup server location on ZooKeeper.
+		debug("Contacting ZooKeeper at " + zooHost + ":" + zooPort);
+        ZKNaming zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
+        debug("Looking up " + path);
+        ZKRecord record = zkNaming.lookup(path);
+        String target = record.getURI();
+        debug("Located server at " + target);
+        
+		// Channel is the abstraction to connect to a service endpoint.
+		// Let us use plaintext communication because we do not have certificates.
+		this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+
+		// Create a blocking stub.
+		stub = RecordServiceGrpc.newBlockingStub(channel);
+
+        this.path = path; 
+	}
+
+	public RecordFrontend(String zooHost, int zooPort, String path, boolean debug) throws ZKNamingException {
+		this(zooHost, zooPort, path);
+		this.DEBUG = debug;
+	}
+
+    // Constructors when receiving rec information directly (LEGACY)
+    public RecordFrontend(String host, int port) {
 		// Channel is the abstraction to connect to a service endpoint.
 		// Let us use plaintext communication because we do not have certificates.
 		this.channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
@@ -22,8 +52,6 @@ public class RecordFrontend extends MessageHelper implements AutoCloseable {
 		// Create a blocking stub.
 		stub = RecordServiceGrpc.newBlockingStub(channel);
 
-		this.host = host;
-		this.port = port;
 	}
 
 	public RecordFrontend(String host, int port, boolean debug) {
@@ -32,7 +60,7 @@ public class RecordFrontend extends MessageHelper implements AutoCloseable {
 	}
 	
 	public String getPath() {
-		return host + ":" + port;
+		return path;
 	}
 
 	public ReadResponse read(RegisterRequest request) {

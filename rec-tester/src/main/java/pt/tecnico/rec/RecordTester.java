@@ -1,10 +1,11 @@
-	package pt.tecnico.rec;
+package pt.tecnico.rec;
 
 import pt.tecnico.rec.grpc.Rec.*;
 import io.grpc.StatusRuntimeException;
 
 import pt.tecnico.rec.frontend.RecordFrontend;
 import static pt.tecnico.rec.frontend.RecordFrontend.*;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 public class RecordTester {
 	
@@ -12,7 +13,7 @@ public class RecordTester {
 
 	private static RecordFrontend frontend;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ZKNamingException{
 		System.out.println(RecordTester.class.getSimpleName());
 		
 		// receive and print arguments
@@ -22,35 +23,36 @@ public class RecordTester {
 		}
 
 		// check arguments
-		if (args.length < 2) {
+		if (args.length < 3) {
 			System.out.println("Argument(s) missing!");
 			System.out.printf("Usage: java %s host port%n", RecordTester.class.getName());
 			return;
 		}
 
-		final String host = args[0];
-		final int port = Integer.parseInt(args[1]);
+		final String zooHost = args[0];
+		final int zooPort = Integer.parseInt(args[1]);
+		final String path = args[2];
 
-		frontend = new RecordFrontend(host, port);
+		frontend = new RecordFrontend(zooHost, zooPort, path, true);
 		
 
 		/* Ping */
 		pingTest(getPingRequest("friend"));
-		// pingTest(getPingRequest(""));
+		pingTest(getPingRequest(""));
 
 		/* Write */
-		// writeTest(registerIdDefault, getRegisterBalanceAsRegisterValue(0));
-		// writeTest(registerIdDefault, getRegisterOnBikeAsRegisterValue(true));
-		// writeTest(registerIdDefault, getRegisterNBikesAsRegisterValue(2));
-		// writeTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue(3));
-		// writeTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue(4));
+		writeTest(registerIdDefault, getRegisterBalanceAsRegisterValue(0));
+		writeTest(registerIdDefault, getRegisterOnBikeAsRegisterValue(true));
+		writeTest(registerIdDefault, getRegisterNBikesAsRegisterValue(2));
+		writeTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue(3));
+		writeTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue(4));
 
 		/* Read */
-		// readTest(registerIdDefault, getRegisterBalanceAsRegisterValue());
-		// readTest(registerIdDefault, getRegisterOnBikeAsRegisterValue());
-		// readTest(registerIdDefault, getRegisterNBikesAsRegisterValue());
-		// readTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue());
-		// readTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue());
+		readTest(registerIdDefault, getRegisterBalanceAsRegisterValue());
+		readTest(registerIdDefault, getRegisterOnBikeAsRegisterValue());
+		readTest(registerIdDefault, getRegisterNBikesAsRegisterValue());
+		readTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue());
+		readTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue());
 
 		frontend.close();
 	}

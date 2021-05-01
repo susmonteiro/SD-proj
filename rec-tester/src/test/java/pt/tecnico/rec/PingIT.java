@@ -16,7 +16,7 @@ public class PingIT extends BaseIT {
 	public void pingOKTest() {
 		PingRequest request = PingRequest.newBuilder().setInput("friend").build();
 		PingResponse response = frontend.ping(request);
-		assertEquals("Hello friend! Im Rec 1 at localhost:8091", response.getOutput());
+		assertEquals("Hello friend!", response.getOutput().substring(0, 13));
 	}
 
 	@Test
@@ -26,9 +26,7 @@ public class PingIT extends BaseIT {
 			INVALID_ARGUMENT.getCode(),
 			assertThrows(StatusRuntimeException.class, () -> frontend.ping(request))
 				.getStatus().getCode()
-		);
-
-			
+		);	
 	}
 
 }

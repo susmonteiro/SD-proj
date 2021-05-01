@@ -19,6 +19,7 @@
 
 		<rec.i>1</rec.i><!-- instance number -->
 		<rec.port>809${rec.i}</rec.port>
+		<rec.path>/grpc/bicloin/rec/${rec.i}</rec.path>
 		<rec.host>localhost</rec.host>
 		<rec.ZKhost>localhost</rec.ZKhost>
 		<rec.ZKport>2181</rec.ZKport>
@@ -32,6 +33,12 @@
 			<groupId>${project.groupId}</groupId>
 			<artifactId>rec-contract</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+		<!-- zookeeper dependencies -->
+		<dependency>
+			<groupId>pt.ulisboa.tecnico.sdis</groupId>
+			<artifactId>zk-naming</artifactId>
+			<version>1.0.4</version>
 		</dependency>
 	</dependencies>
 
@@ -82,7 +89,7 @@
 						<argument>${rec.ZKport}</argument>
 						<argument>${rec.host}</argument>
 						<argument>${rec.port}</argument>
-						<argument>${rec.i}</argument>
+						<argument>${rec.path}</argument>
 					</arguments>
 				</configuration>
 			</plugin>

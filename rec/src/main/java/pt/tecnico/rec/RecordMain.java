@@ -8,20 +8,18 @@ import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
+import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
+
 public class RecordMain {
 	private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
-	private static String ZooKeeper_IP, IP;
-	private static int ZooKeeper_PORT, PORT, instance_num;
-
-	/** Helper method to print debug messages. */
-	public static void debug(Object debugMessage) {
-		if (DEBUG_FLAG)
-			System.err.println(debugMessage);
-	}
+	private static String zooHost, IP, server_path;
+	private static int zooPort, PORT;
+	/** ZooKeeper helper object. */
+	private static ZKNaming zkNaming = null;
 
 
-
-	public static void main(String[] args) throws IOException, InterruptedException {
+	public static void main(String[] args) throws IOException, InterruptedException, ZKNamingException {
 		System.out.println(RecordMain.class.getSimpleName());
 		
 		parseArgs(args);
@@ -30,21 +28,38 @@ public class RecordMain {
 
 		// Create a new server to listen on port.
 		Server server = ServerBuilder.forPort(PORT).addService(impl).build();
-		// Start the server.
-		server.start();
-		// Server threads are running in the background.
-		System.out.println("Server started");
+		
+		// Register on ZooKeeper.
+		try {
+			System.out.println("Contacting ZooKeeper at " + zooHost + ":" + zooPort + "...");
+			zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
 
-		// Create new thread where we wait for the user input.
-		new Thread(() -> {
-			System.out.println("<Press enter to shutdown>");
-			new Scanner(System.in).nextLine();
+			System.out.println("Binding " + server_path + " to " + IP + ":" + PORT + "...");
+			zkNaming.rebind(server_path, IP, Integer.toString(PORT));
+			
+			// Start the server.
+			server.start();
+			// Server threads are running in the background.
+			System.out.println("Server started");
 
-			server.shutdown();
-		}).start();
+			// Create new thread where we wait for the user input.
+			new Thread(() -> {
+				System.out.println("<Press enter to shutdown>");
+				new Scanner(System.in).nextLine();
+				
+				server.shutdown();
+			}).start();
+	
+			// Do not exit the main thread. Wait until server is terminated.
+			server.awaitTermination();
+			
+		} finally {
+			if (zkNaming != null) {
+				zkNaming.unbind(server_path, IP, Integer.toString(PORT));			
+			}
+		}
+		
 
-		// Do not exit the main thread. Wait until server is terminated.
-		server.awaitTermination();
 	}
 
 	public static void parseArgs(String[] args) {
@@ -57,25 +72,31 @@ public class RecordMain {
 		// Check arguments.
 		if (args.length < 5) {
 			System.err.println("Argument(s) missing!");
-			System.err.printf("Usage: java %s ZooKeeper_IP ZooKeeper_PORT " + 
-				"IP PORT instance_num %n", RecordMain.class.getName());
+			System.err.printf("Usage: java %s zooHost zooPort " + 
+				"IP PORT server_path %n", RecordMain.class.getName());
 			System.exit(1);
 		}
 		
-		ZooKeeper_IP = args[0];
-		ZooKeeper_PORT = Integer.parseInt(args[1]);
+		zooHost = args[0];
+		zooPort = Integer.parseInt(args[1]);
 		IP = args[2];
 		PORT = Integer.parseInt(args[3]);
-		instance_num = Integer.parseInt(args[4]);
+		server_path = args[4];
 
 	}
 
 	public static String identity() {
-		return "Im Rec " + instance_num + " at " + path(); 
+		return "Im Rec " + server_path + " at " + path(); 
 	}
 
 	public static String path() {
 		return IP + ":" + PORT;
+	}
+
+	/** Helper method to print debug messages. */
+	public static void debug(Object debugMessage) {
+		if (DEBUG_FLAG)
+			System.err.println(debugMessage);
 	}
 	
 }

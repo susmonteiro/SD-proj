@@ -22,10 +22,9 @@
 		<hub.i>1</hub.i><!-- instance number -->
 		<hub.port>808${hub.i}</hub.port>
 		<hub.host>localhost</hub.host>
-		<!-- <hub.ZKhost>localhost</hub.ZKhost>
-		<hub.ZKport>2181</hub.ZKport> -->
-		<hub.rechost>localhost</hub.rechost>
-		<hub.recport>8091</hub.recport>
+		<hub.ZKhost>localhost</hub.ZKhost>
+		<hub.ZKport>2181</hub.ZKport>
+		<hub.path>/grpc/bicloin/hub/${hub.i}</hub.path>
 		<hub.users_csv>../demo/data/users.csv</hub.users_csv>
 		<hub.stations_csv>../demo/data/stations.csv</hub.stations_csv>
 		<hub.initRec>initRec</hub.initRec>
@@ -39,6 +38,12 @@
 			<groupId>${project.groupId}</groupId>
 			<artifactId>hub-contract</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+		<!-- zookeeper dependencies -->
+		<dependency>
+			<groupId>pt.ulisboa.tecnico.sdis</groupId>
+			<artifactId>zk-naming</artifactId>
+			<version>1.0.4</version>
 		</dependency>
 		<!-- contract brings Rec gRPC dependencies with it -->
 		<dependency>
@@ -99,13 +104,11 @@
 					<killAfter>-1</killAfter>
 					<mainClass>${mainclass}</mainClass>
 					<arguments>
-						<!-- <argument>${hub.ZKhost}</argument>
-						<argument>${hub.ZKport}</argument> -->
-						<argument>${hub.rechost}</argument>
-						<argument>${hub.recport}</argument>
+						<argument>${hub.ZKhost}</argument>
+						<argument>${hub.ZKport}</argument>
 						<argument>${hub.host}</argument>
 						<argument>${hub.port}</argument>
-						<argument>${hub.i}</argument>
+						<argument>${hub.path}</argument>
 						<argument>${hub.users_csv}</argument>
 						<argument>${hub.stations_csv}</argument>
 						<argument>${hub.initRec}</argument>					

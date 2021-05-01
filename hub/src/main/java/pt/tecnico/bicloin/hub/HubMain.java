@@ -2,6 +2,7 @@ package pt.tecnico.bicloin.hub;
 
 import java.io.IOException;
 import pt.tecnico.bicloin.hub.domain.exception.InvalidFileInputException;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 import java.io.File;
 import java.util.Scanner;
@@ -19,19 +20,19 @@ public class HubMain {
 	private static final int STATION_FILE_FIELDS = 7;
 	
 	
-	private static String recIP, IP;
-	private static int recPORT, PORT, instance_num;
+	private static String zooHost, IP, server_path;
+	private static int zooPort, PORT;
 	private static String usersFile, stationsFile;
 	private static boolean initRec = false;
 
 
-	public static void main(String[] args) throws IOException, InterruptedException {
+	public static void main(String[] args) throws IOException, InterruptedException, ZKNamingException {
 		System.out.println(HubMain.class.getSimpleName());
 		
 		parseArgs(args);
 
 		// Initialize service (and Load data)
-		final HubServerImpl impl = new HubServerImpl(recIP, recPORT, parseUsers(usersFile), parseStations(stationsFile), DEBUG);
+		final HubServerImpl impl = new HubServerImpl(zooHost, zooPort, parseUsers(usersFile), parseStations(stationsFile), DEBUG);
 
 		// Initilize register in Record
 		if (initRec) impl.getHub().initializeRec();
@@ -49,11 +50,11 @@ public class HubMain {
 			new Scanner(System.in).nextLine();
 
 			server.shutdown();
-			impl.shutdown();		// close runtime connections (Record frontend)
 		}).start();
-
+		
 		// Do not exit the main thread. Wait until server is terminated.
 		server.awaitTermination();
+		impl.shutdown();		// close runtime connections (Record frontend)
 	}
 
 	private static void parseArgs(String[] args) {
@@ -66,16 +67,16 @@ public class HubMain {
 		// Check arguments.
 		if (args.length < 7) {
 			System.err.println("Argument(s) missing!");
-			System.err.printf("Usage: java %s recIP recPORT " + 
+			System.err.printf("Usage: java %s zooHost zooPort " + 
 				"IP PORT instance_num users.csv stations.csv [initRec] %n", HubMain.class.getName());
 			System.exit(1);
 		}
 		
-		recIP = args[0];
-		recPORT = Integer.parseInt(args[1]);
+		zooHost = args[0];
+		zooPort = Integer.parseInt(args[1]);
 		IP = args[2];
 		PORT = Integer.parseInt(args[3]);
-		instance_num = Integer.parseInt(args[4]);
+		server_path = args[4];
 		usersFile = args[5];
 		stationsFile = args[6];
 		initRec = args[args.length-1].equals("initRec");

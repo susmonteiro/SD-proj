@@ -3,11 +3,11 @@ package pt.tecnico.bicloin.hub;
 import io.grpc.stub.StreamObserver;
 import pt.tecnico.bicloin.hub.grpc.HubServiceGrpc;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
-
 import pt.tecnico.bicloin.hub.domain.*;
 
 import pt.tecnico.bicloin.hub.domain.exception.FailedPreconditionException;
 import pt.tecnico.bicloin.hub.domain.exception.InvalidArgumentException;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import io.grpc.StatusRuntimeException;
 import static io.grpc.Status.INVALID_ARGUMENT;
 import static io.grpc.Status.UNAVAILABLE;
@@ -21,15 +21,15 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 	/* Server Implementation */
 	private Hub hub;
 
-	public HubServerImpl(String recIP, int recPORT, Map<String, User> users, Map<String, Station> stations) {
+	public HubServerImpl(String zooHost, int zooPort, Map<String, User> users, Map<String, Station> stations) throws ZKNamingException {
 		super();
-		this.hub = new Hub(recIP, recPORT, users, stations);
+		this.hub = new Hub(zooHost, zooPort, users, stations);
 	}
 	
-	public HubServerImpl(String recIP, int recPORT, Map<String, User> users, Map<String, Station> stations, boolean debug) {
+	public HubServerImpl(String zooHost, int zooPort, Map<String, User> users, Map<String, Station> stations, boolean debug) throws ZKNamingException {
 		super();
 		this.DEBUG = debug;
-		this.hub = new Hub(recIP, recPORT, users, stations, DEBUG);
+		this.hub = new Hub(zooHost, zooPort, users, stations, DEBUG);
 	}
 
 	public void shutdown() {
