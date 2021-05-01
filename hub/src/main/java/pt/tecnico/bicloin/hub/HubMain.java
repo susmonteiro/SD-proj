@@ -85,7 +85,7 @@ public class HubMain {
 		debug("@HubMain Parsing Users...");
 		Map<String, User> users = new HashMap<String, User>();
 
-		try (Scanner scanner = new Scanner(new File(usersFile))) {
+		try (Scanner scanner = new Scanner(new File(usersFile), "utf-8")) {
 
 			String CSV_DELIMITER = ",";
 
@@ -113,7 +113,7 @@ public class HubMain {
 		debug("@HubMain Parsing Stations...");
 		Map<String, Station> stations = new HashMap<String, Station>();
 		
-		try (Scanner scanner = new Scanner(new File(stationsFile))) {
+		try (Scanner scanner = new Scanner(new File(stationsFile), "utf-8")) {
 
 			String CSV_DELIMITER = ",";
 
