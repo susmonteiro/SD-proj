@@ -25,8 +25,8 @@ public class Rec {
     }
 
     private void checkInput(String id, RegisterValue.ValueCase type) throws InvalidArgumentException {
-            checkId(id);
-            checkType(type);
+        checkId(id);
+        checkType(type);
     }
 
     private Register addNewRegister(String id) {

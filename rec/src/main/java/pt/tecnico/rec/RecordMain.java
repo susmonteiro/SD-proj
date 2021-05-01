@@ -8,7 +8,7 @@ import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
-import static pt.tecnico.rec.frontend.RecordFrontend.ZOO_DIR;
+import static pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper.ZOO_DIR;
 
 import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
@@ -65,7 +65,7 @@ public class RecordMain {
 
 	public static void parseArgs(String[] args) {
 		// receive and print arguments
-		debug("Received" + args.length + "arguments");
+		debug("Received " + args.length + " arguments");
 		for (int i = 0; i < args.length; i++) {
 			debug(String.format("arg[%d] = %s", i, args[i]));
 		}
@@ -83,7 +83,7 @@ public class RecordMain {
 		IP = args[2];
 		PORT = Integer.parseInt(args[3]);
 		instance_num = Integer.parseInt(args[4]);
-		server_path = ZOO_DIR + instance_num;		// path to server logged to zookeeper
+		server_path = ZOO_DIR + '/' + instance_num;		// path to server logged to zookeeper
 		debug("Path: "+ server_path);
 	}
 

@@ -198,6 +198,8 @@ A entregar: o `hub`, `hub-tester`, `rec`, `rec-tester` e a `app`.
 
 - É suposto tanto o `rec` como o `hub` passarem a receber um `path` como argumento ou recebem na mesma um `intance_num` e depois o path é construído no rec/hub (concatenando `/grpc/bicloin/rec/` com este número)
 
+- Para cada operação feita no Hub é suposto contactarmos o Zookeeper novamente para obter todas as réplicas registadas, ou podemos considerar que não é suposto nascerem novas réplicas durante a execução?
+
 
 > Registos Fortemente tipificados?
 
