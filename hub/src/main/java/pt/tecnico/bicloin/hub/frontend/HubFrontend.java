@@ -14,7 +14,7 @@ public class HubFrontend extends MessageHelper implements AutoCloseable {
     private final ManagedChannel channel;
 	private final HubServiceGrpc.HubServiceBlockingStub stub;
 
-	public static final String ZOO_DIR = "/grpc/bicloin/hub/";
+	public static final String ZOO_DIR = "/grpc/bicloin/hub";
 
 	public HubFrontend(String host, int port) {
 		// Channel is the abstraction to connect to a service endpoint.

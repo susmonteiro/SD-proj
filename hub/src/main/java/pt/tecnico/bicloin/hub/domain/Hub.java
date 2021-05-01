@@ -10,8 +10,8 @@ import pt.tecnico.bicloin.hub.HubMain;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
 import pt.tecnico.rec.grpc.Rec;
-import pt.tecnico.rec.frontend.RecordFrontend;
-import static pt.tecnico.rec.frontend.RecordFrontend.*;
+import pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper;
+import static pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper.*;
 
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.tecnico.bicloin.hub.domain.exception.*;
@@ -26,15 +26,14 @@ public class Hub {
     private static final int MIN_DIST_FOR_BIKE_UP = 200;    /* Minimun distance to the station to be able to request a bike */
     private Map<String, User> users;
     private Map<String, Station> stations;
-    private RecordFrontend rec;
+    private RecordFrontendReplicationWrapper rec;
 
     private static final int EARTH_RADIUS = 6371;
 
     public Hub(String zooHost, int zooPort, Map<String, User> users, Map<String, Station> stations) throws ZKNamingException {
         this.users = users;
         this.stations = stations;
-        // TODO change me
-        rec = new RecordFrontend(zooHost, zooPort);
+        rec = new RecordFrontendReplicationWrapper(zooHost, zooPort);
     }
     
     public Hub(String zooHost, int zooPort, Map<String, User> users, Map<String, Station> stations, boolean debug) throws ZKNamingException {
@@ -42,8 +41,7 @@ public class Hub {
 
         this.users = users;
         this.stations = stations;
-        // TODO change me
-        rec = new RecordFrontend(zooHost, zooPort, DEBUG);
+        rec = new RecordFrontendReplicationWrapper(zooHost, zooPort, debug);
     }
 
     public void shutdown() {

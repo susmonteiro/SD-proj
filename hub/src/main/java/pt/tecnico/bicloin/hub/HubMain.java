@@ -2,6 +2,7 @@ package pt.tecnico.bicloin.hub;
 
 import java.io.IOException;
 import pt.tecnico.bicloin.hub.domain.exception.InvalidFileInputException;
+import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 import java.io.File;
@@ -21,11 +22,12 @@ public class HubMain {
 	private static final int USER_FILE_FIELDS = 3;
 	private static final int STATION_FILE_FIELDS = 7;
 	
-	
 	private static String zooHost, IP, server_path;
 	private static int zooPort, PORT, instance_num;
 	private static String usersFile, stationsFile;
 	private static boolean initRec = false;
+
+	private static ZKNaming zkNaming = null;
 
 	public static void main(String[] args) throws IOException, InterruptedException, ZKNamingException {
 		System.out.println(HubMain.class.getSimpleName());
@@ -40,6 +42,37 @@ public class HubMain {
 
 		// Create a new server to listen on port.
 		Server server = ServerBuilder.forPort(PORT).addService(impl).build();
+
+		// Register on ZooKeeper.
+		try {
+			debug("Contacting ZooKeeper at " + zooHost + ":" + zooPort);
+			zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
+
+			debug("Binding " + server_path + " to " + IP + ":" + PORT);
+			zkNaming.rebind(server_path, IP, Integer.toString(PORT));
+			
+			// Start the server.
+			server.start();
+			// Server threads are running in the background.
+			System.out.println("Server started");
+
+			// Create new thread where we wait for the user input.
+			new Thread(() -> {
+				System.out.println("<Press enter to shutdown>");
+				new Scanner(System.in).nextLine();
+				
+				server.shutdown();
+			}).start();
+	
+			// Do not exit the main thread. Wait until server is terminated.
+			server.awaitTermination();
+			
+		} finally {
+			if (zkNaming != null) {
+				zkNaming.unbind(server_path, IP, Integer.toString(PORT));			
+			}
+		}
+
 		// Start the server.
 		server.start();
 		// Server threads are running in the background.
@@ -78,7 +111,7 @@ public class HubMain {
 		IP = args[2];
 		PORT = Integer.parseInt(args[3]);
 		instance_num = Integer.parseInt(args[4]);
-		server_path = ZOO_DIR + instance_num;
+		server_path = ZOO_DIR + '/' + instance_num;
 		debug("Path: "+ server_path);
 		usersFile = args[5];
 		stationsFile = args[6];
