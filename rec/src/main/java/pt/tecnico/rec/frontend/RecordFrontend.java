@@ -5,44 +5,32 @@ import io.grpc.ManagedChannelBuilder;
 import pt.tecnico.rec.grpc.RecordServiceGrpc;
 import pt.tecnico.rec.grpc.Rec.*;
 
-import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
-import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
-
-import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import io.grpc.StatusRuntimeException;
 
-public class RecordFrontend extends MessageHelper implements AutoCloseable {
+public class RecordFrontend implements AutoCloseable {
 	private boolean DEBUG = false;
-    public static final String ZOO_DIR = "/grpc/bicloin/rec/";
 
 	private final ManagedChannel channel;
 	private final RecordServiceGrpc.RecordServiceBlockingStub stub;
 	private String path;
     
     // Constructors when using zookeeper
-	public RecordFrontend(String zooHost, int zooPort) throws ZKNamingException {
-        // Lookup server location on ZooKeeper.
-		debug("Contacting ZooKeeper at " + zooHost + ":" + zooPort);
-        ZKNaming zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
-        debug("Looking up " + path);
-        ZKRecord record = zkNaming.lookup(path);
-        String target = record.getURI();
+    public RecordFrontend(String target) {
         debug("Located server at " + target);
         
-		// Channel is the abstraction to connect to a service endpoint.
-		// Let us use plaintext communication because we do not have certificates.
-		this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
-
-		// Create a blocking stub.
-		stub = RecordServiceGrpc.newBlockingStub(channel);
-
-	}
-
-	public RecordFrontend(String zooHost, int zooPort, boolean debug) throws ZKNamingException {
-		this(zooHost, zooPort, path);
+        // Channel is the abstraction to connect to a service endpoint.
+        // Let us use plaintext communication because we do not have certificates.
+        this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+        
+        // Create a blocking stub.
+        stub = RecordServiceGrpc.newBlockingStub(channel);
+    }
+    
+    public RecordFrontend(String target, boolean debug) {
+        this(target);
 		this.DEBUG = debug;
 	}
-
+    
     // Constructors when receiving rec information directly (LEGACY)
     public RecordFrontend(String host, int port) {
 		// Channel is the abstraction to connect to a service endpoint.
@@ -51,7 +39,6 @@ public class RecordFrontend extends MessageHelper implements AutoCloseable {
 
 		// Create a blocking stub.
 		stub = RecordServiceGrpc.newBlockingStub(channel);
-
 	}
 
 	public RecordFrontend(String host, int port, boolean debug) {
@@ -83,133 +70,133 @@ public class RecordFrontend extends MessageHelper implements AutoCloseable {
 	/* Record Getters and Setters */
     /* ========================== */
 
-    public int getBalance(String id) throws StatusRuntimeException {
-        /* Use only with trusted id */
-        RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue());
-        debug("#getBalance\n**Request:\n" + request);
+    // public int getBalance(String id) throws StatusRuntimeException {
+    //     /* Use only with trusted id */
+    //     RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue());
+    //     debug("#getBalance\n**Request:\n" + request);
         
-        ReadResponse response = read(request);
-        debug("#getBalance\n**Response:\n" + response);
+    //     ReadResponse response = read(request);
+    //     debug("#getBalance\n**Response:\n" + response);
         
-        int value = getBalanceValue(response.getData());
-        debug("#getBalance\n**Value:\n" + value);
+    //     int value = getBalanceValue(response.getData());
+    //     debug("#getBalance\n**Value:\n" + value);
 
-        return value;
-    }
+    //     return value;
+    // }
 
-    public void setBalance(String id, int value) throws StatusRuntimeException {
-        /* Use only with trusted id */
-        RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue(value));
-        debug("#setBalance\n**Request:\n" + request);
+    // public void setBalance(String id, int value) throws StatusRuntimeException {
+    //     /* Use only with trusted id */
+    //     RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue(value));
+    //     debug("#setBalance\n**Request:\n" + request);
 
-        write(request);
-    }
+    //     write(request);
+    // }
     
 
-	public boolean getOnBike(String id) throws StatusRuntimeException {
-        /* Use only with trusted id */
-        RegisterRequest request = getRegisterRequest(id, getRegisterOnBikeAsRegisterValue());
-        debug("#getOnBike\n**Request:\n" + request);
+	// public boolean getOnBike(String id) throws StatusRuntimeException {
+    //     /* Use only with trusted id */
+    //     RegisterRequest request = getRegisterRequest(id, getRegisterOnBikeAsRegisterValue());
+    //     debug("#getOnBike\n**Request:\n" + request);
         
-        ReadResponse response = read(request);
-        debug("#getOnBike\n**Response:\n" + response);
+    //     ReadResponse response = read(request);
+    //     debug("#getOnBike\n**Response:\n" + response);
         
-        boolean value = getOnBikeValue(response.getData());
-        debug("#getOnBike\n**Value:\n" + value);
+    //     boolean value = getOnBikeValue(response.getData());
+    //     debug("#getOnBike\n**Value:\n" + value);
 
-        return value;
-    }
+    //     return value;
+    // }
 
-    public void setOnBike(String id, boolean value) throws StatusRuntimeException {
-        /* Use only with trusted id */
-        RegisterRequest request = getRegisterRequest(id, getRegisterOnBikeAsRegisterValue(value));
-        debug("#setOnBike\n**Request:\n" + request);
+    // public void setOnBike(String id, boolean value) throws StatusRuntimeException {
+    //     /* Use only with trusted id */
+    //     RegisterRequest request = getRegisterRequest(id, getRegisterOnBikeAsRegisterValue(value));
+    //     debug("#setOnBike\n**Request:\n" + request);
         
-        write(request);
-    }
+    //     write(request);
+    // }
 
 
-    public int getNBikes(String id) throws StatusRuntimeException {
-        /* Use only with trusted id */
-        RegisterRequest request = getRegisterRequest(id, getRegisterNBikesAsRegisterValue());
-        debug("#getNBikes\n**Request:\n" + request);
+    // public int getNBikes(String id) throws StatusRuntimeException {
+    //     /* Use only with trusted id */
+    //     RegisterRequest request = getRegisterRequest(id, getRegisterNBikesAsRegisterValue());
+    //     debug("#getNBikes\n**Request:\n" + request);
         
-        ReadResponse response = read(request);
-        debug("#getNBikes\n**Response:\n" + response);
+    //     ReadResponse response = read(request);
+    //     debug("#getNBikes\n**Response:\n" + response);
         
-        int value = getNBikesValue(response.getData());
-        debug("#getNBikes\n**Value:\n" + value);
+    //     int value = getNBikesValue(response.getData());
+    //     debug("#getNBikes\n**Value:\n" + value);
 
-        return value;
-    }
+    //     return value;
+    // }
 
-    public void setNBikes(String id, int value) throws StatusRuntimeException {
-        /* Use only with trusted id */
-        RegisterRequest request = getRegisterRequest(id, getRegisterNBikesAsRegisterValue(value));
-        debug("#setNBikes\n**Request:\n" + request);
+    // public void setNBikes(String id, int value) throws StatusRuntimeException {
+    //     /* Use only with trusted id */
+    //     RegisterRequest request = getRegisterRequest(id, getRegisterNBikesAsRegisterValue(value));
+    //     debug("#setNBikes\n**Request:\n" + request);
         
-        write(request);
-    }
+    //     write(request);
+    // }
 
 
-	public int getNPickUps(String id) throws StatusRuntimeException {
-        /* Use only with trusted id */
-        RegisterRequest request = getRegisterRequest(id, getRegisterNPickUpsAsRegisterValue());
-        debug("#getNPickUps\n**Request:\n" + request);
+	// public int getNPickUps(String id) throws StatusRuntimeException {
+    //     /* Use only with trusted id */
+    //     RegisterRequest request = getRegisterRequest(id, getRegisterNPickUpsAsRegisterValue());
+    //     debug("#getNPickUps\n**Request:\n" + request);
         
-        ReadResponse response = read(request);
-        debug("#getNPickUps\n**Response:\n" + response);
+    //     ReadResponse response = read(request);
+    //     debug("#getNPickUps\n**Response:\n" + response);
         
-        int value = getNPickUpsValue(response.getData());
-        debug("#getNPickUps\n**Value:\n" + value);
+    //     int value = getNPickUpsValue(response.getData());
+    //     debug("#getNPickUps\n**Value:\n" + value);
 
-        return value;
-    }
+    //     return value;
+    // }
 
-    public void setNPickUps(String id, int value) throws StatusRuntimeException {
-        /* Use only with trusted id */
-        RegisterRequest request = getRegisterRequest(id, getRegisterNPickUpsAsRegisterValue(value));
-        debug("#setNPickUps\n**Request:\n" + request);
+    // public void setNPickUps(String id, int value) throws StatusRuntimeException {
+    //     /* Use only with trusted id */
+    //     RegisterRequest request = getRegisterRequest(id, getRegisterNPickUpsAsRegisterValue(value));
+    //     debug("#setNPickUps\n**Request:\n" + request);
         
-        write(request);
-    }
+    //     write(request);
+    // }
 
-	public int getNDeliveries(String id) throws StatusRuntimeException {
-        /* Use only with trusted id */
-        RegisterRequest request = getRegisterRequest(id, getRegisterNDeliveriesAsRegisterValue());
-        debug("#getNDeliveries\n**Request:\n" + request);
+	// public int getNDeliveries(String id) throws StatusRuntimeException {
+    //     /* Use only with trusted id */
+    //     RegisterRequest request = getRegisterRequest(id, getRegisterNDeliveriesAsRegisterValue());
+    //     debug("#getNDeliveries\n**Request:\n" + request);
         
-        ReadResponse response = read(request);
-        debug("#getNDeliveries\n**Response:\n" + response);
+    //     ReadResponse response = read(request);
+    //     debug("#getNDeliveries\n**Response:\n" + response);
         
-        int value = getNDeliveriesValue(response.getData());
-        debug("#getNDeliveries\n**Value:\n" + value);
+    //     int value = getNDeliveriesValue(response.getData());
+    //     debug("#getNDeliveries\n**Value:\n" + value);
 
-        return value;
-    }
+    //     return value;
+    // }
 
-    public void setNDeliveries(String id, int value) throws StatusRuntimeException {
-        /* Use only with trusted id */
-        RegisterRequest request = getRegisterRequest(id, getRegisterNDeliveriesAsRegisterValue(value));
-        debug("#setNBikes\n**Request:\n" + request);
+    // public void setNDeliveries(String id, int value) throws StatusRuntimeException {
+    //     /* Use only with trusted id */
+    //     RegisterRequest request = getRegisterRequest(id, getRegisterNDeliveriesAsRegisterValue(value));
+    //     debug("#setNBikes\n**Request:\n" + request);
         
-        write(request);
-    }
+    //     write(request);
+    // }
 
 
-	public String getPing(String input) throws StatusRuntimeException {
-        /* Use only with trusted id */
-        PingRequest request = getPingRequest(input);
-        debug("#getPing\n**Request:\n" + request);
+	// public String getPing(String input) throws StatusRuntimeException {
+    //     /* Use only with trusted id */
+    //     PingRequest request = getPingRequest(input);
+    //     debug("#getPing\n**Request:\n" + request);
         
-        PingResponse response = ping(request);
-        debug("#getPing\n**Response:\n" + response);
+    //     PingResponse response = ping(request);
+    //     debug("#getPing\n**Response:\n" + response);
         
-        String output = response.getOutput();
-        debug("#getPing\n**Value:\n" + output);
+    //     String output = response.getOutput();
+    //     debug("#getPing\n**Value:\n" + output);
 
-        return output;
-    }
+    //     return output;
+    // }
 
 	
 	/** Helper method to print debug messages. */
