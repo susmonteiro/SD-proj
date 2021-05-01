@@ -89,7 +89,7 @@ Procedimentos remotos:
 Argumentos do hub
 
     $ hub servidor_ZooKeeper porto_ZooKeeper servidor_próprio porto_próprio número_instância [ficheiros_dados]* [opção_inicialização_registos]
-
+i
 Por exemplo:
 
     $ hub localhost 2181 localhost 8081 1 users.csv stations.csv initRec
@@ -193,6 +193,11 @@ A entregar: o `hub`, `hub-tester`, `rec`, `rec-tester` e a `app`.
 - Zookeeper para esta entrega? Se não como fazemos o sys-status?
 
 - Vale a pena guardar numBicycles no hub ou é só mandado no inicio para o rec?
+
+---
+
+- É suposto tanto o `rec` como o `hub` passarem a receber um `path` como argumento ou recebem na mesma um `intance_num` e depois o path é construído no rec/hub (concatenando `/grpc/bicloin/rec/` com este número)
+
 
 > Registos Fortemente tipificados?
 

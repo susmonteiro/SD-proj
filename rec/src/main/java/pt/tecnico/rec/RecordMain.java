@@ -8,13 +8,15 @@ import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
+import static pt.tecnico.rec.frontend.RecordFrontend.ZOO_DIR;
+
 import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 public class RecordMain {
 	private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 	private static String zooHost, IP, server_path;
-	private static int zooPort, PORT;
+	private static int zooPort, PORT, instance_num;
 	/** ZooKeeper helper object. */
 	private static ZKNaming zkNaming = null;
 
@@ -31,10 +33,10 @@ public class RecordMain {
 		
 		// Register on ZooKeeper.
 		try {
-			System.out.println("Contacting ZooKeeper at " + zooHost + ":" + zooPort + "...");
+			debug("Contacting ZooKeeper at " + zooHost + ":" + zooPort);
 			zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
 
-			System.out.println("Binding " + server_path + " to " + IP + ":" + PORT + "...");
+			debug("Binding " + server_path + " to " + IP + ":" + PORT);
 			zkNaming.rebind(server_path, IP, Integer.toString(PORT));
 			
 			// Start the server.
@@ -58,15 +60,14 @@ public class RecordMain {
 				zkNaming.unbind(server_path, IP, Integer.toString(PORT));			
 			}
 		}
-		
 
 	}
 
 	public static void parseArgs(String[] args) {
 		// receive and print arguments
-		System.out.printf("Received %d arguments%n", args.length);
+		debug("Received" + args.length + "arguments");
 		for (int i = 0; i < args.length; i++) {
-			System.out.printf("arg[%d] = %s%n", i, args[i]);
+			debug(String.format("arg[%d] = %s", i, args[i]));
 		}
 
 		// Check arguments.
@@ -81,16 +82,13 @@ public class RecordMain {
 		zooPort = Integer.parseInt(args[1]);
 		IP = args[2];
 		PORT = Integer.parseInt(args[3]);
-		server_path = args[4];
-
+		instance_num = Integer.parseInt(args[4]);
+		server_path = ZOO_DIR + instance_num;		// path to server logged to zookeeper
+		debug("Path: "+ server_path);
 	}
 
 	public static String identity() {
-		return "Im Rec " + server_path + " at " + path(); 
-	}
-
-	public static String path() {
-		return IP + ":" + PORT;
+		return "Im Rec " + instance_num + " at " + server_path; 
 	}
 
 	/** Helper method to print debug messages. */

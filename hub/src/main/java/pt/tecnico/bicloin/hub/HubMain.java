@@ -12,6 +12,8 @@ import java.util.HashMap;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
+import static pt.tecnico.bicloin.hub.frontend.HubFrontend.ZOO_DIR;
+
 import pt.tecnico.bicloin.hub.domain.*;
 
 public class HubMain {
@@ -21,10 +23,9 @@ public class HubMain {
 	
 	
 	private static String zooHost, IP, server_path;
-	private static int zooPort, PORT;
+	private static int zooPort, PORT, instance_num;
 	private static String usersFile, stationsFile;
 	private static boolean initRec = false;
-
 
 	public static void main(String[] args) throws IOException, InterruptedException, ZKNamingException {
 		System.out.println(HubMain.class.getSimpleName());
@@ -68,7 +69,7 @@ public class HubMain {
 		if (args.length < 7) {
 			System.err.println("Argument(s) missing!");
 			System.err.printf("Usage: java %s zooHost zooPort " + 
-				"IP PORT instance_num users.csv stations.csv [initRec] %n", HubMain.class.getName());
+				"IP PORT path users.csv stations.csv [initRec] %n", HubMain.class.getName());
 			System.exit(1);
 		}
 		
@@ -76,7 +77,9 @@ public class HubMain {
 		zooPort = Integer.parseInt(args[1]);
 		IP = args[2];
 		PORT = Integer.parseInt(args[3]);
-		server_path = args[4];
+		instance_num = Integer.parseInt(args[4]);
+		server_path = ZOO_DIR + instance_num;
+		debug("Path: "+ server_path);
 		usersFile = args[5];
 		stationsFile = args[6];
 		initRec = args[args.length-1].equals("initRec");
@@ -138,7 +141,7 @@ public class HubMain {
 	}
 	
 	public static String identity() {
-		return "Im Hub " + instance_num + " at " + path(); 
+		return "Im Hub " + instance_num + " at " + server_path; 
 	}
 	
 	public static String path() {

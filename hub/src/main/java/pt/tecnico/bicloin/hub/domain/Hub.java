@@ -34,7 +34,7 @@ public class Hub {
         this.users = users;
         this.stations = stations;
         // TODO change me
-        rec = new RecordFrontend(zooHost, zooPort, "/grpc/bicloin/rec/1");
+        rec = new RecordFrontend(zooHost, zooPort);
     }
     
     public Hub(String zooHost, int zooPort, Map<String, User> users, Map<String, Station> stations, boolean debug) throws ZKNamingException {
@@ -43,7 +43,7 @@ public class Hub {
         this.users = users;
         this.stations = stations;
         // TODO change me
-        rec = new RecordFrontend(zooHost, zooPort, "/grpc/bicloin/rec/1", DEBUG);
+        rec = new RecordFrontend(zooHost, zooPort, DEBUG);
     }
 
     public void shutdown() {

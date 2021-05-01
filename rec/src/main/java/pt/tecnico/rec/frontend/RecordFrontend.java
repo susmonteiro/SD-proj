@@ -13,13 +13,14 @@ import io.grpc.StatusRuntimeException;
 
 public class RecordFrontend extends MessageHelper implements AutoCloseable {
 	private boolean DEBUG = false;
+    public static final String ZOO_DIR = "/grpc/bicloin/rec/";
+
 	private final ManagedChannel channel;
 	private final RecordServiceGrpc.RecordServiceBlockingStub stub;
 	private String path;
     
     // Constructors when using zookeeper
-	public RecordFrontend(String zooHost, int zooPort, String path) throws ZKNamingException {
-
+	public RecordFrontend(String zooHost, int zooPort) throws ZKNamingException {
         // Lookup server location on ZooKeeper.
 		debug("Contacting ZooKeeper at " + zooHost + ":" + zooPort);
         ZKNaming zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
@@ -35,10 +36,9 @@ public class RecordFrontend extends MessageHelper implements AutoCloseable {
 		// Create a blocking stub.
 		stub = RecordServiceGrpc.newBlockingStub(channel);
 
-        this.path = path; 
 	}
 
-	public RecordFrontend(String zooHost, int zooPort, String path, boolean debug) throws ZKNamingException {
+	public RecordFrontend(String zooHost, int zooPort, boolean debug) throws ZKNamingException {
 		this(zooHost, zooPort, path);
 		this.DEBUG = debug;
 	}
