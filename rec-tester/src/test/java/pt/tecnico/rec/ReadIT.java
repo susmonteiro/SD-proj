@@ -5,7 +5,7 @@ import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import static pt.tecnico.rec.frontend.RecordFrontend.*;
+import static pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper.*;
 
 import pt.tecnico.rec.domain.exception.*;
 import pt.tecnico.rec.grpc.Rec.*;
@@ -20,7 +20,7 @@ public class ReadIT extends BaseIT {
         RegisterValue balanceRequest = getRegisterBalanceAsRegisterValue();
         RegisterRequest request = getRegisterRequest("alice", balanceRequest);
         
-        ReadResponse response = frontend.read(request);
+        ReadResponse response = frontend.readReplicated(request);
         int value = getBalanceValue(response.getData());
 
         // Although the user exists, the inital balance is 0
@@ -32,7 +32,7 @@ public class ReadIT extends BaseIT {
         RegisterValue onBikeRequest = getRegisterOnBikeAsRegisterValue();
         RegisterRequest request = getRegisterRequest("thisIdSupposedlyDoestExist-ReadIT-readNewRegister_OnBike", onBikeRequest);
         
-        ReadResponse response = frontend.read(request);
+        ReadResponse response = frontend.readReplicated(request);
         boolean value = getOnBikeValue(response.getData());
 
         // Supposedly a new register is created, and returned a default value
@@ -44,7 +44,7 @@ public class ReadIT extends BaseIT {
         RegisterValue nPickUpsRequest = getRegisterNPickUpsAsRegisterValue(1);
         RegisterRequest request = getRegisterRequest("thisIdSupposedlyDoestExist-ReadIT-readNewRegister_RequestFilled", nPickUpsRequest);
        
-        ReadResponse response = frontend.read(request);
+        ReadResponse response = frontend.readReplicated(request);
         int value = getNPickUpsValue(response.getData());
 
         // It's supposed to read the value and ignore the filled request
@@ -58,7 +58,7 @@ public class ReadIT extends BaseIT {
         RegisterValue emptyVal = RegisterValue.newBuilder().build();
         RegisterRequest request = getRegisterRequest("alice", emptyVal);
        
-        StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.read(request));
+        StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.readReplicated(request));
 
         assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
         assertEquals(new NoRegisterValueSetException().getMessage(), e.getStatus().getDescription());
@@ -68,7 +68,7 @@ public class ReadIT extends BaseIT {
     public void readEmptyRegisterRequest() {
         RegisterRequest request = RegisterRequest.newBuilder().build();
        
-        StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.read(request));
+        StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.readReplicated(request));
 
         // Id should be tested first
         assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());

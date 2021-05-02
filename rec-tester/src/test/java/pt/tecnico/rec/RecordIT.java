@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 
-import static pt.tecnico.rec.frontend.RecordFrontend.*;
+import static pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper.*;
 
 public class RecordIT extends BaseIT {
 	

@@ -5,14 +5,14 @@ import java.util.Properties;
 
 import org.junit.jupiter.api.*;
 
-import pt.tecnico.rec.frontend.RecordFrontend;
+import pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 public class BaseIT {
 
 	private static final String TEST_PROP_FILE = "/test.properties";
 	protected static Properties testProps;
-	public static RecordFrontend frontend;
+	public static RecordFrontendReplicationWrapper frontend;
 
 	@BeforeAll
 	public static void oneTimeSetup () throws IOException, ZKNamingException {
@@ -28,11 +28,10 @@ public class BaseIT {
 			throw e;
 		}
 
-		final String path = testProps.getProperty("server.path");
 		final String zooHost = testProps.getProperty("server.zkhost");
 		final int zooPort = Integer.parseInt(testProps.getProperty("server.zkport"));
 		
-		frontend = new RecordFrontend(zooHost, zooPort, path);
+		frontend = new RecordFrontendReplicationWrapper(zooHost, zooPort);
 		System.out.println(frontend.getPath());
 	}
 	

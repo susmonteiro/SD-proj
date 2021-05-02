@@ -3,15 +3,15 @@ package pt.tecnico.rec;
 import pt.tecnico.rec.grpc.Rec.*;
 import io.grpc.StatusRuntimeException;
 
-import pt.tecnico.rec.frontend.RecordFrontend;
-import static pt.tecnico.rec.frontend.RecordFrontend.*;
+import pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper;
+import static pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper.*;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 public class RecordTester {
 	
 	private static final String registerIdDefault = "rec-tester";
 
-	private static RecordFrontend frontend;
+	private static RecordFrontendReplicationWrapper frontend;
 
 	public static void main(String[] args) throws ZKNamingException{
 		System.out.println(RecordTester.class.getSimpleName());
@@ -31,9 +31,8 @@ public class RecordTester {
 
 		final String zooHost = args[0];
 		final int zooPort = Integer.parseInt(args[1]);
-		final String path = args[2];
 
-		frontend = new RecordFrontend(zooHost, zooPort, path, true);
+		frontend = new RecordFrontendReplicationWrapper(zooHost, zooPort, true);
 		
 
 		/* Ping */
@@ -62,7 +61,7 @@ public class RecordTester {
 
 	private static void pingTest(PingRequest request) {
 		try{
-			PingResponse response = frontend.ping(request);
+			PingResponse response = frontend.pingReplicated(request);
 			System.out.println("@PingTest:\n" + response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("@PingTest:\nCaught exception with description: " +
@@ -76,7 +75,7 @@ public class RecordTester {
 				.setId(registerId)
 				.setData(value)
 				.build();
-			WriteResponse response = frontend.write(request);
+			WriteResponse response = frontend.writeReplicated(request);
 			System.out.println("@WriteTest:\n" + response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("@WriteTest:\nCaught exception with description: " +
@@ -90,7 +89,7 @@ public class RecordTester {
 				.setId(registerId)
 				.setData(value)
 				.build();
-			ReadResponse response = frontend.read(request);
+			ReadResponse response = frontend.readReplicated(request);
 			System.out.println("@ReadTest:\n" + response.getData().getRegBalance().getBalance());
 
 			RegisterBalance b = RegisterBalance.getDefaultInstance();

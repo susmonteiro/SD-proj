@@ -5,7 +5,7 @@ import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import static pt.tecnico.rec.frontend.RecordFrontend.*;
+import static pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper.*;
 
 import pt.tecnico.rec.domain.exception.*;
 import pt.tecnico.rec.grpc.Rec.*;
@@ -22,7 +22,7 @@ public class WriteIT extends BaseIT {
         RegisterValue nBikesRequest = getRegisterNBikesAsRegisterValue(newValue);
         RegisterRequest request = getRegisterRequest("ista", nBikesRequest);
         
-        ReadResponse response = frontend.read(request);
+        ReadResponse response = frontend.readReplicated(request);
         getNBikesValue(response.getData());
     }
 
@@ -32,7 +32,7 @@ public class WriteIT extends BaseIT {
         RegisterValue nDeliveriesRequest = getRegisterNDeliveriesAsRegisterValue(valueToWrite);
         RegisterRequest request = getRegisterRequest("thisIdSupposedlyDoestExist-WriteIT-writeNew_NDeliveries", nDeliveriesRequest);
         
-        ReadResponse response = frontend.read(request);
+        ReadResponse response = frontend.readReplicated(request);
         getNDeliveriesValue(response.getData());
     }
 
@@ -41,7 +41,7 @@ public class WriteIT extends BaseIT {
         RegisterValue emptyVal = RegisterValue.newBuilder().build();
         RegisterRequest request = getRegisterRequest("alice", emptyVal);
        
-        StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.write(request));
+        StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.writeReplicated(request));
 
         assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
         assertEquals(new NoRegisterValueSetException().getMessage(), e.getStatus().getDescription());
@@ -52,7 +52,7 @@ public class WriteIT extends BaseIT {
         RegisterValue emptyVal = RegisterValue.newBuilder().build();
         RegisterRequest request = getRegisterRequest("thisIdSupposedlyDoestExist-WriteIT-writeNewRegister_EmptyRequestValueNotExistingId", emptyVal);
        
-        StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.write(request));
+        StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.writeReplicated(request));
 
         assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
         assertEquals(new NoRegisterValueSetException().getMessage(), e.getStatus().getDescription());
@@ -62,7 +62,7 @@ public class WriteIT extends BaseIT {
     public void writeEmptyRegisterRequest() {
         RegisterRequest request = RegisterRequest.newBuilder().build();
        
-        StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.write(request));
+        StatusRuntimeException e = assertThrows(StatusRuntimeException.class, () -> frontend.writeReplicated(request));
 
         // Id should be tested first
         assertEquals(INVALID_ARGUMENT.getCode(), e.getStatus().getCode());
