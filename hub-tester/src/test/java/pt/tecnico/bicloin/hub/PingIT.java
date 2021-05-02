@@ -16,7 +16,7 @@ public class PingIT extends BaseIT {
         public void pingOKTest() {
                 PingRequest request = getPingRequest("friend");
                 PingResponse response = frontend.ping(request);
-                assertEquals("Hello friend! Im Hub 1 at localhost:8081", response.getOutput());
+		assertEquals("Hello friend!", response.getOutput().substring(0, 13));
         }
 
     @Test
