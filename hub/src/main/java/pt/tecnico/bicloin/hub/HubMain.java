@@ -66,29 +66,13 @@ public class HubMain {
 	
 			// Do not exit the main thread. Wait until server is terminated.
 			server.awaitTermination();
-			
+			impl.shutdown();		// close runtime connections (Record frontend)			
 		} finally {
 			if (zkNaming != null) {
 				zkNaming.unbind(server_path, IP, Integer.toString(PORT));			
 			}
 		}
 
-		// Start the server.
-		server.start();
-		// Server threads are running in the background.
-		System.out.println("Server started");
-
-		// Create new thread where we wait for the user input.
-		new Thread(() -> {
-			System.out.println("<Press enter to shutdown>");
-			new Scanner(System.in).nextLine();
-
-			server.shutdown();
-		}).start();
-		
-		// Do not exit the main thread. Wait until server is terminated.
-		server.awaitTermination();
-		impl.shutdown();		// close runtime connections (Record frontend)
 	}
 
 	private static void parseArgs(String[] args) {
