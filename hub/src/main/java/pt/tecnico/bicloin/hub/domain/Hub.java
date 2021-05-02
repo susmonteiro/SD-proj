@@ -57,8 +57,8 @@ public class Hub {
             debug("Users:");
             for (String id : users.keySet()) {
                 debug("id: " + id + "\n" + users.get(id));
-                rec.setBalance(id, getBalanceDefaultValue());
-                rec.setOnBike(id, getOnBikeDefaultValue());
+                rec.setBalance(id);
+                rec.setOnBike(id);
             }
 
             debug("Stations:");
@@ -67,8 +67,8 @@ public class Hub {
                 int nBicycles = stations.get(id).getNBicycles();
                 
                 rec.setNBikes(id, nBicycles);
-                rec.setNPickUps(id, getNPickUpsDefaultValue());
-                rec.setNDeliveries(id, getNDeliveriesDefaultValue());
+                rec.setNPickUps(id);
+                rec.setNDeliveries(id);
             }
         } catch (StatusRuntimeException e) {
 			System.err.println("Could not initialize rec. Rec is down.");
@@ -184,7 +184,7 @@ public class Hub {
 
         /* Always synchronize in this order to avoid DeadLocks */
         synchronized (users.get(userId)) {
-            // check if already onBike and has enought money
+            // check if already onBike and has enough money
             int balance = rec.getBalance(userId);
             checkUserCanBikeUp(userId, balance);
 
