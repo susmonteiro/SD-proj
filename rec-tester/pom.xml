@@ -22,7 +22,6 @@
 		<rec.host>localhost</rec.host>
 		<rec.i>1</rec.i><!-- instance number -->
 		<rec.port>809${rec.i}</rec.port>
-		<rec.path>/grpc/bicloin/rec/${rec.i}</rec.path>
 		<recT.ZKhost>localhost</recT.ZKhost>
 		<recT.ZKport>2181</recT.ZKport>
 
@@ -116,7 +115,6 @@
 					<arguments>
 						<argument>${recT.ZKhost}</argument>
 						<argument>${recT.ZKport}</argument>
-						<argument>${rec.path}</argument>
 					</arguments>
 				</configuration>
 			</plugin>

@@ -39,6 +39,15 @@ public class Rec {
     public RegisterValue getRegister(String id, RegisterValue.ValueCase type) 
             throws InvalidArgumentException {
         checkInput(id, type);
+
+        // TODO erase me 
+        /* debug("Sleeping");
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        debug("Finished sleeping"); */
         
         Register register = registers.containsKey(id) ? registers.get(id) : addNewRegister(id);
 
