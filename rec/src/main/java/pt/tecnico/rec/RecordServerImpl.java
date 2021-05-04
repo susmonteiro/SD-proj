@@ -16,11 +16,11 @@ public class RecordServerImpl extends RecordServiceGrpc.RecordServiceImplBase {
 	@Override
     public void read(RegisterRequest request, StreamObserver<ReadResponse> responseObserver) {
 		String id = request.getId();
-		RegisterValue.ValueCase type = request.getData().getValueCase();
+		RegisterValue.ValueCase type = request.getData().getValue().getValueCase();
 		try {
-			RegisterValue value = rec.getRegister(id, type);
+			RegisterData data = rec.getRegister(id, type);
 
-			ReadResponse response = ReadResponse.newBuilder().setData(value).build();
+			ReadResponse response = ReadResponse.newBuilder().setData(data).build();
 			
 			responseObserver.onNext(response);
 			responseObserver.onCompleted();
@@ -34,11 +34,11 @@ public class RecordServerImpl extends RecordServiceGrpc.RecordServiceImplBase {
 	@Override
     public void write(RegisterRequest request, StreamObserver<WriteResponse> responseObserver) {
 		String id = request.getId();
-		RegisterValue value = request.getData();
-		RegisterValue.ValueCase type = value.getValueCase();
+		RegisterData data = request.getData();
+		RegisterValue.ValueCase type = data.getValue().getValueCase();
 
 		try {
-			rec.setRegister(id, type, value);
+			rec.setRegister(id, type, data);
 
 			WriteResponse response = WriteResponse.getDefaultInstance();
 			responseObserver.onNext(response);

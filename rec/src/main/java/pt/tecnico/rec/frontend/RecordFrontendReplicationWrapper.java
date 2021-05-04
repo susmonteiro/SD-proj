@@ -1,5 +1,6 @@
 package pt.tecnico.rec.frontend;
 
+import java.util.List;
 import java.util.ArrayList;
 
 import pt.tecnico.rec.grpc.Rec.*;
@@ -17,95 +18,196 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     public static final int DEADLINE_MS = 2000;
 
     private ZKNaming zkNaming;
-    private RecordFrontend frontend;
+    private List<RecordFrontend> replicas = new ArrayList<RecordFrontend>();
+    private int clientID;
+    private int quorum;
     
-    public RecordFrontendReplicationWrapper(String zooHost, int zooPort) throws ZKNamingException {        
-        initFrontends(zooHost, zooPort);
+    public RecordFrontendReplicationWrapper(String zooHost, int zooPort, int cid) throws ZKNamingException {        
+        this.clientID = cid;
+        initReplicas(zooHost, zooPort);
     }
 
-    public RecordFrontendReplicationWrapper(String zooHost, int zooPort, boolean debug) throws ZKNamingException {
+    public RecordFrontendReplicationWrapper(String zooHost, int zooPort, int cid, boolean debug) throws ZKNamingException {
         DEBUG = debug;
-        initFrontends(zooHost, zooPort);
+        this.clientID = cid;
+        initReplicas(zooHost, zooPort);
     }
 
     public void close() {
-        frontend.close();
+        for (RecordFrontend frontend : replicas)
+            frontend.close();
     }
     
-    private void initFrontends(String zooHost, int zooPort) throws ZKNamingException {
+    private void initReplicas(String zooHost, int zooPort) throws ZKNamingException {
         // find all replicas
         // for todas as replicas
             // criar frontend para essa replica
             // guardar em lista de frontends
             
-        debug("Contacting ZooKeeper at " + zooHost + ":" + zooPort);
+        debug("#initReplicas\tContacting ZooKeeper at " + zooHost + ":" + zooPort);
         zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
 
         // list lookup
         ArrayList<ZKRecord> records = new ArrayList<>(zkNaming.listRecords(ZOO_DIR));
-        debug("Zk records: " + records);
+        debug("#initReplicas\tZk records: " + records);
         String target = records.get(0).getURI();
-        debug("ZK 0 target: " + target);
-        frontend = new RecordFrontend(target, DEADLINE_MS, true);
+        debug("#initReplicas\tZK 0 target: " + target);
+        replicas.add(new RecordFrontend(target, DEADLINE_MS, true));
+
+        quorum = replicas.size()/2;
+        debug("#initReplicas\tQuorum size: " + quorum);
     }
 
-    public String getPath() {
-        return frontend.getPath();
+    public List<RecordFrontend> getReplicas() {
+        return replicas;
     }
-    /* function readReplicated()
-            perform read all replicas
-            wait for quorum responses
-            return to client
-    */
-
 
     /* Replication Logic */
     /* ================= */
 
     public ReadResponse readReplicated(RegisterRequest request) throws StatusRuntimeException {
-        // TODO logic
+        ResponseObserver<ReadResponse> collector = readReplicatedResponseObserver(request);
+        return getResponse(collector);
+    }
+    
+    public void writeReplicated(RegisterRequest request) {
+        ResponseObserver<WriteResponse> collector = new ResponseObserver<WriteResponse>(this.quorum, DEBUG);
 
-        ReadResponse response;
-		try{
-			// Finally, make the call using the stub with timeout of 2 seconds
-			response = frontend.read(request);
-
-		} catch(StatusRuntimeException e){
-			// If the timeout time has expired, stop the client
-			if(Status.DEADLINE_EXCEEDED.getCode() == e.getStatus().getCode())
-				debug("#readReplicated\tServer timed-out.");
-            throw e;
-
-		}
-
-        return response;
+        synchronized(collector) {
+            try {
+                for (RecordFrontend frontend : replicas)
+                    frontend.write(request, collector);
+                
+                collector.wait();
+            } catch(StatusRuntimeException e) {
+                // TODO Unavailable only in observer. Flag for zookeeper search again
+                if(Status.UNAVAILABLE.getCode() == e.getStatus().getCode() || Status.DEADLINE_EXCEEDED.getCode() == e.getStatus().getCode())
+                // TODO if unavailable find new path to frontend in zookeeper
+                    debug("#readReplicatedResponseObserver\tServer unreachable in: " + DEADLINE_MS + ". Exception:" + e.getStatus().getDescription());
+                throw e;
+            } catch(InterruptedException e) {
+                //TODO
+                e.printStackTrace();
+            }
+        }
     }
 
-    public WriteResponse writeReplicated(RegisterRequest request) {
+    public List<PingResponse> pingReplicated(PingRequest request) {
         // TODO logic
-        WriteResponse response;
+        // TODO
+        ResponseObserver<PingResponse> collector = new ResponseObserver<PingResponse>(replicas.size(), DEBUG);
+        ArrayList<PingResponse> responses;
+        synchronized(collector) {
+            try {
+                replicas.get(0).ping(request, collector);
 
-        try {
-            response = frontend.write(request);
+                collector.wait();
+            } catch(StatusRuntimeException e) {
+                // TODO Unavailable only in observer. Flag for zookeeper search again
+                if(Status.UNAVAILABLE.getCode() == e.getStatus().getCode() || Status.DEADLINE_EXCEEDED.getCode() == e.getStatus().getCode())
+                // TODO if unavailable find new path to frontend in zookeeper
+                    debug("#readReplicatedResponseObserver\tServer unreachable in: " + DEADLINE_MS + ". Exception:" + e.getStatus().getDescription());
+                throw e;
+            } catch(InterruptedException e) {
+                //TODO
+                e.printStackTrace();
+            }
+            //cause synchronization yooo
+            responses = new ArrayList<PingResponse>(collector.getResponses());
+        }
         
-        } catch(StatusRuntimeException e){
-			// If the timeout time has expired, stop the client
-			if(Status.DEADLINE_EXCEEDED.getCode() == e.getStatus().getCode())
-				debug("#writeReplicated\tServer timed-out.");
-            throw e;
-
-		}
-
-        return response;
-
+        return responses;
     }
 
-    public PingResponse pingReplicated(PingRequest request) {
-        // TODO logic
+    private ResponseObserver<ReadResponse> readReplicatedResponseObserver(RegisterRequest request) throws StatusRuntimeException {
+        ResponseObserver<ReadResponse> collector = new ResponseObserver<ReadResponse>(this.quorum, DEBUG);
 
-        return frontend.ping(request);
+        synchronized(collector) {
+            try {
+                for (RecordFrontend frontend : replicas)
+                    frontend.read(request, collector);
+                
+                collector.wait();
+            } catch(StatusRuntimeException e) {
+                // TODO Unavailable only in observer. Flag for zookeeper search again
+                if(Status.UNAVAILABLE.getCode() == e.getStatus().getCode() || Status.DEADLINE_EXCEEDED.getCode() == e.getStatus().getCode())
+                // TODO if unavailable find new path to frontend in zookeeper
+                    debug("#readReplicatedResponseObserver\tServer unreachable in: " + DEADLINE_MS + ". Exception:" + e.getStatus().getDescription());
+                throw e;
+            } catch(InterruptedException e) {
+                //TODO
+                e.printStackTrace();
+            }
+        }
+
+        return collector;
     }
 
+    
+        /* Tag */
+        /* +++ */
+
+    private RegisterRequest addTagToRegister(RegisterRequest request) {
+        ResponseObserver<ReadResponse> collector = readReplicatedResponseObserver(request);
+        int maxSeqNumber = getMostRecentSeqNumber(collector);
+        
+        RegisterTag newTag = getRegisterTag(
+            maxSeqNumber + 1,
+            this.clientID
+        );
+        return setTagToRegisterRequest(request, newTag);
+    }
+
+    private boolean isTagNewer(RegisterTag oldTag, RegisterTag newTag) {
+        if (oldTag.getSeqNumber() < newTag.getSeqNumber()) { return true; }
+        // useless for now, but will need this in case of multiple hubs
+        if (oldTag.getSeqNumber() == newTag.getSeqNumber() && oldTag.getClientID() < newTag.getClientID()) { return true; }
+        // else new tag is older than the previous
+        return false;
+    }
+
+    /** Returns most recent response */
+    public ReadResponse getResponse(ResponseObserver<ReadResponse> collector) {
+        RegisterTag tag;
+        RegisterTag latestTag;
+        ReadResponse latestResponse;
+        
+        synchronized(collector) {
+            List<ReadResponse> responses = collector.getResponses();
+            
+            latestTag = responses.get(0).getData().getTag();
+            latestResponse = responses.get(0);
+
+            for (ReadResponse response : responses) {
+                tag = response.getData().getTag();
+                if (isTagNewer(latestTag, tag)) {
+                    latestTag = tag;
+                    latestResponse = response;
+                }
+            }
+        }
+        
+        return latestResponse;
+    }
+
+    /** returns most recent sequence number */
+    public int getMostRecentSeqNumber(ResponseObserver<ReadResponse> collector) {
+        int seqNumber;
+        int latestSeqNumber;
+
+        synchronized(collector) {
+            List<ReadResponse> responses = collector.getResponses();
+
+            latestSeqNumber = responses.get(0).getData().getTag().getSeqNumber();
+
+            for (ReadResponse response : responses) {
+                seqNumber = response.getData().getTag().getSeqNumber();
+                if (seqNumber > latestSeqNumber) latestSeqNumber = seqNumber;
+            }
+        }
+
+        return latestSeqNumber;
+    }
 
     /* Record Getters and Setters */
     /* ========================== */
@@ -125,8 +227,9 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     }
 
     public void setBalance(String id, int value) throws StatusRuntimeException {
-        /* Use only with trusted id */
+        /* Use only with trusted id */        
         RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue(value));
+        request = addTagToRegister(request);
         debug("#setBalance\n**Request:\n" + request);
 
         writeReplicated(request);
@@ -155,6 +258,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     public void setOnBike(String id, boolean value) throws StatusRuntimeException {
         /* Use only with trusted id */
         RegisterRequest request = getRegisterRequest(id, getRegisterOnBikeAsRegisterValue(value));
+        request = addTagToRegister(request);
         debug("#setOnBike\n**Request:\n" + request);
         
         writeReplicated(request);
@@ -183,6 +287,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     public void setNBikes(String id, int value) throws StatusRuntimeException {
         /* Use only with trusted id */
         RegisterRequest request = getRegisterRequest(id, getRegisterNBikesAsRegisterValue(value));
+        request = addTagToRegister(request);
         debug("#setNBikes\n**Request:\n" + request);
         
         writeReplicated(request);
@@ -206,6 +311,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     public void setNPickUps(String id, int value) throws StatusRuntimeException {
         /* Use only with trusted id */
         RegisterRequest request = getRegisterRequest(id, getRegisterNPickUpsAsRegisterValue(value));
+        request = addTagToRegister(request);
         debug("#setNPickUps\n**Request:\n" + request);
         
         writeReplicated(request);
@@ -233,6 +339,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     public void setNDeliveries(String id, int value) throws StatusRuntimeException {
         /* Use only with trusted id */
         RegisterRequest request = getRegisterRequest(id, getRegisterNDeliveriesAsRegisterValue(value));
+        request = addTagToRegister(request);
         debug("#setNBikes\n**Request:\n" + request);
         
         writeReplicated(request);
@@ -249,10 +356,10 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
         PingRequest request = getPingRequest(input);
         debug("#getPing\n**Request:\n" + request);
         
-        PingResponse response = pingReplicated(request);
-        debug("#getPing\n**Response:\n" + response);
+        List<PingResponse> responses = pingReplicated(request);
+        debug("#getPing\n**Response:\n" + responses);
         
-        String output = response.getOutput();
+        String output = responses.get(0).getOutput();       // TODO change to send all, done this way to compile and not have to change Logic for now
         debug("#getPing\n**Value:\n" + output);
 
         return output;

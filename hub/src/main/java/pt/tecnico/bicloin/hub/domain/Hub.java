@@ -10,6 +10,7 @@ import pt.tecnico.bicloin.hub.HubMain;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
 import pt.tecnico.rec.grpc.Rec;
+import pt.tecnico.rec.frontend.RecordFrontend;
 import pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper;
 import static pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper.*;
 
@@ -30,18 +31,18 @@ public class Hub {
 
     private static final int EARTH_RADIUS = 6371;
 
-    public Hub(String zooHost, int zooPort, Map<String, User> users, Map<String, Station> stations) throws ZKNamingException {
+    public Hub(String zooHost, int zooPort, int instance_num, Map<String, User> users, Map<String, Station> stations) throws ZKNamingException {
         this.users = users;
         this.stations = stations;
-        rec = new RecordFrontendReplicationWrapper(zooHost, zooPort);
+        rec = new RecordFrontendReplicationWrapper(zooHost, zooPort, instance_num);
     }
     
-    public Hub(String zooHost, int zooPort, Map<String, User> users, Map<String, Station> stations, boolean debug) throws ZKNamingException {
+    public Hub(String zooHost, int zooPort, int instance_num, Map<String, User> users, Map<String, Station> stations, boolean debug) throws ZKNamingException {
         DEBUG = debug;
 
         this.users = users;
         this.stations = stations;
-        rec = new RecordFrontendReplicationWrapper(zooHost, zooPort, debug);
+        rec = new RecordFrontendReplicationWrapper(zooHost, zooPort, instance_num, debug);
     }
 
     public void shutdown() {
@@ -282,20 +283,15 @@ public class Hub {
                 .build());
 
         // Rec
-        status = true;
-        try {
-            rec.getPing("friend");
-
-        } catch (StatusRuntimeException e) {
-            debug("#GetAllServerStatus:\nCaught exception with description: " +
-                e.getStatus().getDescription());
-            status = false;     // log on error
+        Rec.PingRequest request = Rec.PingRequest.newBuilder().setInput("Mama Miaaaa").build();
+        int i = 0;
+        SysStatusResponse.StatusResponse statusResponse;
+        for(Rec.PingResponse response : rec.pingReplicated(request)) {
+            statusResponse = SysStatusResponse.StatusResponse.newBuilder().setPath("path/" + i).setStatus(true).build();
+            serverResponse.addServerStatus(statusResponse);
+            i += 1;
         }
-        
-        serverResponse.addServerStatus(SysStatusResponse.StatusResponse.newBuilder()
-            .setPath(rec.getPath())
-            .setStatus(status)
-            .build());
+
 
         debug(serverResponse);
         return serverResponse.build();

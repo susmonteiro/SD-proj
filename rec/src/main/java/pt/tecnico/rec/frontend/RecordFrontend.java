@@ -11,7 +11,7 @@ public class RecordFrontend implements AutoCloseable {
 	private boolean DEBUG = false;
 
 	private final ManagedChannel channel;
-	private final RecordServiceGrpc.RecordServiceBlockingStub stub;
+	private final RecordServiceGrpc.RecordServiceStub stub;
 	private String path;
 
     private final int timeout;
@@ -25,7 +25,7 @@ public class RecordFrontend implements AutoCloseable {
         this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
         
         // Create a blocking stub.
-        stub = RecordServiceGrpc.newBlockingStub(channel);
+        stub = RecordServiceGrpc.newStub(channel);
         
         this.path = target;
         this.timeout = timeoutMS;
@@ -42,8 +42,8 @@ public class RecordFrontend implements AutoCloseable {
 		// Let us use plaintext communication because we do not have certificates.
 		this.channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
 
-		// Create a blocking stub.
-		stub = RecordServiceGrpc.newBlockingStub(channel);
+		// Create a non blocking stub.
+		stub = RecordServiceGrpc.newStub(channel);
         this.timeout = timeoutMS;
     }
 
@@ -56,16 +56,16 @@ public class RecordFrontend implements AutoCloseable {
 		return path;
 	}
 
-	public ReadResponse read(RegisterRequest request) {
-		return stub.withDeadlineAfter(timeout, TimeUnit.MILLISECONDS).read(request);
+	public void read(RegisterRequest request, ResponseObserver<ReadResponse> collector) {
+		stub.withDeadlineAfter(timeout, TimeUnit.MILLISECONDS).read(request, collector);
 	}
 
-	public WriteResponse write(RegisterRequest request) {
-		return stub.withDeadlineAfter(timeout, TimeUnit.MILLISECONDS).write(request);
+	public void write(RegisterRequest request, ResponseObserver<WriteResponse> collector) {
+		stub.withDeadlineAfter(timeout, TimeUnit.MILLISECONDS).write(request, collector);
 	}
 
-	public PingResponse ping(PingRequest request) {
-		return stub.withDeadlineAfter(timeout, TimeUnit.MILLISECONDS).ping(request);
+	public void ping(PingRequest request, ResponseObserver<PingResponse> collector) {
+		stub.withDeadlineAfter(timeout, TimeUnit.MILLISECONDS).ping(request, collector);
 	}
 
     @Override

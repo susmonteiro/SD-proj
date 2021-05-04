@@ -18,45 +18,45 @@ public class MessageHelper {
 		public static final int N_DELIVERIES = 0;
 	}
 
-    public static int getBalanceValue(RegisterValue response) {
-        return response.hasRegBalance() ?
-            response.getRegBalance().getBalance() : Default.BALANCE;
+    public static int getBalanceValue(RegisterData response) {
+        return response.getValue().hasRegBalance() ?
+            response.getValue().getRegBalance().getBalance() : Default.BALANCE;
     }
 
 	public static int getBalanceDefaultValue() {
 		return Default.BALANCE;
 	}
 
-    public static boolean getOnBikeValue(RegisterValue response) {
-        return response.hasRegOnBike() ?
-            response.getRegOnBike().getOnBike() : Default.ON_BIKE;
+    public static boolean getOnBikeValue(RegisterData response) {
+        return response.getValue().hasRegOnBike() ?
+            response.getValue().getRegOnBike().getOnBike() : Default.ON_BIKE;
     }
 
 	public static boolean getOnBikeDefaultValue() {
 		return Default.ON_BIKE;
 	}
 
-    public static int getNBikesValue(RegisterValue response) {
-        return response.hasRegNBikes() ?
-            response.getRegNBikes().getNBikes() : Default.N_BIKES;
+    public static int getNBikesValue(RegisterData response) {
+        return response.getValue().hasRegNBikes() ?
+            response.getValue().getRegNBikes().getNBikes() : Default.N_BIKES;
     }
 
 	public static int getNBikesDefaultValue() {
 		return Default.N_BIKES;
 	}
 
-    public static int getNPickUpsValue(RegisterValue response) {
-        return response.hasRegNPickUps() ?
-            response.getRegNPickUps().getNPickUps() : Default.N_PICK_UPS;
+    public static int getNPickUpsValue(RegisterData response) {
+        return response.getValue().hasRegNPickUps() ?
+            response.getValue().getRegNPickUps().getNPickUps() : Default.N_PICK_UPS;
     }
 
 	public static int getNPickUpsDefaultValue() {
 		return Default.N_PICK_UPS;
 	}
 
-    public static int getNDeliveriesValue(RegisterValue response) {
-        return response.hasRegNDeliveries() ?
-            response.getRegNDeliveries().getNDeliveries() : Default.N_DELIVERIES;
+    public static int getNDeliveriesValue(RegisterData response) {
+        return response.getValue().hasRegNDeliveries() ?
+            response.getValue().getRegNDeliveries().getNDeliveries() : Default.N_DELIVERIES;
     }
 
 	public static int getNDeliveriesDefaultValue() {
@@ -65,17 +65,52 @@ public class MessageHelper {
 	
 	/* Message Building */
 	/* ++++++++++++++++ */
-
-    public static PingRequest getPingRequest(String input) {
-		return PingRequest.newBuilder().setInput(input).build();
+	
+	public static PingRequest getPingRequest(String input) {
+		return PingRequest.newBuilder()
+				.setInput(input)
+				.build();
 	}
 
-    public static RegisterRequest getRegisterRequest(String id, RegisterValue value) {
+    public static RegisterRequest getRegisterRequest(String id, RegisterValue value, RegisterTag tag) {
         return RegisterRequest.newBuilder()
                 .setId(id)
-                .setData(value)
+                .setData( RegisterData.newBuilder()
+					.setValue(value)
+					.setTag(tag)
+					.build()
+				)
                 .build();
     }
+
+	public static RegisterRequest getRegisterRequest(String id, RegisterValue value) {
+        return RegisterRequest.newBuilder()
+                .setId(id)
+                .setData( RegisterData.newBuilder()
+					.setValue(value)
+					.build()
+				)
+                .build();
+    }
+
+	public static RegisterTag getRegisterTag(int seq, int cid) {
+		return RegisterTag.newBuilder()
+				.setSeqNumber(seq)
+				.setClientID(cid)
+				.build();
+	}
+	public static RegisterRequest setTagToRegisterRequest(RegisterRequest request, RegisterTag tag) {
+		String id = request.getId();
+		RegisterValue value = request.getData().getValue();
+		return RegisterRequest.newBuilder()
+			.setId(id)
+			.setData(RegisterData.newBuilder()
+				.setValue(value)
+				.setTag(tag)
+				.build()
+		).build();
+	}
+
 
 	public static RegisterValue getRegisterBalanceAsRegisterValue(int value) {
 		return RegisterValue.newBuilder().setRegBalance(

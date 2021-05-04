@@ -6,6 +6,11 @@ package pt.tecnico.rec.grpc;
 
 
 // Specific Values
+message RegisterData {
+  RegisterValue value = 1;
+  RegisterTag tag = 2;
+}
+
 message RegisterValue {
   oneof value {
     RegisterBalance RegBalance = 1;
@@ -36,17 +41,23 @@ message RegisterNDeliveries {
   int32 nDeliveries = 1;
 }
 
+message RegisterTag {
+  int32 seqNumber = 1;
+  int32 clientID = 2;
+}
+
 // Used messages
 message RegisterRequest {
   string id = 1;
-  RegisterValue data = 2;
+  RegisterData data = 2;
 }
 
 message ReadResponse {
-  RegisterValue data = 1;
+  RegisterData data = 1;
 }
 
 message WriteResponse {
+  RegisterTag tag = 1;
 }
 
 message PingRequest {

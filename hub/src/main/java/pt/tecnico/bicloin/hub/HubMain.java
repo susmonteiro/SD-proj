@@ -35,7 +35,7 @@ public class HubMain {
 		parseArgs(args);
 
 		// Initialize service (and Load data)
-		final HubServerImpl impl = new HubServerImpl(zooHost, zooPort, parseUsers(usersFile), parseStations(stationsFile), DEBUG);
+		final HubServerImpl impl = new HubServerImpl(zooHost, zooPort, instance_num, parseUsers(usersFile), parseStations(stationsFile), DEBUG);
 
 		// Initilize register in Record
 		if (initRec) impl.getHub().initializeRec();

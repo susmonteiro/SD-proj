@@ -32,26 +32,26 @@ public class RecordTester {
 		final String zooHost = args[0];
 		final int zooPort = Integer.parseInt(args[1]);
 
-		frontend = new RecordFrontendReplicationWrapper(zooHost, zooPort, true);
+		frontend = new RecordFrontendReplicationWrapper(zooHost, zooPort, 1, true);
 		
 
 		/* Ping */
-		pingTest(getPingRequest("friend"));
-		pingTest(getPingRequest(""));
+		pingTest("friend");
+		pingTest("");
 
 		/* Write */
-		writeTest(registerIdDefault, getRegisterBalanceAsRegisterValue(0));
-		writeTest(registerIdDefault, getRegisterOnBikeAsRegisterValue(true));
-		writeTest(registerIdDefault, getRegisterNBikesAsRegisterValue(2));
-		writeTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue(3));
-		writeTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue(4));
+		// writeTest(registerIdDefault, getRegisterBalanceAsRegisterValue(0));
+		// writeTest(registerIdDefault, getRegisterOnBikeAsRegisterValue(true));
+		// writeTest(registerIdDefault, getRegisterNBikesAsRegisterValue(2));
+		// writeTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue(3));
+		// writeTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue(4));
 
 		/* Read */
-		readTest(registerIdDefault, getRegisterBalanceAsRegisterValue());
-		readTest(registerIdDefault, getRegisterOnBikeAsRegisterValue());
-		readTest(registerIdDefault, getRegisterNBikesAsRegisterValue());
-		readTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue());
-		readTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue());
+		// readTest(registerIdDefault, getRegisterBalanceAsRegisterValue());
+		// readTest(registerIdDefault, getRegisterOnBikeAsRegisterValue());
+		// readTest(registerIdDefault, getRegisterNBikesAsRegisterValue());
+		// readTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue());
+		// readTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue());
 
 		frontend.close();
 	}
@@ -59,9 +59,9 @@ public class RecordTester {
 	/* ============== */
 	/* Method testing */
 
-	private static void pingTest(PingRequest request) {
+	private static void pingTest(String in) {
 		try{
-			PingResponse response = frontend.pingReplicated(request);
+			String response = frontend.getPing(in);
 			System.out.println("@PingTest:\n" + response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("@PingTest:\nCaught exception with description: " +
@@ -69,7 +69,7 @@ public class RecordTester {
 		}
 	}
 
-	private static void writeTest(String registerId, RegisterValue value) {
+	/* private static void writeTest(String registerId, RegisterValue value) {
 		try{
 			RegisterRequest request = RegisterRequest.newBuilder()
 				.setId(registerId)
@@ -98,6 +98,6 @@ public class RecordTester {
 			System.out.println("@ReadTest:\nCaught exception with description: " +
 				e.getStatus().getDescription());
 		}
-	}
+	} */
 
 }

@@ -24,6 +24,7 @@ public class Rec {
         if (type == RegisterValue.ValueCase.VALUE_NOT_SET) { throw new NoRegisterValueSetException(); }
     }
 
+
     private void checkInput(String id, RegisterValue.ValueCase type) throws InvalidArgumentException {
         checkId(id);
         checkType(type);
@@ -36,7 +37,7 @@ public class Rec {
         
     }
 
-    public RegisterValue getRegister(String id, RegisterValue.ValueCase type) 
+    public RegisterData getRegister(String id, RegisterValue.ValueCase type) 
             throws InvalidArgumentException {
         checkInput(id, type);
 
@@ -52,10 +53,10 @@ public class Rec {
         Register register = registers.containsKey(id) ? registers.get(id) : addNewRegister(id);
 
         debug(register);
-        return register.getValue(type);
+        return register.getData(type);
     }
 
-    public void setRegister(String id, RegisterValue.ValueCase type, RegisterValue value) 
+    public void setRegister(String id, RegisterValue.ValueCase type, RegisterData data) 
             throws InvalidArgumentException {
         checkInput(id, type);
         
@@ -63,7 +64,7 @@ public class Rec {
         registers.putIfAbsent(id, new Register());
 
         Register register = registers.get(id);        
-        register.setValue(type, value);
+        register.setData(type, data);
         debug(register);
 	}
 

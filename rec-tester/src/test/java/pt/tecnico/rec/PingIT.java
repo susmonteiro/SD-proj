@@ -2,6 +2,8 @@ package pt.tecnico.rec;
 
 import org.junit.jupiter.api.*;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -17,8 +19,9 @@ public class PingIT extends BaseIT {
 	@Test
 	public void pingOKTest() {
 		PingRequest request = PingRequest.newBuilder().setInput("friend").build();
-		PingResponse response = frontend.pingReplicated(request);
-		assertEquals("Hello friend!", response.getOutput().substring(0, 13));
+		List<PingResponse> responses = frontend.pingReplicated(request);
+		for (PingResponse r : responses)
+			assertEquals("Hello friend!", r.getOutput().substring(0, 13));
 	}
 
 	@Test

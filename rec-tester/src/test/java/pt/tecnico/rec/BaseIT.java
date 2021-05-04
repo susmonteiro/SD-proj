@@ -31,8 +31,7 @@ public class BaseIT {
 		final String zooHost = testProps.getProperty("server.zkhost");
 		final int zooPort = Integer.parseInt(testProps.getProperty("server.zkport"));
 		
-		frontend = new RecordFrontendReplicationWrapper(zooHost, zooPort);
-		System.out.println(frontend.getPath());
+		frontend = new RecordFrontendReplicationWrapper(zooHost, zooPort, 1);
 	}
 	
 	@AfterAll

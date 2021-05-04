@@ -21,15 +21,15 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 	/* Server Implementation */
 	private Hub hub;
 
-	public HubServerImpl(String zooHost, int zooPort, Map<String, User> users, Map<String, Station> stations) throws ZKNamingException {
+	public HubServerImpl(String zooHost, int zooPort, int instance_num, Map<String, User> users, Map<String, Station> stations) throws ZKNamingException {
 		super();
-		this.hub = new Hub(zooHost, zooPort, users, stations);
+		this.hub = new Hub(zooHost, zooPort, instance_num, users, stations);
 	}
 	
-	public HubServerImpl(String zooHost, int zooPort, Map<String, User> users, Map<String, Station> stations, boolean debug) throws ZKNamingException {
+	public HubServerImpl(String zooHost, int zooPort, int instance_num, Map<String, User> users, Map<String, Station> stations, boolean debug) throws ZKNamingException {
 		super();
 		this.DEBUG = debug;
-		this.hub = new Hub(zooHost, zooPort, users, stations, DEBUG);
+		this.hub = new Hub(zooHost, zooPort, instance_num, users, stations, DEBUG);
 	}
 
 	public void shutdown() {
