@@ -7,6 +7,8 @@ import org.junit.jupiter.api.*;
 
 import pt.tecnico.bicloin.hub.frontend.HubFrontend;
 
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
+
 
 public class BaseIT {
 
@@ -15,7 +17,7 @@ public class BaseIT {
         static HubFrontend frontend;
 
         @BeforeAll
-        public static void oneTimeSetup () throws IOException {
+        public static void oneTimeSetup () throws IOException, ZKNamingException {
                 testProps = new Properties();
 
                 try {

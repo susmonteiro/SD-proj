@@ -44,35 +44,34 @@ public class HubMain {
 		Server server = ServerBuilder.forPort(PORT).addService(impl).build();
 
 		// Register on ZooKeeper.
-		try {
-			debug("Contacting ZooKeeper at " + zooHost + ":" + zooPort);
-			zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
+		debug("Contacting ZooKeeper at " + zooHost + ":" + zooPort);
+		zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
 
-			debug("Binding " + server_path + " to " + IP + ":" + PORT);
-			zkNaming.rebind(server_path, IP, Integer.toString(PORT));
+		debug("Binding " + server_path + " to " + IP + ":" + PORT);
+		zkNaming.rebind(server_path, IP, Integer.toString(PORT));
+		
+		// Start the server.
+		server.start();
+
+		// Use hook to register a thread to be called on shutdown.
+		Runtime.getRuntime().addShutdownHook(new Unbind());
+
+		// Server threads are running in the background.
+		System.out.println("Server started");
+
+		// Create new thread where we wait for the user input.
+		new Thread(() -> {
+			System.out.println("<Press enter to shutdown>");
+			new Scanner(System.in).nextLine();
 			
-			// Start the server.
-			server.start();
-			// Server threads are running in the background.
-			System.out.println("Server started");
-
-			// Create new thread where we wait for the user input.
-			new Thread(() -> {
-				System.out.println("<Press enter to shutdown>");
-				new Scanner(System.in).nextLine();
-				
-				server.shutdown();
-			}).start();
-	
-			// Do not exit the main thread. Wait until server is terminated.
-			server.awaitTermination();
+			server.shutdown();
 			impl.shutdown();		// close runtime connections (Record frontend)			
-		} finally {
-			if (zkNaming != null) {
-				zkNaming.unbind(server_path, IP, Integer.toString(PORT));			
-			}
-		}
+			System.exit(0);
+		}).start();
 
+		// Do not exit the main thread. Wait until server is terminated.
+		server.awaitTermination();
+		impl.shutdown();		// close runtime connections (Record frontend)			
 	}
 
 	private static void parseArgs(String[] args) {
@@ -86,7 +85,7 @@ public class HubMain {
 		if (args.length < 7) {
 			System.err.println("Argument(s) missing!");
 			System.err.printf("Usage: java %s zooHost zooPort " + 
-				"IP PORT path users.csv stations.csv [initRec] %n", HubMain.class.getName());
+				"IP PORT instance_num users.csv stations.csv [initRec] %n", HubMain.class.getName());
 			System.exit(1);
 		}
 		
@@ -164,6 +163,25 @@ public class HubMain {
 	public static String path() {
 		return IP + ":" + PORT;
 	}	
+
+
+	/** 
+	 * Unbind class unbinds replica from ZKNaming after interruption.
+	 */
+	static class Unbind extends Thread {
+		public void run() {
+			if (zkNaming != null) {
+				try {
+					System.out.println("Unbinding " + server_path + " from ZooKeeper...");
+					zkNaming.unbind(server_path, IP, String.valueOf(PORT));
+				}
+			   	catch (ZKNamingException e) {
+					System.err.println("Could not close connection with ZooKeeper: " + e);
+					return;
+				}
+			}
+		}
+	}
 
 	/** Helper method to print debug messages. */
 	private static void debug(Object debugMessage) {

@@ -5,6 +5,7 @@ import io.grpc.StatusRuntimeException;
 
 import pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper;
 import static pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper.*;
+import static pt.tecnico.rec.frontend.MessageHelper.*;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 public class RecordTester {
@@ -23,7 +24,7 @@ public class RecordTester {
 		}
 
 		// check arguments
-		if (args.length < 3) {
+		if (args.length < 2) {
 			System.out.println("Argument(s) missing!");
 			System.out.printf("Usage: java %s host port%n", RecordTester.class.getName());
 			return;
@@ -37,10 +38,13 @@ public class RecordTester {
 
 		/* Ping */
 		pingTest("friend");
-		pingTest("");
+		// pingTest("");
 
 		/* Write */
-		// writeTest(registerIdDefault, getRegisterBalanceAsRegisterValue(0));
+		// frontend.setBalance(registerIdDefault, 12);
+		// writeTest(registerIdDefault, getRegisterBalanceAsRegisterValue(10));
+		// System.out.println(frontend.getBalance(registerIdDefault));
+		// frontend.setBalance(registerIdDefault, 20);
 		// writeTest(registerIdDefault, getRegisterOnBikeAsRegisterValue(true));
 		// writeTest(registerIdDefault, getRegisterNBikesAsRegisterValue(2));
 		// writeTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue(3));
@@ -52,6 +56,19 @@ public class RecordTester {
 		// readTest(registerIdDefault, getRegisterNBikesAsRegisterValue());
 		// readTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue());
 		// readTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue());
+
+
+		RegisterValue emptyVal = RegisterValue.newBuilder().build();
+        RegisterTag emptyTag = RegisterTag.newBuilder().build();
+        RegisterRequest request = getRegisterRequest("alice", emptyVal, emptyTag);
+
+		try {
+			frontend.writeReplicated(request);
+		} catch (StatusRuntimeException e) {
+/* 			System.out.println("@WBlaaariteTest:\nCaught exception with description: " +
+		e.getStatus().getDescription());*/
+			System.out.println("Oh rip we got an exception");
+		}
 
 		frontend.close();
 	}
@@ -69,21 +86,29 @@ public class RecordTester {
 		}
 	}
 
-	/* private static void writeTest(String registerId, RegisterValue value) {
+	private static void writeTest(String registerId, RegisterValue value) {
 		try{
 			RegisterRequest request = RegisterRequest.newBuilder()
 				.setId(registerId)
-				.setData(value)
+				.setData(RegisterData.newBuilder()
+					.setValue(value)
+					.setTag(RegisterTag.newBuilder()
+						.setSeqNumber(1)
+						.setClientID(1)
+						.build()
+					)
+					.build()
+				)
 				.build();
-			WriteResponse response = frontend.writeReplicated(request);
-			System.out.println("@WriteTest:\n" + response);
+			frontend.writeReplicated(request);
+			// System.out.println("@WriteTest:\n" + response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("@WriteTest:\nCaught exception with description: " +
 				e.getStatus().getDescription());
 		}
 	}
 
-	private static void readTest(String registerId, RegisterValue value) {
+	/*private static void readTest(String registerId, RegisterValue value) {
 		try{
 			RegisterRequest request = RegisterRequest.newBuilder()
 				.setId(registerId)

@@ -17,8 +17,8 @@
 	<properties>
 		<mainclass>pt.tecnico.bicloin.app.AppMain</mainclass>
 
-		<hub.port>8081</hub.port>
-		<hub.host>localhost</hub.host>
+		<zooPort>2181</zooPort>
+		<zooHost>localhost</zooHost>
 		<username>alice</username>
 		<phone>+35191102030</phone>
 		<latitude>38.7380</latitude>
@@ -100,8 +100,8 @@
 				<configuration>
 					<mainClass>${mainclass}</mainClass>
 					<arguments>
-						<argument>${hub.host}</argument>
-						<argument>${hub.port}</argument>
+						<argument>${zooHost}</argument>
+						<argument>${zooPort}</argument>
 						<argument>${username}</argument>
 						<argument>${phone}</argument>
 						<argument>${latitude}</argument>

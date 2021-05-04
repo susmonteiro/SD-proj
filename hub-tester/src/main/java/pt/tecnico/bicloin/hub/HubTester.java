@@ -2,6 +2,7 @@ package pt.tecnico.bicloin.hub;
 
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 import io.grpc.StatusRuntimeException;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 import pt.tecnico.bicloin.hub.frontend.HubFrontend;
 import static pt.tecnico.bicloin.hub.frontend.HubFrontend.*;
@@ -10,7 +11,7 @@ import static pt.tecnico.bicloin.hub.frontend.HubFrontend.*;
 public class HubTester {
 	private static HubFrontend frontend;
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ZKNamingException {
 		System.out.println(HubTester.class.getSimpleName());
 		
 		// receive and print arguments

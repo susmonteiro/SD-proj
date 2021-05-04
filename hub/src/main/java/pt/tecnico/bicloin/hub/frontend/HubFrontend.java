@@ -5,10 +5,16 @@ import io.grpc.ManagedChannelBuilder;
 import pt.tecnico.bicloin.hub.grpc.HubServiceGrpc;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
+import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
+import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
+
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
+
 import io.grpc.StatusRuntimeException;
 
 
 public class HubFrontend extends MessageHelper implements AutoCloseable {
+	private static final int DELAY = 10000; //10 seconds
 	private boolean DEBUG;
 
     private final ManagedChannel channel;
@@ -16,16 +22,33 @@ public class HubFrontend extends MessageHelper implements AutoCloseable {
 
 	public static final String ZOO_DIR = "/grpc/bicloin/hub";
 
-	public HubFrontend(String host, int port) {
+	public HubFrontend(String zooHost, int zooPort) throws ZKNamingException {
+		
+		ZKNaming zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
+		debug("Looking up " + ZOO_DIR + "...");
+		// there's only one or zero hubs
+		ZKRecord hub = zkNaming.listRecords(ZOO_DIR).stream().findFirst().orElse(null);
+		
+		// if no hubs were found, try again
+		while(hub == null) {
+			System.out.println("No Hubs found. Retrying in 10 secs...");
+			try { Thread.sleep(DELAY); }
+			catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+			hub = zkNaming.listRecords(ZOO_DIR).stream().findFirst().orElse(null);
+		}
+
+		String target = hub.getURI();
+
+		debug("Located server at " + target);
 		// Channel is the abstraction to connect to a service endpoint.
 		// Let us use plaintext communication because we do not have certificates.
-		this.channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
+		this.channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
 
 		// Create a blocking stub.
 		stub = HubServiceGrpc.newBlockingStub(channel);
 	}
 
-	public HubFrontend(String host, int port, boolean debug) {
+	public HubFrontend(String host, int port, boolean debug) throws ZKNamingException {
 		this(host, port);
 		DEBUG = debug;
 	}

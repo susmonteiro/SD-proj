@@ -143,180 +143,139 @@ Quando quiser sair da aplicação, introduza o comando 'exit'.
 Nesta secção vamos correr os comandos necessários para testar todas as operações do sistema.
 Cada subsecção é respetiva a cada operação presente no *hub*.
 
-### 2.1. *balance*
+Em qualquer momento, na sequência de qualquer comando, podem ocorrer 2 erros:
+- O Hub não conseguir comunicar com o Rec, o que resulta em: `ERRO - UNAVAILABLE:<mensagem_hub>`
+- A App não consegue comunicar com o Hub, o que resulta em: `ERRO - UNAVAILABLE:<mensagem_grpc>`
 
-- Caso normal: 
-    - Todas as validações passam:
-        - Hub responde com o valor. 
-        - App responde com `<username> <valor> BIC` 
+### 2.1 *balance*
+- casos normais:
 
-- Casos de erro:
-    1. Hub recebe id de utilizador inválido (não existe no ficheiro de utilizadores):
-        - Hub envia erro `INVALID_ARGUMENTS`. 
-        - App responde com `ERRO - INVALID_ARGUMENT:<mensagem_hub>`.
-    1. Hub não consegue comunicar com servidor de registos (Rec):
-        - Hub envia erro `UNAVAILABLE`.
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_hub>`.
-    1. App não consegue comunicar com o Hub:
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_grpc>`
+    ```> balance```
+
+    Devolve o balance do user: `alice 0 BIC`
+
+- casos de erro:
+    - caso o user usado para correr a app não esteja registado, é devolvido: `ERRO - INVALID_ARGUMENT:<mensagem_hub>`
 
 ### 2.2 *top-up*
+- casos normais:
 
-- Caso normal:
-    - Todas as validações passam:
-        - Hub responde com o novo valor.
-        - App responde com `<username> <valor> BIC` 
+    ```> top-up 10```
 
-- Casos de erro:
-    1. Hub recebe id de utilizador inválido (não existe no ficheiro de utilizadores):
-        - Hub envia erro `INVALID_ARGUMENTS`. 
-        - App responde com `ERRO - INVALID_ARGUMENT:<mensagem_hub>`.
-    1. Hub recebe número de telemóvel do utilizador que não corresponde com o registado:
-        - Hub envia erro `INVALID_ARGUMENTS`. 
-        - App responde com `ERRO - INVALID_ARGUMENT:<mensagem_hub>`.
-    1. Hub recebe valor a carregar inválido (obrigatoriamente entre 1-20):
-        - Hub envia erro `INVALID_ARGUMENTS`. 
-        - App responde com `ERRO - INVALID_ARGUMENT:<mensagem_hub>`.
-    1. Hub não consegue comunicar com servidor de registos (Rec):
-        - Hub envia erro `UNAVAILABLE`.
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_hub>`.
-    1. App não consegue comunicar com o Hub:
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_grpc>`
+    Devolve o balance atualizado do user: `alice 100 BIC`
 
-### 2.3 *info-station*
+- casos de erro:
+    - caso o user usado para correr a app não esteja registado, é devolvido: `ERRO - INVALID_ARGUMENT:<mensagem_hub>`
 
-- Caso normal 
-    - Todas as validações passam:
-        - Hub responde com toda a informação sobre a estação (nome, coordenadas, prémio e número de docas, bicicletas, levantamentos e entregas)
-        - App responde com `<StationName>, lat <latitude>, <longitude> long, <nDocas> docas, <reward> BIC prémio, <nBicycles> bicicletas, <nPickUps> levantamentos, <nDeliveries> devoluções.` 
+    - caso não seja introduzido um valor, ou este não seja um número, é devolvido: `ERRO - Argumentos incorretos para comando top-up!`
 
-- Casos de erro:
-    1. Hub recebe id de estação inválido (não existe no ficheiro de utilizadores):
-        - Hub envia erro `INVALID_ARGUMENTS`. 
-        - App responde com `ERRO - INVALID_ARGUMENT:<mensagem_hub>`.
-    1. Hub não consegue comunicar com servidor de registos (Rec):
-        - Hub envia erro `UNAVAILABLE`.
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_hub>`.
-    1. App não consegue comunicar com o Hub:
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_grpc>`
 
-### 2.4 *locate-station*
+### 2.3 *tag*
+- casos normais:
 
-- Caso normal 
-    - Todas as validações passam:
-        - Hub responde com o id das `k` estações mais próximas, sendo `k = min(valor pedido, número de estações existentes)`
-        - App responde com `<StationName>, lat <latitude>, <longitude> long, <nDocas> docas, <reward> BIC prémio, <nBicycles> bicicletas, a <distance> metros` 
+    ```> tag 38.7376 -9.3031 loc1```
 
-- Casos de erro:
-    1. Hub recebe um valor de latitude (-90,90) ou longitude (-180,180) inválido:
-        - Hub envia erro `INVALID_ARGUMENTS`. 
-        - App responde com `ERRO - INVALID_ARGUMENT:<mensagem_hub>`.
-    1. Hub recebe um `k` (número de estações a devolver) negativo:
-        - Hub envia erro `INVALID_ARGUMENTS`. 
-        - App responde com `ERRO - INVALID_ARGUMENT:<mensagem_hub>`.
-    1. Hub não consegue comunicar com servidor de registos (Rec):
-        - Hub envia erro `UNAVAILABLE`.
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_hub>`.
-    1. App não consegue comunicar com o Hub:
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_grpc>`
+    Devolve: `OK`
 
-### 2.5 *bike-up*
+- casos de erro:
+    - caso não seja introduzido algum dos valores ou este não seja coordenadas ou nome da tag: `ERRO - Argumentos incorretos para comando tag!`
 
-- Caso normal:
-    - Todas as validações passam:
-        - Hub responde com uma mensagem vazia.
-        - App responde com `OK`
+### 2.4 *move*
+- casos normais:
 
-- Casos de erro:
-    1. Hub recebe id de utilizador inválido (não existe no ficheiro de utilizadores):
-        - Hub envia erro `INVALID_ARGUMENTS`. 
-        - App responde com `ERRO - INVALID_ARGUMENT:<mensagem_hub>`.
-    1. Hub recebe coordenadas inválidas (valor invalido):
-        - Hub envia erro `INVALID_ARGUMENTS`. 
-        - App responde com `ERRO - INVALID_ARGUMENT:<mensagem_hub>`.
-    1. Hub recebe id da estação inválido (não existe no ficheiro de estações):
-        - Hub envia erro `INVALID_ARGUMENTS`. 
-        - App responde com `ERRO - INVALID_ARGUMENT:<mensagem_hub>`.
-    1. Hub recebe coordenadas do utilizador que estão muito longe da estação (distância de *haversine* superior a 200m):
-        - Hub envia erro `FAILED_PRECONDITION`. 
-        - App responde com `ERRO - FAILED_PRECONDITION:<mensagem_hub>`.
-    1. Hub recebe id de utilizador que já tem na sua posse uma bicicleta:
-        - Hub envia erro `FAILED_PRECONDITION`. 
-        - App responde com `ERRO - FAILED_PRECONDITION:<mensagem_hub>`.
-    1. Hub recebe id de utilizador que não possui saldo suficiente (pelo menos 10 Bics para levantar):
-        - Hub envia erro `FAILED_PRECONDITION`. 
-        - App responde com `ERRO - FAILED_PRECONDITION:<mensagem_hub>`.
-    1. Hub recebe id de uma estação que nao possui bicicletas disponíveis:
-        - Hub envia erro `FAILED_PRECONDITION`. 
-        - App responde com `ERRO - FAILED_PRECONDITION:<mensagem_hub>`.
-    1. Hub não consegue comunicar com servidor de registos (Rec):
-        - Hub envia erro `UNAVAILABLE`.
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_hub>`.
-    1. App não consegue comunicar com o Hub:
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_grpc>`
+    ```> move loc1```
 
-### 2.6 *bike-down*
+    Devolve a nova localização do utilizador: `alice em https://www.google.com/maps/place/38.7376,-9.3031`
 
-- Caso normal:
-    - Todas as validações passam:
-        - Hub responde com uma mensagem vazia.
-        - App responde com `OK`
+    ```> move 38.6867 -9.3117``` 
 
-- Casos de erro:
-    1. Hub recebe id de utilizador inválido (não existe no ficheiro de utilizadores):
-        - Hub envia erro `INVALID_ARGUMENTS`. 
-        - App responde com `ERRO - INVALID_ARGUMENT:<mensagem_hub>`.
-    1. Hub recebe coordenadas inválidas (valor invalido):
-        - Hub envia erro `INVALID_ARGUMENTS`. 
-        - App responde com `ERRO - INVALID_ARGUMENT:<mensagem_hub>`.
-    1. Hub recebe id da estação inválido (não existe no ficheiro de estações):
-        - Hub envia erro `INVALID_ARGUMENTS`. 
-        - App responde com `ERRO - INVALID_ARGUMENT:<mensagem_hub>`.
-    1. Hub recebe coordenadas do utilizador que estão muito longe da estação (distância de *haversine* superior a 200m):
-        - Hub envia erro `FAILED_PRECONDITION`. 
-        - App responde com `ERRO - FAILED_PRECONDITION:<mensagem_hub>`.
-    1. Hub recebe id de utilizador que não tem na sua posse uma bicicleta:
-        - Hub envia erro `FAILED_PRECONDITION`. 
-        - App responde com `ERRO - FAILED_PRECONDITION:<mensagem_hub>`.
-    1. Hub recebe id de uma estação que nao possui docas de estacionamento disponíveis:
-        - Hub envia erro `FAILED_PRECONDITION`. 
-        - App responde com `ERRO - FAILED_PRECONDITION:<mensagem_hub>`.
-    1. Hub não consegue comunicar com servidor de registos (Rec):
-        - Hub envia erro `UNAVAILABLE`.
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_hub>`.
-    1. App não consegue comunicar com o Hub:
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_grpc>`
+    Devolve a nova localização do utilizador: `alice em https://www.google.com/maps/place/38.6867,-9.3117`
 
-### 2.7 *ping*
+- casos de erro:
+    - caso não seja introduzido algum dos valores ou este não seja coordenadas ou nome da tag: `ERRO - Argumentos incorretos para comando move!`
 
-- caso normal:
-    - Todas as validações passam e a app consegue comunicar com o hub
-        - Hub responde com uma mensagem a identificar-se
-        - App responde com `<Mensagem de resposta do Hub>` 
+### 2.5 *at*
+- casos normais:
+    
+    ```> at```
 
-- Casos de erro:
-    1. Hub recebe um valor de input vazio
-        - Hub envia erro `INVALID_ARGUMENTS`. 
-        - App responde com `ERRO - INVALID_ARGUMENT:<mensagem_hub>`.
-    1. Hub não consegue comunicar com servidor de registos (Rec):
-        - Hub envia erro `UNAVAILABLE`.
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_hub>`.
-    1. App não consegue comunicar com o Hub:
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_grpc>`
+    Devolve a localização atual do utilizador: `alice em https://www.google.com/maps/place/38.7376,-9.3031`
 
-### 2.8 *sys-status*
+- casos de erro: não existem
 
-- caso normal:
-    - Todas as validações passam. App consegue comunicar com o hub e este, por sua vez, consegue comunicar com o rec
-        - Hub responde com a mensagem de greeting que recebeu do rec, à qual junta a sua própria mensagem
-        - App responde com `Path:<HubPath> Status:<HubStatus>` 
+### 2.6 *scan*
+- casos normais:
 
-- Casos de erro:
-    1. Hub não consegue comunicar com servidor de registos (Rec):
-        - Hub envia erro `UNAVAILABLE`.
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_hub>`.
-    1. App não consegue comunicar com o Hub:
-        - App responde com `ERRO - UNAVAILABLE:<mensagem_grpc>`
+    ```> scan 2```
+
+    Devolve a informação das 2 estações mais próximas: `istt, lat 38.7372, -9.3023 long, 20 docas, 4 BIC prémio, 12 bicicletas, a 218 metros`
+    `stao, lat 38.6867, -9.3124 long, 30 docas, 3 BIC prémio, 20 bicicletas, a 5805 metros`
+
+- casos de erro:
+    - caso não seja introduzido um número de estações, devolve: `ERRO - Argumentos incorretos para comando scan!`
+
+    - caso seja introduzido um número negativo, devolve: `ERRO - INVALID_ARGUMENT: Invalid number, please scan 0 or higher.`
+
+### 2.7 *info*
+- casos normais:
+
+    ```> info istt```
+
+    Devolve a informação da estação: `IST Taguspark, lat 38.7372, -9.3023 long, 20 docas, 4 BIC prémio, 12 bicicletas, 0 levantamentos, 0 devoluções.`
+
+- casos de erro:
+    - caso a estação não exista, devolve: `ERRO - INVALID_ARGUMENT: Invalid station.`
+
+    - caso não seja introduzido um identificador, devolve: `ERRO - Argumentos incorretos para comando info!`
+
+### 2.8 *bike-up*
+- casos normais:
+
+    ```> bike-up istt```
+
+    Devolve: `OK`
+
+- casos de erro:
+    - caso não seja introduzido um identificador de estação, devolve: `ERRO - Argumentos incorretos para comando bike-up!`
+
+    - caso a estação introduzida não exista, devolve: `ERRO - INVALID_ARGUMENT: Invalid station.`
+
+    - caso o utilizador já esteja numa bicicleta, devolve: `ERRO - FAILED_PRECONDITION: User already has a bicycle.`
+
+### 2.9 *bike-down*
+- casos normais:
+
+    ```> bike-down istt```
+
+    Devolve: `OK`
+
+- casos de erro:
+    - caso não seja introduzido um identificador de estação, devolve: `ERRO - Argumentos incorretos para comando bike-down!`
+
+    - caso a estação introduzida não exista, devolve: `ERRO - INVALID_ARGUMENT: Invalid station.`
+
+    - caso o utilizador não esteja numa bicicleta, devolve: `ERRO - FAILED_PRECONDITION: User doesnt have bicycle.`
+
+    - caso a estação seja demasiado longe, devolve: `ERRO - FAILED_PRECONDITION: User is too far away from station to request a bicycle.`
+
+### 2.10 *ping*
+- casos normais:
+
+    ```> ping ```
+
+    Devolve: `Hello alice! Im Hub 1 at localhost:8081`
+
+- casos de erro: não existem.
+
+### 2.11 *sys-status*
+- casos normais:
+
+    ```> sys-status ```
+
+    Devolve: `Path: localhost:8081 Status: true`
+    `Path: localhost:8091 Status: true`
+
+- casos de erro: não existem.
 
 ----
 

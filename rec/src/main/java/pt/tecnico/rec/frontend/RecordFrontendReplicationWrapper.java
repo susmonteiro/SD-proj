@@ -54,7 +54,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
         debug("#initReplicas\tZK 0 target: " + target);
         replicas.add(new RecordFrontend(target, DEADLINE_MS, true));
 
-        quorum = replicas.size()/2;
+        quorum = replicas.size()/2 + 1;
         debug("#initReplicas\tQuorum size: " + quorum);
     }
 
@@ -71,73 +71,85 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     }
     
     public void writeReplicated(RegisterRequest request) {
-        ResponseObserver<WriteResponse> collector = new ResponseObserver<WriteResponse>(this.quorum, DEBUG);
+        ResponseObserver<WriteResponse> collector = new ResponseObserver<WriteResponse>(this.quorum, this.replicas.size(), DEBUG);
 
         synchronized(collector) {
-            try {
-                for (RecordFrontend frontend : replicas)
-                    frontend.write(request, collector);
+            do {
+                try {
+                    for (RecordFrontend frontend : replicas)
+                        frontend.write(request, collector);
+                    
+                    collector.wait();
                 
-                collector.wait();
-            } catch(StatusRuntimeException e) {
-                // TODO Unavailable only in observer. Flag for zookeeper search again
-                if(Status.UNAVAILABLE.getCode() == e.getStatus().getCode() || Status.DEADLINE_EXCEEDED.getCode() == e.getStatus().getCode())
-                // TODO if unavailable find new path to frontend in zookeeper
-                    debug("#readReplicatedResponseObserver\tServer unreachable in: " + DEADLINE_MS + ". Exception:" + e.getStatus().getDescription());
-                throw e;
-            } catch(InterruptedException e) {
-                //TODO
-                e.printStackTrace();
-            }
+                } catch(InterruptedException e) {
+                    throw Status.ABORTED.withDescription("Read call was interrupted. Operation might not be totally processed (UKNOWN state)").asRuntimeException();
+                
+                } finally {
+                    if (collector.isReplicaDown()) {
+                        // TODO rebuild frontend replicas
+                    }
+                    if (collector.getLogicException() != null) { debug("throwing: " + collector.getLogicException()); throw collector.getLogicException(); }
+                }
+
+            } while(!collector.isQuorumMet());
+
         }
     }
 
-    public List<PingResponse> pingReplicated(PingRequest request) {
+    public List<PingResponse> pingReplicated(PingRequest request) throws StatusRuntimeException {
         // TODO logic
         // TODO
-        ResponseObserver<PingResponse> collector = new ResponseObserver<PingResponse>(replicas.size(), DEBUG);
-        ArrayList<PingResponse> responses;
+        ResponseObserver<PingResponse> collector = new ResponseObserver<PingResponse>(this.replicas.size(), this.replicas.size(), DEBUG);
+        List<PingResponse> responses;
         synchronized(collector) {
-            try {
-                replicas.get(0).ping(request, collector);
+            
+            do {
+                try {
+                    replicas.get(0).ping(request, collector);
 
-                collector.wait();
-            } catch(StatusRuntimeException e) {
-                // TODO Unavailable only in observer. Flag for zookeeper search again
-                if(Status.UNAVAILABLE.getCode() == e.getStatus().getCode() || Status.DEADLINE_EXCEEDED.getCode() == e.getStatus().getCode())
-                // TODO if unavailable find new path to frontend in zookeeper
-                    debug("#readReplicatedResponseObserver\tServer unreachable in: " + DEADLINE_MS + ". Exception:" + e.getStatus().getDescription());
-                throw e;
-            } catch(InterruptedException e) {
-                //TODO
-                e.printStackTrace();
-            }
-            //cause synchronization yooo
-            responses = new ArrayList<PingResponse>(collector.getResponses());
+                    collector.wait();
+                
+                } catch(InterruptedException e) {
+                    throw Status.ABORTED.withDescription("Read call was interrupted. Operation might not be totally processed (UKNOWN state)").asRuntimeException();
+                
+                } finally {
+                    if (collector.isReplicaDown()) {
+                        // TODO rebuild frontend replicas
+                    }
+                    if (collector.getLogicException() != null) { throw collector.getLogicException(); }
+                }
+
+            } while(!collector.isQuorumMet());
+
+            responses = collector.getResponses();
         }
         
         return responses;
     }
 
     private ResponseObserver<ReadResponse> readReplicatedResponseObserver(RegisterRequest request) throws StatusRuntimeException {
-        ResponseObserver<ReadResponse> collector = new ResponseObserver<ReadResponse>(this.quorum, DEBUG);
+        ResponseObserver<ReadResponse> collector = new ResponseObserver<ReadResponse>(this.quorum, this.replicas.size(), DEBUG);
 
         synchronized(collector) {
-            try {
-                for (RecordFrontend frontend : replicas)
-                    frontend.read(request, collector);
+            do {
+                try {
+                    for (RecordFrontend frontend : replicas)
+                        frontend.read(request, collector);
+                    
+                    collector.wait();
                 
-                collector.wait();
-            } catch(StatusRuntimeException e) {
-                // TODO Unavailable only in observer. Flag for zookeeper search again
-                if(Status.UNAVAILABLE.getCode() == e.getStatus().getCode() || Status.DEADLINE_EXCEEDED.getCode() == e.getStatus().getCode())
-                // TODO if unavailable find new path to frontend in zookeeper
-                    debug("#readReplicatedResponseObserver\tServer unreachable in: " + DEADLINE_MS + ". Exception:" + e.getStatus().getDescription());
-                throw e;
-            } catch(InterruptedException e) {
-                //TODO
-                e.printStackTrace();
-            }
+                } catch(InterruptedException e) {
+                    throw Status.ABORTED.withDescription("Read call was interrupted. Operation might not be totally processed (UKNOWN state)").asRuntimeException();
+                
+                } finally {
+                    if (collector.isReplicaDown()) {
+                        // TODO rebuild frontend replicas
+                    }
+                    if (collector.getLogicException() != null) { throw collector.getLogicException(); }
+                }
+
+            } while(!collector.isQuorumMet());
+
         }
 
         return collector;

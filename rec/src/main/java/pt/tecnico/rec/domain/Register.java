@@ -22,18 +22,26 @@ public class Register {
     }
 
     private RegisterData setDefault(RegisterValue.ValueCase type) {
+        debug("#setDefault");
         RegisterData defaultData = RegisterData.getDefaultInstance();
         this.setData(type, defaultData);
         return defaultData;
     }
 
     public RegisterData getData(RegisterValue.ValueCase type) {
+        debug("#getData");
         return register.containsKey(type) ? register.get(type) : setDefault(type);
     }
 
     public void setData(RegisterValue.ValueCase type, RegisterData data){
-        if (isTagNewer(data.getTag(), register.get(type).getTag()))
+        debug("#setData");
+        // if data didnt exist, immediately add to register
+        debug("Register constains this type of data? " + register.containsKey(type));
+        // if it exists but tag is newer, then update register
+        if (register.containsKey(type)) debug("Is the new tag more recent? " + isTagNewer(register.get(type).getTag(), data.getTag()));
+        if (!register.containsKey(type) || isTagNewer(register.get(type).getTag(), data.getTag())) {
             register.put(type, data);
+        }
     }
 
     @Override
@@ -41,7 +49,8 @@ public class Register {
         String output = "=== REGISTER CONTENT ===\n";
         for (Map.Entry<RegisterValue.ValueCase, RegisterData> entry : register.entrySet()) {
             output += "Type: " + entry.getKey() +
-                        "\n" + entry.getValue();
+                        "\nTag: " + entry.getValue().getTag() +
+                        "\nContent: " + entry.getValue().getValue();
         }
         return output;
     }

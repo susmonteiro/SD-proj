@@ -25,8 +25,8 @@ public class InfoStationIT extends BaseIT{
         DecimalFormat df = new DecimalFormat("#.####");
 
         assertEquals("Oceanário", response.getName());
-		assertEquals(Float.toString(38.7633f), df.format(response.getCoordinates().getLatitude()));
-		assertEquals(Float.toString(-9.0950f), df.format(response.getCoordinates().getLongitude()));
+		assertEquals("38.7633", df.format(response.getCoordinates().getLatitude()));
+		assertEquals("-9.095", df.format(response.getCoordinates().getLongitude()));
 		assertEquals(20, response.getNDocks());
 		assertEquals(2, response.getReward());
 		assertEquals(15, response.getNBicycles());

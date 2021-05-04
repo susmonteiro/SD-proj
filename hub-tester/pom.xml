@@ -20,7 +20,7 @@
 		<mainclass>pt.tecnico.bicloin.hub.HubTester</mainclass>
 
 		<hub.host>localhost</hub.host>
-		<hub.port>8081</hub.port>
+		<hub.port>2181</hub.port>
 	</properties>
 
 	<!-- Dependencies are code archives - JARs - on which your current module needs in order to compile, build, test, and/or to run. 

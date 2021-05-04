@@ -1,12 +1,14 @@
 package pt.tecnico.bicloin.app;
 
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
+
 
 public class AppMain {
 	private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 	
 
-	private static String hubIP;
-	private static int hubPORT;
+	private static String zooHost;
+	private static int zooPort;
 	private static String userID, userPhoneNumber;
 	private static float latitude, longitude;
 
@@ -17,15 +19,13 @@ public class AppMain {
 			System.err.println(debugMessage);
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ZKNamingException {
 		System.out.println(AppMain.class.getSimpleName());
 		
 		parseArgs(args);
 		
-		App app = new App(hubIP, hubPORT, userID, userPhoneNumber, latitude, longitude);
+		App app = new App(zooHost, zooPort, userID, userPhoneNumber, latitude, longitude);
 		app.start();
-		
-		
 	}
 
 	private static void parseArgs(String[] args) {
@@ -38,13 +38,13 @@ public class AppMain {
 		// Check arguments.
 		if (args.length < 6) {
 			System.err.println("Argument(s) missing!");
-			System.err.printf("Usage: java %s hubIP hubPORT " + 
+			System.err.printf("Usage: java %s zooHost zooPort " + 
 				"userID userPhoneNumber latitude longitude %n", AppMain.class.getName());
 			System.exit(1);
 		}
 		
-		hubIP = args[0];
-		hubPORT = Integer.parseInt(args[1]);
+		zooHost = args[0];
+		zooPort = Integer.parseInt(args[1]);
 		userID = args[2];
 		userPhoneNumber = args[3];
 		latitude = Float.parseFloat(args[4]);

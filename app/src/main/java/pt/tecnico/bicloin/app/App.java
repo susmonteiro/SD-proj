@@ -17,13 +17,14 @@ import pt.tecnico.bicloin.hub.frontend.HubFrontend;
 import pt.tecnico.bicloin.hub.grpc.Hub.*;
 
 import pt.tecnico.bicloin.hub.domain.exception.InvalidArgumentException;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 
 public class App {
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
-    private static String _host;
-    private static int _port;
+    private static String zooHost;
+    private static int zooPort;
     private static String _user, _phone;
     private static float _latitude, _longitude;
 
@@ -47,8 +48,8 @@ public class App {
         }
     }
     
-    public App(String hubIP, int hubPORT, String userID, String userPhoneNumber, 
-        float latitude, float longitude) {
+    public App(String zooHost, int zooPort, String userID, String userPhoneNumber, 
+        float latitude, float longitude) throws ZKNamingException {
 
         try {
             checkId(userID);
@@ -60,8 +61,8 @@ public class App {
             System.exit(1);	
         }
 
-        _host = hubIP;
-        _port = hubPORT;
+        this.zooHost = zooHost;
+        this.zooPort = zooPort;
         _user = userID;
         _phone = userPhoneNumber;
         _latitude = latitude;
@@ -69,7 +70,7 @@ public class App {
         
         _tags = new HashMap<String, Tag>();
 
-        hub = new HubFrontend(hubIP, hubPORT);
+        hub = new HubFrontend(zooHost, zooPort);
     }
 
     /** Helper method to print debug messages. */

@@ -17,11 +17,17 @@ public class Rec {
     }
 
     private void checkId(String id) throws InvalidIdException {
-        if (id == null || id.isBlank()) { throw new InvalidIdException(); }
+        if (id == null || id.isBlank()) { 
+            debug("!! Invalid id");
+            throw new InvalidIdException(); 
+        }
     }
 
     private void checkType(RegisterValue.ValueCase type) throws NoRegisterValueSetException {
-        if (type == RegisterValue.ValueCase.VALUE_NOT_SET) { throw new NoRegisterValueSetException(); }
+        if (type == RegisterValue.ValueCase.VALUE_NOT_SET) { 
+            debug("!! Value Case type not set");
+            throw new NoRegisterValueSetException(); 
+        }
     }
 
 
@@ -31,6 +37,7 @@ public class Rec {
     }
 
     private Register addNewRegister(String id) {
+        debug("#addNewRegister");
         Register register = new Register();
         registers.put(id, register);
         return register;
@@ -39,6 +46,8 @@ public class Rec {
 
     public RegisterData getRegister(String id, RegisterValue.ValueCase type) 
             throws InvalidArgumentException {
+        debug("=== READ OPERATION ===");
+        debug("#getRegister");
         checkInput(id, type);
 
         // TODO erase me 
@@ -58,6 +67,9 @@ public class Rec {
 
     public void setRegister(String id, RegisterValue.ValueCase type, RegisterData data) 
             throws InvalidArgumentException {
+        debug("=== WRITE OPERATION ===");
+        debug("#setRegister");
+        debug("> input:\t" + data);
         checkInput(id, type);
         
         // if registers doesnt exist, we add it atomically to registers
@@ -65,6 +77,7 @@ public class Rec {
 
         Register register = registers.get(id);        
         register.setData(type, data);
+        debug("> register after write operation");
         debug(register);
 	}
 
