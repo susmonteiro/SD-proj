@@ -61,6 +61,10 @@ public class RecordFrontend implements AutoCloseable {
 		return zkRecord.getPath();
 	}
 
+	public String getURI() {
+		return zkRecord.getURI();
+	}
+
 	public void read(RegisterRequest request, ResponseObserver<ReadResponse> collector) {
 		asyncStub.withDeadlineAfter(timeout, TimeUnit.MILLISECONDS).read(request, collector);
 	}

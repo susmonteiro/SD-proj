@@ -73,7 +73,7 @@ public class RecordMain {
 		if (args.length < 5) {
 			System.err.println("Argument(s) missing!");
 			System.err.printf("Usage: java %s zooHost zooPort " + 
-				"IP PORT server_path %n", RecordMain.class.getName());
+				"IP PORT instance_number %n", RecordMain.class.getName());
 			System.exit(1);
 		}
 		

@@ -83,6 +83,19 @@ _(descrição das trocas de mensagens)_
 
 ## Medições de desempenho
 
+**Rascunhooooo**
+
+Por cada escrita, ha' uma leitura para obter o numero de sequencia maximo 
+Por cada operacao, supondo que correm sem excecoes lancadas, tem-se:
+
+- balance: 1 leitura
+- top-up: 1 leitura (getBalance()), 1 escrita (setBalance()) 
+- infoStation: 3 leituras (getNBikes(), getNPickUps(), getNDeliviries())
+- locateStation: 0 leituras e 0 escritas
+- bikeUp: 4 leituras (getBalance(), getNBikes(), getNPickUps(), getOnBike()) e 4 escritas (setNBikes(), setNPickUps(), setBalance(), setOnBike())
+- bikeDown: 4 leituras (getBalance(), getNBikes(), getNDeliveries(), getOnBike()) e 4 escritas (setNBikes(), setNDeliveries(), setBalance(), setOnBike())
+
+
 _(Tabela-resumo)_
 
 _(explicação)_

@@ -13,12 +13,15 @@ import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
 
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import io.grpc.StatusRuntimeException;
+import static io.grpc.Status.UNAVAILABLE;
 
 public class RecordFrontendReplicationWrapper extends MessageHelper {
-    private static final int DELAY = 10000; // 10 seconds
     private boolean DEBUG = false;
-    public static final String ZOO_DIR = "/grpc/bicloin/rec";
+    private static final int DELAY = 10000; // 10 seconds
+    private static final int NTRIES_TO_TIMEOUT = 5;
     public static final int DEADLINE_MS = 2000;
+    public static final String ZOO_DIR = "/grpc/bicloin/rec";
+    
 
     private ZKNaming zkNaming;
     private List<RecordFrontend> replicas;
@@ -43,7 +46,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     public void close() {
         replicas.forEach((replica) -> replica.close()); 
     }
-    
+
     private void initReplicas() {
         // list lookup
         try {
@@ -52,17 +55,38 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
             // if no replicas were found, try again
             if (records.isEmpty()) { records = retryGetReplicas(); }
             
-            debug("#initReplicas\tZk records: " + records);
+            debug("#rebuildReplicas\tZk records: " + records);
             replicas = new ArrayList<RecordFrontend>();
             records.forEach((r) -> replicas.add(new RecordFrontend(r, DEADLINE_MS, this.DEBUG)));
                        
             quorum = replicas.size()/2 + 1;
-            debug("#initReplicas\tQuorum size: " + quorum);
+            debug("#rebuildReplicas\tQuorum size: " + quorum);
 
         } catch (ZKNamingException e) {
             e.printStackTrace();
             System.exit(1);
         }
+    }
+    
+    private void rebuildReplicas() {
+        // list lookup
+        List<RecordFrontend> updatedReplicas = new ArrayList<>();
+
+        for (RecordFrontend replica : replicas) {
+            try {
+                ZKRecord newRecord = zkNaming.lookup(replica.getPath());
+                if (newRecord.getURI() != replica.getURI()) {
+                    // the replica has a new ip and/or port
+                    replica.close();
+                    updatedReplicas.add(new RecordFrontend(newRecord, DEADLINE_MS, this.DEBUG));
+                } else {
+                    updatedReplicas.add(replica);   // keeping old one for target reference
+                }
+            } catch (ZKNamingException e) {
+                updatedReplicas.add(replica);       // keeping old one for target reference
+            }
+        }
+        replicas = updatedReplicas;                 // swap updated
     }
 
     private List<ZKRecord> retryGetReplicas() throws ZKNamingException {
@@ -90,7 +114,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     
     public void writeReplicated(RegisterRequest request) {
         
-        while(true) {
+        for(int i=0; i<NTRIES_TO_TIMEOUT; i++) {
             ResponseObserver<WriteResponse> collector = new ResponseObserver<WriteResponse>(this.quorum, this.replicas.size(), this.DEBUG);
             synchronized(collector) {
                 try {
@@ -102,18 +126,21 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
                     throw Status.ABORTED.withDescription("Write call was interrupted. Operation might not be totally processed (UKNOWN state)").asRuntimeException();
                 
                 } finally {
-                    if (collector.isReplicaDown()) { initReplicas(); /* rebuild frontend replicas */ }
+                    if (collector.isReplicaDown()) { rebuildReplicas(); /* rebuild frontend replicas */ }
                     if (collector.getLogicException() != null) { throw collector.getLogicException(); }
                 }
 
                 if (collector.isQuorumMet()) return;
             }
-        } 
+        }
+
+        // Tries exceeded
+        throw UNAVAILABLE.withDescription("Exceeded " + NTRIES_TO_TIMEOUT + " tries to process the request").asRuntimeException();
     }
 
     private ResponseObserver<ReadResponse> readReplicatedResponseObserver(RegisterRequest request) throws StatusRuntimeException {
 
-        while(true) {
+        for(int i=0; i<NTRIES_TO_TIMEOUT; i++) {
             ResponseObserver<ReadResponse> collector = new ResponseObserver<ReadResponse>(this.quorum, this.replicas.size(), this.DEBUG);
             synchronized(collector) {
                 try {
@@ -125,13 +152,16 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
                     throw Status.ABORTED.withDescription("Read call was interrupted. Operation might not be totally processed (UKNOWN state)").asRuntimeException();
                 
                 } finally {
-                    if (collector.isReplicaDown()) { initReplicas(); /* rebuild frontend replicas */ }
+                    if (collector.isReplicaDown()) { rebuildReplicas(); /* rebuild frontend replicas */ }
                     if (collector.getLogicException() != null) { throw collector.getLogicException(); }
                 }
 
                 if (collector.isQuorumMet()) return collector;
             }
-        } 
+        }
+        
+        // Tries exceeded
+        throw UNAVAILABLE.withDescription("Exceeded " + NTRIES_TO_TIMEOUT + " tries to process the request").asRuntimeException();
     }
 
     
@@ -372,7 +402,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     public Map<String, Boolean> getSysStatus() {
         debug("#getSysStatus");
         // Forcing discover of new Record Replicas
-        initReplicas();
+        rebuildReplicas();
 
         Map<String, Boolean> responses = new HashMap<String, Boolean>();
         for (RecordFrontend replica : replicas) {
