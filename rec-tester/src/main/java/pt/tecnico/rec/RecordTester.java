@@ -1,5 +1,7 @@
 package pt.tecnico.rec;
 
+import java.util.Map;
+
 import pt.tecnico.rec.grpc.Rec.*;
 import io.grpc.StatusRuntimeException;
 
@@ -37,48 +39,46 @@ public class RecordTester {
 		
 
 		/* Ping */
-		pingTest("friend");
-		// pingTest("");
+		int recInstanceToTest = 1;
+		frontend.getPing("friend", recInstanceToTest);
+		// frontend.getPing("", recInstanceToTest);
 
 		/* Write */
-		// frontend.setBalance(registerIdDefault, 12);
-		// writeTest(registerIdDefault, getRegisterBalanceAsRegisterValue(10));
-		// System.out.println(frontend.getBalance(registerIdDefault));
-		// frontend.setBalance(registerIdDefault, 20);
-		// writeTest(registerIdDefault, getRegisterOnBikeAsRegisterValue(true));
-		// writeTest(registerIdDefault, getRegisterNBikesAsRegisterValue(2));
-		// writeTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue(3));
-		// writeTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue(4));
+		frontend.setBalance(registerIdDefault, 10);
+		// frontend.setOnBike(registerIdDefault, true);
+		// frontend.setNBikes(registerIdDefault, 2);
+		// frontend.setNPickUps(registerIdDefault, 3);
+		// frontend.setNDeliveries(registerIdDefault, 4);
 
 		/* Read */
-		// readTest(registerIdDefault, getRegisterBalanceAsRegisterValue());
-		// readTest(registerIdDefault, getRegisterOnBikeAsRegisterValue());
-		// readTest(registerIdDefault, getRegisterNBikesAsRegisterValue());
-		// readTest(registerIdDefault, getRegisterNPickUpsAsRegisterValue());
-		// readTest(registerIdDefault, getRegisterNDeliveriesAsRegisterValue());
+		System.out.println("@ReadTest:\n" + frontend.getBalance(registerIdDefault));
+		// System.out.println("@ReadTest:\n" + frontend.getOnBike(registerIdDefault));
+		// System.out.println("@ReadTest:\n" + frontend.getNBikes(registerIdDefault));
+		// System.out.println("@ReadTest:\n" + frontend.getNPickUps(registerIdDefault));
+		// System.out.println("@ReadTest:\n" + frontend.getNDeliveries(registerIdDefault));
 
-
-		RegisterValue emptyVal = RegisterValue.newBuilder().build();
+		/* test for empty requests */
+		/* RegisterValue emptyVal = RegisterValue.newBuilder().build();
         RegisterTag emptyTag = RegisterTag.newBuilder().build();
         RegisterRequest request = getRegisterRequest("alice", emptyVal, emptyTag);
 
 		try {
 			frontend.writeReplicated(request);
 		} catch (StatusRuntimeException e) {
-/* 			System.out.println("@WBlaaariteTest:\nCaught exception with description: " +
-		e.getStatus().getDescription());*/
+			System.out.println("@WBlaaariteTest:\nCaught exception with description: " +
+		e.getStatus().getDescription());
 			System.out.println("Oh rip we got an exception");
-		}
-
+		} */
+		
 		frontend.close();
 	}
 	
 	/* ============== */
 	/* Method testing */
 
-	private static void pingTest(String in) {
+	/* private static void pingTest(String in) {
 		try{
-			String response = frontend.getPing(in);
+			PingResponse response = frontend.getPing(in, );
 			System.out.println("@PingTest:\n" + response);
 		} catch (StatusRuntimeException e) {
 			System.out.println("@PingTest:\nCaught exception with description: " +
@@ -107,7 +107,7 @@ public class RecordTester {
 				e.getStatus().getDescription());
 		}
 	}
-
+ */
 	/*private static void readTest(String registerId, RegisterValue value) {
 		try{
 			RegisterRequest request = RegisterRequest.newBuilder()

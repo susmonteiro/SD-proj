@@ -9,7 +9,7 @@ import pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 public class BaseIT {
-
+	public static int instance_num;
 	private static final String TEST_PROP_FILE = "/test.properties";
 	protected static Properties testProps;
 	public static RecordFrontendReplicationWrapper frontend;
@@ -22,7 +22,7 @@ public class BaseIT {
 			testProps.load(BaseIT.class.getResourceAsStream(TEST_PROP_FILE));
 			System.out.println("Test properties:");
 			System.out.println(testProps);
-		}catch (IOException e) {
+		} catch (IOException e) {
 			final String msg = String.format("Could not load properties file {}", TEST_PROP_FILE);
 			System.out.println(msg);
 			throw e;
@@ -30,6 +30,7 @@ public class BaseIT {
 
 		final String zooHost = testProps.getProperty("server.zkhost");
 		final int zooPort = Integer.parseInt(testProps.getProperty("server.zkport"));
+		instance_num = Integer.parseInt(testProps.getProperty("server.instance"));
 		
 		frontend = new RecordFrontendReplicationWrapper(zooHost, zooPort, 1);
 	}

@@ -7,7 +7,6 @@ import pt.tecnico.bicloin.hub.domain.*;
 
 import pt.tecnico.bicloin.hub.domain.exception.FailedPreconditionException;
 import pt.tecnico.bicloin.hub.domain.exception.InvalidArgumentException;
-import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import io.grpc.StatusRuntimeException;
 import static io.grpc.Status.INVALID_ARGUMENT;
 import static io.grpc.Status.UNAVAILABLE;
@@ -21,12 +20,12 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 	/* Server Implementation */
 	private Hub hub;
 
-	public HubServerImpl(String zooHost, int zooPort, int instance_num, Map<String, User> users, Map<String, Station> stations) throws ZKNamingException {
+	public HubServerImpl(String zooHost, int zooPort, int instance_num, Map<String, User> users, Map<String, Station> stations) {
 		super();
 		this.hub = new Hub(zooHost, zooPort, instance_num, users, stations);
 	}
 	
-	public HubServerImpl(String zooHost, int zooPort, int instance_num, Map<String, User> users, Map<String, Station> stations, boolean debug) throws ZKNamingException {
+	public HubServerImpl(String zooHost, int zooPort, int instance_num, Map<String, User> users, Map<String, Station> stations, boolean debug) {
 		super();
 		this.DEBUG = debug;
 		this.hub = new Hub(zooHost, zooPort, instance_num, users, stations, DEBUG);

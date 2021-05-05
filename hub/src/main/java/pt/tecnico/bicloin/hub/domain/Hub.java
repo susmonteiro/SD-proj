@@ -14,7 +14,6 @@ import pt.tecnico.rec.frontend.RecordFrontend;
 import pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper;
 import static pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper.*;
 
-import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.tecnico.bicloin.hub.domain.exception.*;
 import pt.tecnico.bicloin.hub.frontend.HubFrontend;
 import io.grpc.StatusRuntimeException;
@@ -31,13 +30,13 @@ public class Hub {
 
     private static final int EARTH_RADIUS = 6371;
 
-    public Hub(String zooHost, int zooPort, int instance_num, Map<String, User> users, Map<String, Station> stations) throws ZKNamingException {
+    public Hub(String zooHost, int zooPort, int instance_num, Map<String, User> users, Map<String, Station> stations) {
         this.users = users;
         this.stations = stations;
         rec = new RecordFrontendReplicationWrapper(zooHost, zooPort, instance_num);
     }
     
-    public Hub(String zooHost, int zooPort, int instance_num, Map<String, User> users, Map<String, Station> stations, boolean debug) throws ZKNamingException {
+    public Hub(String zooHost, int zooPort, int instance_num, Map<String, User> users, Map<String, Station> stations, boolean debug) {
         DEBUG = debug;
 
         this.users = users;
@@ -260,7 +259,6 @@ public class Hub {
     }
 
     public SysStatusResponse getAllServerStatus() {
-        // TODO zookeper integration
         SysStatusResponse.Builder serverResponse = SysStatusResponse.newBuilder();
         // Hub (Self)
         boolean status = true;
@@ -278,20 +276,18 @@ public class Hub {
         }
 
         serverResponse.addServerStatus(SysStatusResponse.StatusResponse.newBuilder()
-                .setPath(HubMain.path())
+                .setPath(HubMain.getPath())
                 .setStatus(status)
                 .build());
 
         // Rec
-        Rec.PingRequest request = Rec.PingRequest.newBuilder().setInput("Mama Miaaaa").build();
-        int i = 0;
-        SysStatusResponse.StatusResponse statusResponse;
-        for(Rec.PingResponse response : rec.pingReplicated(request)) {
-            statusResponse = SysStatusResponse.StatusResponse.newBuilder().setPath("path/" + i).setStatus(true).build();
-            serverResponse.addServerStatus(statusResponse);
-            i += 1;
-        }
-
+        rec.getSysStatus().forEach((rPath, rStatus) -> serverResponse.addServerStatus(
+            SysStatusResponse.StatusResponse.newBuilder()
+                .setPath(rPath)
+                .setStatus(rStatus)
+                .build()
+            )
+        );
 
         debug(serverResponse);
         return serverResponse.build();

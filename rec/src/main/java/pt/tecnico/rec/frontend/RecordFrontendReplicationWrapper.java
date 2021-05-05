@@ -2,6 +2,8 @@ package pt.tecnico.rec.frontend;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 import pt.tecnico.rec.grpc.Rec.*;
 import io.grpc.Status;
@@ -13,49 +15,65 @@ import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import io.grpc.StatusRuntimeException;
 
 public class RecordFrontendReplicationWrapper extends MessageHelper {
+    private static final int DELAY = 10000; // 10 seconds
     private boolean DEBUG = false;
     public static final String ZOO_DIR = "/grpc/bicloin/rec";
     public static final int DEADLINE_MS = 2000;
 
     private ZKNaming zkNaming;
-    private List<RecordFrontend> replicas = new ArrayList<RecordFrontend>();
+    private List<RecordFrontend> replicas;
     private int clientID;
     private int quorum;
     
-    public RecordFrontendReplicationWrapper(String zooHost, int zooPort, int cid) throws ZKNamingException {        
+    public RecordFrontendReplicationWrapper(String zooHost, int zooPort, int cid) {        
         this.clientID = cid;
-        initReplicas(zooHost, zooPort);
+        debug("#RecordFrontendReplicationWrapper\tContacting ZooKeeper at " + zooHost + ":" + zooPort);
+        zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
+        initReplicas();
     }
 
-    public RecordFrontendReplicationWrapper(String zooHost, int zooPort, int cid, boolean debug) throws ZKNamingException {
-        DEBUG = debug;
+    public RecordFrontendReplicationWrapper(String zooHost, int zooPort, int cid, boolean debug) {
+        this.DEBUG = debug;
         this.clientID = cid;
-        initReplicas(zooHost, zooPort);
+        debug("#RecordFrontendReplicationWrapper\tContacting ZooKeeper at " + zooHost + ":" + zooPort);
+        zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
+        initReplicas();
     }
 
     public void close() {
-        for (RecordFrontend frontend : replicas)
-            frontend.close();
+        replicas.forEach((replica) -> replica.close()); 
     }
     
-    private void initReplicas(String zooHost, int zooPort) throws ZKNamingException {
-        // find all replicas
-        // for todas as replicas
-            // criar frontend para essa replica
-            // guardar em lista de frontends
-            
-        debug("#initReplicas\tContacting ZooKeeper at " + zooHost + ":" + zooPort);
-        zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
-
+    private void initReplicas() {
         // list lookup
-        ArrayList<ZKRecord> records = new ArrayList<>(zkNaming.listRecords(ZOO_DIR));
-        debug("#initReplicas\tZk records: " + records);
-        String target = records.get(0).getURI();
-        debug("#initReplicas\tZK 0 target: " + target);
-        replicas.add(new RecordFrontend(target, DEADLINE_MS, true));
+        try {
+            List<ZKRecord> records = new ArrayList<>(zkNaming.listRecords(ZOO_DIR));
 
-        quorum = replicas.size()/2 + 1;
-        debug("#initReplicas\tQuorum size: " + quorum);
+            // if no replicas were found, try again
+            if (records.isEmpty()) { records = retryGetReplicas(); }
+            
+            debug("#initReplicas\tZk records: " + records);
+            replicas = new ArrayList<RecordFrontend>();
+            records.forEach((r) -> replicas.add(new RecordFrontend(r, DEADLINE_MS, this.DEBUG)));
+                       
+            quorum = replicas.size()/2 + 1;
+            debug("#initReplicas\tQuorum size: " + quorum);
+
+        } catch (ZKNamingException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    private List<ZKRecord> retryGetReplicas() throws ZKNamingException {
+        List<ZKRecord> records;
+        do {
+			System.out.println("No Recs found. Retrying in 10 secs...");
+			try { Thread.sleep(DELAY); }
+			catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            records = new ArrayList<>(zkNaming.listRecords(ZOO_DIR));
+        } while (records.isEmpty());
+        return records;
     }
 
     public List<RecordFrontend> getReplicas() {
@@ -71,88 +89,49 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     }
     
     public void writeReplicated(RegisterRequest request) {
-        ResponseObserver<WriteResponse> collector = new ResponseObserver<WriteResponse>(this.quorum, this.replicas.size(), DEBUG);
-
-        synchronized(collector) {
-            do {
+        
+        while(true) {
+            ResponseObserver<WriteResponse> collector = new ResponseObserver<WriteResponse>(this.quorum, this.replicas.size(), this.DEBUG);
+            synchronized(collector) {
                 try {
-                    for (RecordFrontend frontend : replicas)
-                        frontend.write(request, collector);
-                    
-                    collector.wait();
-                
-                } catch(InterruptedException e) {
-                    throw Status.ABORTED.withDescription("Read call was interrupted. Operation might not be totally processed (UKNOWN state)").asRuntimeException();
-                
-                } finally {
-                    if (collector.isReplicaDown()) {
-                        // TODO rebuild frontend replicas
-                    }
-                    if (collector.getLogicException() != null) { debug("throwing: " + collector.getLogicException()); throw collector.getLogicException(); }
-                }
-
-            } while(!collector.isQuorumMet());
-
-        }
-    }
-
-    public List<PingResponse> pingReplicated(PingRequest request) throws StatusRuntimeException {
-        // TODO logic
-        // TODO
-        ResponseObserver<PingResponse> collector = new ResponseObserver<PingResponse>(this.replicas.size(), this.replicas.size(), DEBUG);
-        List<PingResponse> responses;
-        synchronized(collector) {
-            
-            do {
-                try {
-                    replicas.get(0).ping(request, collector);
+                    replicas.forEach((replica) -> replica.write(request, collector));
 
                     collector.wait();
                 
                 } catch(InterruptedException e) {
-                    throw Status.ABORTED.withDescription("Read call was interrupted. Operation might not be totally processed (UKNOWN state)").asRuntimeException();
+                    throw Status.ABORTED.withDescription("Write call was interrupted. Operation might not be totally processed (UKNOWN state)").asRuntimeException();
                 
                 } finally {
-                    if (collector.isReplicaDown()) {
-                        // TODO rebuild frontend replicas
-                    }
+                    if (collector.isReplicaDown()) { initReplicas(); /* rebuild frontend replicas */ }
                     if (collector.getLogicException() != null) { throw collector.getLogicException(); }
                 }
 
-            } while(!collector.isQuorumMet());
-
-            responses = collector.getResponses();
-        }
-        
-        return responses;
+                if (collector.isQuorumMet()) return;
+            }
+        } 
     }
 
     private ResponseObserver<ReadResponse> readReplicatedResponseObserver(RegisterRequest request) throws StatusRuntimeException {
-        ResponseObserver<ReadResponse> collector = new ResponseObserver<ReadResponse>(this.quorum, this.replicas.size(), DEBUG);
 
-        synchronized(collector) {
-            do {
+        while(true) {
+            ResponseObserver<ReadResponse> collector = new ResponseObserver<ReadResponse>(this.quorum, this.replicas.size(), this.DEBUG);
+            synchronized(collector) {
                 try {
-                    for (RecordFrontend frontend : replicas)
-                        frontend.read(request, collector);
-                    
+                    replicas.forEach((replica) -> replica.read(request, collector));
+
                     collector.wait();
                 
                 } catch(InterruptedException e) {
                     throw Status.ABORTED.withDescription("Read call was interrupted. Operation might not be totally processed (UKNOWN state)").asRuntimeException();
                 
                 } finally {
-                    if (collector.isReplicaDown()) {
-                        // TODO rebuild frontend replicas
-                    }
+                    if (collector.isReplicaDown()) { initReplicas(); /* rebuild frontend replicas */ }
                     if (collector.getLogicException() != null) { throw collector.getLogicException(); }
                 }
 
-            } while(!collector.isQuorumMet());
-
-        }
-
-        return collector;
+                if (collector.isQuorumMet()) return collector;
+            }
+        } 
     }
 
     
@@ -362,25 +341,59 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
         setNDeliveries(id, getNDeliveriesDefaultValue());
     }
 
-
-	public String getPing(String input) throws StatusRuntimeException {
-        /* Use only with trusted id */
+    // ping is still a synchronous function
+    // no need to meet a quorum of responses (we want a specific replica to reply)
+	public String getPing(String input, RecordFrontend frontend) throws StatusRuntimeException {
         PingRequest request = getPingRequest(input);
         debug("#getPing\n**Request:\n" + request);
         
-        List<PingResponse> responses = pingReplicated(request);
-        debug("#getPing\n**Response:\n" + responses);
+        PingResponse response = frontend.ping(request);
+        debug("#getPing\n**Response:\n" + response);
         
-        String output = responses.get(0).getOutput();       // TODO change to send all, done this way to compile and not have to change Logic for now
+        String output = response.getOutput();       
         debug("#getPing\n**Value:\n" + output);
 
         return output;
     }
 
+    public String getPing(String input, int instance_num) throws StatusRuntimeException, ZKNamingException {
+		final ZKRecord target = zkNaming.lookup(ZOO_DIR + "/" + instance_num);
+
+        RecordFrontend frontend = new RecordFrontend(target, DEADLINE_MS, this.DEBUG);
+
+        String response = getPing(input, frontend);
+
+        frontend.close();
+        return response;
+    }
+
+
+
+    public Map<String, Boolean> getSysStatus() {
+        debug("#getSysStatus");
+        // Forcing discover of new Record Replicas
+        initReplicas();
+
+        Map<String, Boolean> responses = new HashMap<String, Boolean>();
+        for (RecordFrontend replica : replicas) {
+            boolean status = false;
+            try {
+                this.getPing("@sysStatus", replica);
+                status = true;
+            } catch (StatusRuntimeException e) {
+                // if StatusRuntimeException then server is down
+                status = false;
+            }
+            debug("Path: " + replica.getPath());
+            responses.put(replica.getPath(), status);
+        }
+
+        return responses;
+    }
 
    /** Helper method to print debug messages. */
    private void debug(Object debugMessage) {
-    if (DEBUG)
+    if (this.DEBUG)
         System.err.println("@RecordFrontendReplicationWrapper\t" +  debugMessage);
     }
 

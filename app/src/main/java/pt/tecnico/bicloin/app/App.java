@@ -363,7 +363,7 @@ public class App {
             SysStatusResponse response = hub.doSysStatusOperation();
             int len = response.getServerStatusList().size();
             for (int i=0; i<len; i++) {
-                boolean status = (response.getServerStatus(i).getStatus()) ? true : false; 
+                String status = (response.getServerStatus(i).getStatus()) ? "up" : "down"; 
                 System.out.println("Path: " + response.getServerStatus(i).getPath() +
                     " Status: " + status);
             }

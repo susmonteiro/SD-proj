@@ -32,7 +32,6 @@ _(que correções ou melhorias foram feitas ao código da primeira parte -- incl
 
 - [Passam a ser permitidas chamadas assíncronas com mecanismos de controlo de concorrência e tolerância a faltas](https://git.rnl.tecnico.ulisboa.pt/SD-20-21-2/A24-Bicloin/commit/961e691c9ed6d52ace18cd9e1894a1e367606c2a)(https://git.rnl.tecnico.ulisboa.pt/SD-20-21-2/A24-Bicloin/commit/5b432fcd693fd06ddbf1deb0aa0d0c5b785404d7)
 
-- [descrição da alteração](https://github.com/tecnico-distsys/CXX-Bicloin/commit/a70e690b3655e76a0a1e0ff1137c0cb28cfe26a7)
 
 
 ## Modelo de faltas
@@ -50,8 +49,20 @@ _(Breve explicação da solução, suportada pela figura anterior)_
 ## Protocolo de replicação
 
 _(Explicação do protocolo)_
+Segue-se uma abordagem de replicação ativa, implementando uma variante do protocolo registo distribuído coerente para coordenar as leituras e escritas concorrentes nas réplicas.
 
+Cada réplica guarda o valor do registo e uma tag composta por um seqNumber (número de sequência da escrita que deu origem à versão) e um clientID (identificador do cliente que escreveu essa versão). Uma tag é mais recente do que outra se o seu seqNumber for maior ou, caso os seqNumber sejam iguais, se o seu clientID for maior.
+ 
 _(descrição das trocas de mensagens)_
+
+**Leituras**
+1.1 Cliente envia um read() para todas as réplicas.
+1.2 Aguarda por respostas de um quórum (N/2 + 1 respostas).
+1.3 Retorna o valor que recebeu associado à maior tag.
+2.1 Cada réplica ao receber um read() responde com o valor do registo e a tag.
+
+**Escritas**
+
 
 ## Medições de desempenho
 

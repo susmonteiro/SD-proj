@@ -10,6 +10,7 @@ import java.util.Scanner;
 import java.util.Map;
 import java.util.HashMap;
 
+import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
@@ -27,6 +28,8 @@ public class HubMain {
 	private static String usersFile, stationsFile;
 	private static boolean initRec = false;
 
+	private static HubServerImpl impl;
+	private static Server server;
 	private static ZKNaming zkNaming = null;
 
 	public static void main(String[] args) throws IOException, InterruptedException, ZKNamingException {
@@ -35,13 +38,13 @@ public class HubMain {
 		parseArgs(args);
 
 		// Initialize service (and Load data)
-		final HubServerImpl impl = new HubServerImpl(zooHost, zooPort, instance_num, parseUsers(usersFile), parseStations(stationsFile), DEBUG);
+		impl = new HubServerImpl(zooHost, zooPort, instance_num, parseUsers(usersFile), parseStations(stationsFile), DEBUG);
 
 		// Initilize register in Record
 		if (initRec) impl.getHub().initializeRec();
 
 		// Create a new server to listen on port.
-		Server server = ServerBuilder.forPort(PORT).addService(impl).build();
+		server = ServerBuilder.forPort(PORT).addService((BindableService)impl).build();
 
 		// Register on ZooKeeper.
 		debug("Contacting ZooKeeper at " + zooHost + ":" + zooPort);
@@ -54,7 +57,7 @@ public class HubMain {
 		server.start();
 
 		// Use hook to register a thread to be called on shutdown.
-		Runtime.getRuntime().addShutdownHook(new Unbind());
+		Runtime.getRuntime().addShutdownHook(new CleanUp());
 
 		// Server threads are running in the background.
 		System.out.println("Server started");
@@ -64,14 +67,11 @@ public class HubMain {
 			System.out.println("<Press enter to shutdown>");
 			new Scanner(System.in).nextLine();
 			
-			server.shutdown();
-			impl.shutdown();		// close runtime connections (Record frontend)			
 			System.exit(0);
 		}).start();
 
 		// Do not exit the main thread. Wait until server is terminated.
 		server.awaitTermination();
-		impl.shutdown();		// close runtime connections (Record frontend)			
 	}
 
 	private static void parseArgs(String[] args) {
@@ -157,19 +157,21 @@ public class HubMain {
 	}
 	
 	public static String identity() {
-		return "Im Hub " + instance_num + " at " + server_path; 
+		return "Im Hub " + instance_num + " at " + getPath(); 
 	}
 	
-	public static String path() {
-		return IP + ":" + PORT;
+	public static String getPath() {
+		return server_path;
 	}	
 
 
 	/** 
-	 * Unbind class unbinds replica from ZKNaming after interruption.
+	 * Clean up method 
 	 */
-	static class Unbind extends Thread {
+	static class CleanUp extends Thread {
 		public void run() {
+			server.shutdown();
+			impl.shutdown();		// close runtime connections (Record frontend)			
 			if (zkNaming != null) {
 				try {
 					System.out.println("Unbinding " + server_path + " from ZooKeeper...");
