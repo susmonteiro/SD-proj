@@ -79,9 +79,11 @@ public class Hub {
     public AmountResponse balance(String id) throws StatusRuntimeException, InvalidUserException {
         checkUser(id);
     
-        return AmountResponse.newBuilder()
-            .setBalance(rec.getBalance(id))
-            .build();
+        synchronized(users.get(id)) {           // prevent read of concurrent write
+            return AmountResponse.newBuilder()
+                .setBalance(rec.getBalance(id))
+                .build();
+        }
     }
 
     public AmountResponse topUp(String id, int value, String phoneNumber) 
@@ -118,9 +120,15 @@ public class Hub {
         int nDocks = station.getNDocks();
         int reward = station.getReward();
 
-        int availableBikes = rec.getNBikes(stationId);
-        int nPickUps = rec.getNPickUps(stationId); 
-        int nDeliveries = rec.getNDeliveries(stationId); 
+        int availableBikes;
+        int nPickUps;
+        int nDeliveries;
+
+        synchronized(stations.get(stationId)) {     // prevent read of concurrent write
+            availableBikes = rec.getNBikes(stationId);
+            nPickUps = rec.getNPickUps(stationId); 
+            nDeliveries = rec.getNDeliveries(stationId); 
+        }
 
         InfoStationResponse response = InfoStationResponse.newBuilder()
             .setCoordinates(Coordinates.newBuilder()
@@ -270,7 +278,7 @@ public class Hub {
                 e.getStatus().getDescription());
             status = false;     // log on error
         } catch (InvalidArgumentException e) { 
-            // This should not happen
+            // This should not happen, local function call
             debug("#GetAllServerStatus:\nCaught exception with description: " +
                 e.getMessage());
         }
