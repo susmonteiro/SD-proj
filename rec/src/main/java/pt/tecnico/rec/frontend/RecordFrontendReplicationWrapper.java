@@ -13,11 +13,11 @@ import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
 
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import io.grpc.StatusRuntimeException;
-import static io.grpc.Status.UNAVAILABLE;
 
 public class RecordFrontendReplicationWrapper extends MessageHelper {
     private boolean DEBUG = false;
     private static final int DELAY = 10000; // 10 seconds
+    private static final float READ_FRACTION = 1/3f;
     public static final int DEADLINE_MS = 2000;
     public static final String ZOO_DIR = "/grpc/bicloin/rec";
     
@@ -25,7 +25,8 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     private ZKNaming zkNaming;
     private List<RecordFrontend> replicas;
     private int clientID;
-    private int quorum;
+    private int readQuorum;
+    private int writeQuorum;
     private PerformanceLogger logger = new PerformanceLogger();
 
     public RecordFrontendReplicationWrapper(String zooHost, int zooPort, int cid) {        
@@ -41,6 +42,10 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
         debug("#RecordFrontendReplicationWrapper\tContacting ZooKeeper at " + zooHost + ":" + zooPort);
         zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
         initReplicas();
+    }
+    
+    public List<RecordFrontend> getReplicas() {
+        return replicas;
     }
 
     public void close() {
@@ -60,13 +65,32 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
             replicas = new ArrayList<RecordFrontend>();
             records.forEach((r) -> replicas.add(new RecordFrontend(r, DEADLINE_MS, this.DEBUG)));
                        
-            quorum = replicas.size()/2 + 1;
-            debug("#initReplicas\tQuorum size: " + quorum);
+            /* readQuorum = (int)(replicas.size()*READ_FRACTION) + 1;
+            writeQuorum = replicas.size() - readQuorum + 1; */
+
+            readQuorum = replicas.size()/2 + 1;
+            writeQuorum = replicas.size()/2 + 1;
+
+            /* readQuorum = 1;
+            writeQuorum = replicas.size(); */
+
+            debug("#initReplicas\tQuorum for read: " + readQuorum + "\tQuorum for write: " + writeQuorum);
 
         } catch (ZKNamingException e) {
             e.printStackTrace();
             System.exit(1);
         }
+    }
+   
+    private List<ZKRecord> retryGetReplicas() throws ZKNamingException {
+        List<ZKRecord> records;
+        do {
+            System.out.println("No Recs found. Retrying in 10 secs...");
+            try { Thread.sleep(DELAY); }
+            catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            records = new ArrayList<>(zkNaming.listRecords(ZOO_DIR));
+        } while (records.isEmpty());
+        return records;
     }
     
     /**
@@ -93,21 +117,6 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
         replicas = updatedReplicas;                 // swap updated
     }
 
-    private List<ZKRecord> retryGetReplicas() throws ZKNamingException {
-        List<ZKRecord> records;
-        do {
-			System.out.println("No Recs found. Retrying in 10 secs...");
-			try { Thread.sleep(DELAY); }
-			catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-            records = new ArrayList<>(zkNaming.listRecords(ZOO_DIR));
-        } while (records.isEmpty());
-        return records;
-    }
-
-    public List<RecordFrontend> getReplicas() {
-        return replicas;
-    }
-
     /* Replication Logic */
     /* ================= */
 
@@ -120,11 +129,13 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
         int loggerId = 0;
         if (DEBUG) { loggerId = logger.startWrite(); }      // logging performance
 
+        ResponseObserver<WriteResponse> collector;
         while(true) {   // block waiting for successful write 
-            ResponseObserver<WriteResponse> collector = new ResponseObserver<WriteResponse>(this.quorum, this.replicas.size(), this.DEBUG);
+            collector = new ResponseObserver<WriteResponse>(this.writeQuorum, this.replicas.size(), this.DEBUG);
             synchronized(collector) {
                 try {
-                    replicas.forEach((replica) -> replica.write(request, collector));
+                    for (RecordFrontend replica : replicas) 
+                        replica.write(request, collector);
 
                     collector.wait();
                 
@@ -149,7 +160,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
 
         ResponseObserver<ReadResponse> collector;
         while(true) {   // block waiting for successful read
-            collector = new ResponseObserver<ReadResponse>(this.quorum, this.replicas.size(), this.DEBUG);
+            collector = new ResponseObserver<ReadResponse>(this.readQuorum, this.replicas.size(), this.DEBUG);
             synchronized(collector) {
                 try {
                     for (RecordFrontend replica : replicas) 
@@ -431,9 +442,10 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     }
 
    /** Helper method to print debug messages. */
-   private void debug(Object debugMessage) {
+   public void debug(Object debugMessage) {
     if (this.DEBUG)
         System.err.println("@RecordFrontendReplicationWrapper\t" +  debugMessage);
     }
+
 
 }

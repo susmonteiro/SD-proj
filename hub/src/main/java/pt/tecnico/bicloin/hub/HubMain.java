@@ -20,6 +20,7 @@ import pt.tecnico.bicloin.hub.domain.*;
 
 public class HubMain {
 	private static final boolean DEBUG = (System.getProperty("debug") != null);
+	private static final boolean DEBUG_TEST = (System.getProperty("debugDemo") != null);
 	private static final int USER_FILE_FIELDS = 3;
 	private static final int STATION_FILE_FIELDS = 7;
 	
@@ -28,14 +29,26 @@ public class HubMain {
 	private static String usersFile, stationsFile;
 	private static boolean initRec = false;
 
-	private static HubServerImpl impl;
-	private static Server server;
+	private static HubServerImpl impl = null;
+	private static Server server = null;
 	private static ZKNaming zkNaming = null;
 
 	public static void main(String[] args) throws IOException, InterruptedException, ZKNamingException {
 		System.out.println(HubMain.class.getSimpleName());
+
+		// Use hook to register a thread to be called on shutdown.
+		Runtime.getRuntime().addShutdownHook(new CleanUp());
+
+		// Create new thread where we wait for the user input.
+		new Thread(() -> {
+			System.out.println("<Press enter to shutdown>");
+			new Scanner(System.in).nextLine();
+			
+			System.exit(0);
+		}).start();
 		
 		parseArgs(args);
+		debugDemo("Hub " + instance_num + " starting...");
 
 		// Initialize service (and Load data)
 		impl = new HubServerImpl(zooHost, zooPort, instance_num, parseUsers(usersFile), parseStations(stationsFile), DEBUG);
@@ -47,28 +60,17 @@ public class HubMain {
 		server = ServerBuilder.forPort(PORT).addService((BindableService)impl).build();
 
 		// Register on ZooKeeper.
-		debug("Contacting ZooKeeper at " + zooHost + ":" + zooPort);
+		debugDemo("Contacting ZooKeeper at " + zooHost + ":" + zooPort);
 		zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
 
-		debug("Binding " + server_path + " to " + IP + ":" + PORT);
+		debugDemo("Binding " + server_path + " to " + IP + ":" + PORT);
 		zkNaming.rebind(server_path, IP, Integer.toString(PORT));
 		
 		// Start the server.
 		server.start();
 
-		// Use hook to register a thread to be called on shutdown.
-		Runtime.getRuntime().addShutdownHook(new CleanUp());
-
 		// Server threads are running in the background.
 		System.out.println("Server started");
-
-		// Create new thread where we wait for the user input.
-		new Thread(() -> {
-			System.out.println("<Press enter to shutdown>");
-			new Scanner(System.in).nextLine();
-			
-			System.exit(0);
-		}).start();
 
 		// Do not exit the main thread. Wait until server is terminated.
 		server.awaitTermination();
@@ -170,8 +172,8 @@ public class HubMain {
 	 */
 	static class CleanUp extends Thread {
 		public void run() {
-			server.shutdown();
-			impl.shutdown();		// close runtime connections (Record frontend)			
+			if(server != null)	{ server.shutdown(); }
+			if(impl != null)	{ impl.shutdown();	}		// close runtime connections (Record frontend)			
 			if (zkNaming != null) {
 				try {
 					System.out.println("Unbinding " + server_path + " from ZooKeeper...");
@@ -186,8 +188,13 @@ public class HubMain {
 	}
 
 	/** Helper method to print debug messages. */
-	private static void debug(Object debugMessage) {
+	public static void debug(Object debugMessage) {
 		if (DEBUG)
 			System.err.println("@HubMain\t" + debugMessage);
+	}
+
+	public static void debugDemo(Object debugMessage) {
+		if (DEBUG_TEST || DEBUG)
+			System.err.println(debugMessage);
 	}
 }

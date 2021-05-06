@@ -43,7 +43,7 @@ public class PerformanceLogger {
         writeTimes.remove(1);
 
         /* Compute Read */
-        String readLog = "\t**Reads**\n" + "Number of reads: " + readTimes.size() + "\n";
+        String readLog = "\t**Reads**\n" + "Number of reads: " + readTimes.size() + "\t" + "(" + ((double)readTimes.size()/((double)readTimes.size() + (double)writeTimes.size()))*100 + "% of all Ops)\n";
         String readValues = "Values: [";
         double sumAllReads = 0;
         for (Map.Entry<Integer, Long> entry : readTimes.entrySet()) {
@@ -52,12 +52,13 @@ public class PerformanceLogger {
             sumAllReads += time;
             readValues += time + ", ";
         }
-        readValues.substring(0, readValues.length() - 2);   // remove ", " from end
-        readLog += "Average time taken: " + (sumAllReads/readTimes.size()) + "\n";
+        readValues = readValues.substring(0, readValues.length() - 2) + "]";   // remove ", " from end
+        double readAvg = (sumAllReads/readTimes.size());
+        readLog += "Average time taken: " + readAvg + "\n";
         readLog += readValues;
-
+        
         /* Compute Write */
-        String writeLog = "\t**Writes**\n" + "Number of writes: " + writeTimes.size() + "\n";
+        String writeLog = "\t**Writes**\n" + "Number of writes: " + writeTimes.size() + "\t" + "(" + ((double)writeTimes.size()/((double)readTimes.size() + (double)writeTimes.size()))*100 + "% of all Ops)\n";
         String writeValues = "Values: [";
         double sumAllWrites = 0;
         for (Map.Entry<Integer, Long> entry : writeTimes.entrySet()) {
@@ -66,11 +67,14 @@ public class PerformanceLogger {
             sumAllWrites += time;
             writeValues += time + ", ";
         }
-        writeValues.substring(0, writeValues.length() - 2);   // remove ", " from end
-        writeLog += "Average time taken: " + (sumAllWrites/writeTimes.size()) + "\n";
+        writeValues = writeValues.substring(0, writeValues.length() - 2) + "]";   // remove ", " from end
+        double writeAvg = (sumAllWrites/writeTimes.size());
+        writeLog += "Average time taken: " + writeAvg + "\n";
         writeLog += writeValues;
-
-        results = results + readLog + "\n" + writeLog + "\n$=$\n\tPerformance Logger Results.\n$=$\n";
+        
+        results = results + readLog + "\n" + writeLog + "\n" ;
+        results += "Total time taken in Ops: " + (sumAllReads + sumAllWrites) + "\n";
+        results += "\n$=$\n\tPerformance Logger Results.\n$=$\n";
         return results;
     }
 }

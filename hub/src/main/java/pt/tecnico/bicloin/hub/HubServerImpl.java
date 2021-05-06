@@ -12,6 +12,8 @@ import static io.grpc.Status.INVALID_ARGUMENT;
 import static io.grpc.Status.UNAVAILABLE;
 import static io.grpc.Status.FAILED_PRECONDITION;
 
+import static pt.tecnico.bicloin.hub.HubMain.debugDemo;
+
 import java.util.Map;
 
 public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
@@ -43,20 +45,26 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 		String id = request.getUserId();
 
 		try{
+			debugDemo("===\tBALANCE REQUEST\t===");
+
 			AmountResponse response = hub.balance(id);
 		
+			debugDemo("> Sending data\n" + response + "\n");
+
 			responseObserver.onNext(response);
 			responseObserver.onCompleted();
 
 		} catch (InvalidArgumentException e) {
+			debugDemo("> Sending exception INVALID_ARGUMENT - " + e.getMessage() + "\n");
+
 			responseObserver.onError(INVALID_ARGUMENT
 				.withDescription(e.getMessage()).asRuntimeException());
-			debug("Got exception:" + e);
 
 		} catch (StatusRuntimeException e) {
+			debugDemo("> Sending exception UNAVAILABLE - " + e.getMessage() + "\n");
+
 			responseObserver.onError(UNAVAILABLE
 				.withDescription("Request could not be processed.").asRuntimeException());
-			debug("Got exception:" + e.getStatus().getDescription());
 		}
 		
 	}
@@ -68,20 +76,26 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 		String phoneNumber = request.getPhoneNumber();
 
 		try{
+			debugDemo("===\tTOP UP REQUEST\t===");
+
 			AmountResponse response = hub.topUp(id, value, phoneNumber);
+
+			debugDemo("> Sending data\n" + response + "\n");
 		
 			responseObserver.onNext(response);
 			responseObserver.onCompleted();
 
 		} catch (InvalidArgumentException e) {
+			debugDemo("> Sending exception INVALID_ARGUMENT - " + e.getMessage() + "\n");
+
 			responseObserver.onError(INVALID_ARGUMENT
 				.withDescription(e.getMessage()).asRuntimeException());
-			debug("Got exception:" + e);
 
 		} catch (StatusRuntimeException e) {
+			debugDemo("> Sending exception UNAVAILABLE - " + e.getMessage() + "\n");
+
 			responseObserver.onError(UNAVAILABLE
 				.withDescription("Request could not be processed.").asRuntimeException());
-			debug("Got exception:" + e.getStatus().getDescription());
 		} 
 	}
 
@@ -90,18 +104,24 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 		String stationId = request.getStationId();
 
 		try{
+			debugDemo("===\tINFO STATION REQUEST\t===");
+
 			InfoStationResponse response = hub.infoStation(stationId);	
+
+			debugDemo("> Sending data\n" + response + "\n");
 
 			responseObserver.onNext(response);
 			responseObserver.onCompleted();
 		} catch (InvalidArgumentException e) {
+			debugDemo("> Sending exception INVALID_ARGUMENT - " + e.getMessage() + "\n");
+
 			responseObserver.onError(INVALID_ARGUMENT
 				.withDescription(e.getMessage()).asRuntimeException());
-			debug("@HubServerImpl Got exception:" + e);
 		} catch (StatusRuntimeException e) {
+			debugDemo("> Sending exception UNAVAILABLE - " + e.getMessage() + "\n");
+
 			responseObserver.onError(UNAVAILABLE
 				.withDescription("Request could not be processed.").asRuntimeException());
-			debug("@HubServerImpl Got exception:" + e.getStatus().getDescription());
 		}
 	}
 
@@ -113,24 +133,31 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 		String stationId = request.getStationId();
 
 		try{
+			debugDemo("===\tBIKE UP REQUEST\t===");
+
 			BikeResponse response = hub.bikeUp(userId, latitude, longitude, stationId);
+			
+			debugDemo("> Sending data\n" + response + "\n");
 
 			responseObserver.onNext(response);
 			responseObserver.onCompleted();
 
 		} catch (InvalidArgumentException e) {
+			debugDemo("> Sending exception INVALID_ARGUMENT - " + e.getMessage() + "\n");
+
 			responseObserver.onError(INVALID_ARGUMENT
 				.withDescription(e.getMessage()).asRuntimeException());
-			debug("Got exception:" + e);
 
 		} catch (FailedPreconditionException e) {
+			debugDemo("> Sending exception FAILED_PRECONDITION - " + e.getMessage() + "\n");
+
 			responseObserver.onError(FAILED_PRECONDITION
 				.withDescription(e.getMessage()).asRuntimeException());
-			debug("Got exception:" + e);
 		} catch (StatusRuntimeException e) {
+			debugDemo("> Sending exception UNAVAILABLE - " + e.getMessage() + "\n");
+
 			responseObserver.onError(UNAVAILABLE
 				.withDescription("Request could not be processed.").asRuntimeException());
-			debug("Got exception:" + e.getStatus().getDescription());
 		}
 	}
 
@@ -142,21 +169,26 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 		String stationId = request.getStationId();
 
 		try{
+			debugDemo("===\tBIKE DOWN REQUEST\t===");
+
 			BikeResponse response = hub.bikeDown(userId, latitude, longitude, stationId);
+
+			debugDemo("> Sending data\n" + response + "\n");
 
 			responseObserver.onNext(response);
 			responseObserver.onCompleted();
 
 		} catch (InvalidArgumentException e) {
+			debugDemo("> Sending exception INVALID_ARGUMENT - " + e.getMessage() + "\n");
+
 			responseObserver.onError(INVALID_ARGUMENT
 				.withDescription(e.getMessage()).asRuntimeException());
-			debug("Got exception:" + e);
 
 		} catch (FailedPreconditionException e) {
+			debugDemo("> Sending exception FAILED_PRECONDITION - " + e.getMessage() + "\n");
+
 			responseObserver.onError(FAILED_PRECONDITION
 				.withDescription(e.getMessage()).asRuntimeException());
-			debug("Got exception:" + e);
-
 		}
 	}
 
@@ -167,18 +199,24 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 		float longitude = request.getCoordinates().getLongitude();
 
 		try{
-			LocateStationResponse response = hub.locateStation(latitude, longitude, stations);	
+			debugDemo("===\tLOCATE STATION REQUEST\t===");
+
+			LocateStationResponse response = hub.locateStation(latitude, longitude, stations);
+			
+			debugDemo("> Sending data\n" + response + "\n");
 
 			responseObserver.onNext(response);
 			responseObserver.onCompleted();
 		} catch (InvalidArgumentException e) {
+			debugDemo("> Sending exception INVALID_ARGUMENT - " + e.getMessage() + "\n");
+
 			responseObserver.onError(INVALID_ARGUMENT
 				.withDescription(e.getMessage()).asRuntimeException());
-			debug("@HubServerImpl Got exception:" + e);
 		} catch (StatusRuntimeException e) {
+			debugDemo("> Sending exception UNAVAILABLE - " + e.getMessage() + "\n");
+
 			responseObserver.onError(UNAVAILABLE
 				.withDescription("Request could not be processed.").asRuntimeException());
-			debug("@HubServerImpl Got exception:" + e.getStatus().getDescription());
 		}
 	}
 
@@ -187,26 +225,33 @@ public class HubServerImpl extends HubServiceGrpc.HubServiceImplBase {
 		String input = request.getInput();
 		
 		try{
+			debugDemo("===\tPING REQUEST\t===");
+
 			PingResponse response = hub.ping(input);	
+
+			debugDemo("> Sending data\n" + response + "\n");
 
 			responseObserver.onNext(response);
 			responseObserver.onCompleted();
 		} catch (InvalidArgumentException e) {
+			debugDemo("> Sending exception INVALID_ARGUMENT - " + e.getMessage() + "\n");
+
 			responseObserver.onError(INVALID_ARGUMENT
 				.withDescription(e.getMessage()).asRuntimeException());
-			debug("@HubServerImpl Got exception:" + e);
 		}
 	}
 
 	@Override
 	public void sysStatus(SysStatusRequest request, StreamObserver<SysStatusResponse> responseObserver) {
+		debugDemo("===\tSYSTEM STATUS REQUEST\t===");
+
 		responseObserver.onNext(hub.getAllServerStatus());
 		responseObserver.onCompleted();
 	}
 
 
 	/** Helper method to print debug messages. */
-	private void debug(Object debugMessage) {
+	public void debug(Object debugMessage) {
 		if (DEBUG)
 			System.err.println("@HubServerImpl\t" +  debugMessage);
 	}

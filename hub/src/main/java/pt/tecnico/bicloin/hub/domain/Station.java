@@ -52,22 +52,22 @@ public class Station {
     /* =========== */
     
     public static void checkId(String id) throws InvalidArgumentException {
-        if (id.length() != 4)  throw new InvalidArgumentException("ID " + id + " is invalid.\nID needs to have 4 chars.");
+        if (id.length() != 4)  throw new InvalidArgumentException("ID " + id + " is invalid. ID needs to have 4 chars.");
     }
     public static void checkLatitude(float latitude) throws InvalidArgumentException {
-        if (latitude < -90 || latitude > 90) throw new InvalidArgumentException("Latitude " + latitude + " is invalid\n.Latitude has to be between -90 and 90.");
+        if (latitude < -90 || latitude > 90) throw new InvalidArgumentException("Latitude " + latitude + " is invalid. Latitude has to be between -90 and 90.");
     }
     public static void checkLongitude(float longitude) throws InvalidArgumentException {
-        if (longitude < -180 || longitude > 180) throw new InvalidArgumentException("Longitude " + longitude + " is invalid\n.Longitude has to be between -180 and 180.");
+        if (longitude < -180 || longitude > 180) throw new InvalidArgumentException("Longitude " + longitude + " is invalid. Longitude has to be between -180 and 180.");
     }
     public static void checkNDocks(int nDocks) throws InvalidArgumentException {
-        if (nDocks < 0) throw new InvalidArgumentException("Number of Docks " + nDocks + " is invalid.\nNumber of Docks cannot be negative.");    
+        if (nDocks < 0) throw new InvalidArgumentException("Number of Docks " + nDocks + " is invalid. Number of Docks cannot be negative.");    
     }
     public static void checkNBicycles(int nBicycles, int nDocks) throws InvalidArgumentException {
-        if (nBicycles < 0 || nBicycles > nDocks) throw new InvalidArgumentException("Number of Bicycles " + nBicycles + " is invalid.\nNumber of Bicycles cannot be negative or higher than the Number of Docks.");
+        if (nBicycles < 0 || nBicycles > nDocks) throw new InvalidArgumentException("Number of Bicycles " + nBicycles + " is invalid. Number of Bicycles cannot be negative or higher than the Number of Docks.");
     }
     public static void checkReward(int reward) throws InvalidArgumentException {
-        if (reward < 0) throw new InvalidArgumentException("Reward " + reward + " is invalid.\nReward has to be positive.");
+        if (reward < 0) throw new InvalidArgumentException("Reward " + reward + " is invalid. Reward has to be positive.");
     }
         
 

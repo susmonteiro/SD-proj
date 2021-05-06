@@ -19,19 +19,31 @@ public class RecordMain {
 	private static String zooHost, IP, server_path;
 	private static int zooPort, PORT, instance_num;
 	/** ZooKeeper helper object. */
+	private static Server server = null;
 	private static ZKNaming zkNaming = null;
 
 
 	public static void main(String[] args) throws IOException, InterruptedException, ZKNamingException {
 		System.out.println(RecordMain.class.getSimpleName());
-		
+
+		// Use hook to register a thread to be called on shutdown.
+		Runtime.getRuntime().addShutdownHook(new Unbind());
+
+		// Create new thread where we wait for the user input.
+		new Thread(() -> {
+			System.out.println("<Press enter to shutdown>");
+			new Scanner(System.in).nextLine();
+			
+			System.exit(0);
+		}).start();
+
 		parseArgs(args);
 		debugDemo("Replica " + instance_num + " starting...");
 
 		final BindableService impl = new RecordServerImpl();
 
 		// Create a new server to listen on port.
-		Server server = ServerBuilder.forPort(PORT).addService(impl).build();
+		server = ServerBuilder.forPort(PORT).addService(impl).build();
 		
 		// Register on ZooKeeper.
 		debugDemo("Contacting ZooKeeper at " + zooHost + ":" + zooPort);
@@ -42,26 +54,12 @@ public class RecordMain {
 		
 		// Start the server.
 		server.start();
-
-		// Use hook to register a thread to be called on shutdown.
-		Runtime.getRuntime().addShutdownHook(new Unbind());
-
-
+		
 		// Server threads are running in the background.
 		System.out.println("Server started");
 
-		// Create new thread where we wait for the user input.
-		new Thread(() -> {
-			System.out.println("<Press enter to shutdown>");
-			new Scanner(System.in).nextLine();
-			
-			server.shutdown();
-			System.exit(0);
-		}).start();
-
 		// Do not exit the main thread. Wait until server is terminated.
 		server.awaitTermination();
-		System.exit(0);
 	}
 
 	public static void parseArgs(String[] args) {
@@ -97,6 +95,7 @@ public class RecordMain {
 	 */
 	static class Unbind extends Thread {
 		public void run() {
+			if(server != null)	{ server.shutdown(); }
 			if (zkNaming != null) {
 				try {
 					System.out.println("Unbinding " + server_path + " from ZooKeeper...");

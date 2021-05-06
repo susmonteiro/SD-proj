@@ -167,7 +167,7 @@ public class HubFrontend extends MessageHelper implements AutoCloseable {
 
 
 	/** Helper method to print debug messages. */
-	private void debug(Object debugMessage) {
+	public void debug(Object debugMessage) {
 		if (DEBUG)
 			System.err.println(debugMessage);
 	}

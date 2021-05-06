@@ -31,19 +31,19 @@ public class User {
     }
 
     public static void checkId(String id) throws InvalidArgumentException {
-        if (id.length() < 3 || id.length() > 10) throw new InvalidArgumentException("ID " + id + " is invalid.\nID has to be between 3 and 10 characters.");
+        if (id.length() < 3 || id.length() > 10) throw new InvalidArgumentException("ID " + id + " is invalid. ID has to be between 3 and 10 characters.");
     }
     public static void checkName(String name) throws InvalidArgumentException {
-        if (name.length() > 30) throw new InvalidArgumentException("Name " + name + " is invalid\n.Name cannot have more than 30 characters.");
+        if (name.length() > 30) throw new InvalidArgumentException("Name " + name + " is invalid. Name cannot have more than 30 characters.");
     }
     public static void checkPhoneNumber(String phoneNumber) throws InvalidArgumentException {
-        if (!phoneNumber.startsWith("+")) throw new InvalidArgumentException("Phone number " + phoneNumber + " is invalid.\nPhone number has to contain a country code}.");
+        if (!phoneNumber.startsWith("+")) throw new InvalidArgumentException("Phone number " + phoneNumber + " is invalid. Phone number has to contain a country code}.");
     }
     public static void checkLatitude(float latitude) throws InvalidArgumentException {
-        if (latitude < -90 || latitude > 90) throw new InvalidArgumentException("Latitude " + latitude + " is invalid\n.Latitude has to be between -90 and 90.");
+        if (latitude < -90 || latitude > 90) throw new InvalidArgumentException("Latitude " + latitude + " is invalid. Latitude has to be between -90 and 90.");
     }
     public static void checkLongitude(float longitude) throws InvalidArgumentException {
-        if (longitude < -180 || longitude > 180) throw new InvalidArgumentException("Longitude " + longitude + " is invalid\n.Longitude has to be between -180 and 180.");
+        if (longitude < -180 || longitude > 180) throw new InvalidArgumentException("Longitude " + longitude + " is invalid. Longitude has to be between -180 and 180.");
     }
 
     public String getId() { return _id; }
