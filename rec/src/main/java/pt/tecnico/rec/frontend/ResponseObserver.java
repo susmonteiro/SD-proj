@@ -26,9 +26,8 @@ public class ResponseObserver<R> implements StreamObserver<R> {
     
     @Override
     public void onNext(R r) {
-        debug("Received response: " + r);
         synchronized(this) {
-            debug("Adding response");
+            debug("+++ Adding response " + r);
             this.responses.add(r);
             this.totalResponses++;
         }
@@ -36,29 +35,25 @@ public class ResponseObserver<R> implements StreamObserver<R> {
 
     @Override
     public void onError(Throwable throwable) {
-        debug("Received error: " + throwable);
         Status status = Status.fromThrowable(throwable);
-        debug("Status error received: " + status);
+        debug("Status error received: " + status.getCode());
 
-        debug("Status code received: " + status.getCode()
-            + "check if is UNAVAILABLE OR DEADLINE_EXCEEDED: " +
-            (status.getCode() == Status.UNAVAILABLE.getCode() 
-            || status.getCode() == Status.DEADLINE_EXCEEDED.getCode()));
-        
         synchronized(this) {
             this.totalResponses++;
             // Mark connection error for handling after 
             if (status.getCode() == Status.UNAVAILABLE.getCode() 
                 || status.getCode() == Status.DEADLINE_EXCEEDED.getCode()) {
+                
+                debug("!!! Server connection error logged.");
                 this.replicaDown = true;
                 // this check is needed if the last answer is a error (which means onCompleted() is not called)
                 if (totalResponses == totalReplicas) {
-                    debug("Notify waiting");
+                    debug("=== End of ");
                     this.notifyAll();
                 }
-                debug("Server connection error logged.");
-            } else {
-                debug("Server connection error logged.");
+
+            } else {    // Domain logic exception, stored for re-throw
+                debug("=== Server *Logic* error logged. Stored for re-throwing.");
                 logicException = status.asRuntimeException();
                 this.notifyAll();
             }
@@ -67,19 +62,19 @@ public class ResponseObserver<R> implements StreamObserver<R> {
 
     @Override
     public void onCompleted() {
-        debug("Request completed");
         synchronized(this) {
-            debug("Checking responses size");
             if (responses.size() == goal || totalResponses == totalReplicas) {
-                debug("Notify waiting");
+                debug("=== Finish receiving wanted messages, notify waiting");
                 this.notifyAll();
             }
         }
     }
 
+    /**
+     * @Warn Only use this inside syncronized block
+    **/
     public List<R> getResponses() {
-        // copy prevents synchronization issues, we only add new elements
-        return new ArrayList<R>(responses);
+        return responses;
     }
 
     public StatusRuntimeException getLogicException() {
@@ -99,6 +94,6 @@ public class ResponseObserver<R> implements StreamObserver<R> {
     /** Helper method to print debug messages. */
 	public static void debug(Object debugMessage) {
 		if (DEBUG)
-			System.err.println("@ResponseObserver" + debugMessage);
+			System.err.println("@ResponseObserver\t" + debugMessage);
 	}
 }

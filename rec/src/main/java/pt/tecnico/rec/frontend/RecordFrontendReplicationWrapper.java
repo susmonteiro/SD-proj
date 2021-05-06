@@ -18,7 +18,6 @@ import static io.grpc.Status.UNAVAILABLE;
 public class RecordFrontendReplicationWrapper extends MessageHelper {
     private boolean DEBUG = false;
     private static final int DELAY = 10000; // 10 seconds
-    private static final int NTRIES_TO_TIMEOUT = 5;
     public static final int DEADLINE_MS = 2000;
     public static final String ZOO_DIR = "/grpc/bicloin/rec";
     
@@ -27,7 +26,8 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     private List<RecordFrontend> replicas;
     private int clientID;
     private int quorum;
-    
+    private PerformanceLogger logger = new PerformanceLogger();
+
     public RecordFrontendReplicationWrapper(String zooHost, int zooPort, int cid) {        
         this.clientID = cid;
         debug("#RecordFrontendReplicationWrapper\tContacting ZooKeeper at " + zooHost + ":" + zooPort);
@@ -44,7 +44,8 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     }
 
     public void close() {
-        replicas.forEach((replica) -> replica.close()); 
+        replicas.forEach((replica) -> replica.close());
+        debug(logger.computeResults());     // print performance results
     }
 
     private void initReplicas() {
@@ -55,12 +56,12 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
             // if no replicas were found, try again
             if (records.isEmpty()) { records = retryGetReplicas(); }
             
-            debug("#rebuildReplicas\tZk records: " + records);
+            debug("#initReplicas\tZk records: " + records);
             replicas = new ArrayList<RecordFrontend>();
             records.forEach((r) -> replicas.add(new RecordFrontend(r, DEADLINE_MS, this.DEBUG)));
                        
             quorum = replicas.size()/2 + 1;
-            debug("#rebuildReplicas\tQuorum size: " + quorum);
+            debug("#initReplicas\tQuorum size: " + quorum);
 
         } catch (ZKNamingException e) {
             e.printStackTrace();
@@ -68,6 +69,9 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
         }
     }
     
+    /**
+     *  Look for the same replicas that might have a new location (but same path)  
+     */
     private void rebuildReplicas() {
         // list lookup
         List<RecordFrontend> updatedReplicas = new ArrayList<>();
@@ -113,8 +117,10 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     }
     
     public void writeReplicated(RegisterRequest request) {
-        
-        for(int i=0; i<NTRIES_TO_TIMEOUT; i++) {
+        int loggerId = 0;
+        if (DEBUG) { loggerId = logger.startWrite(); }      // logging performance
+
+        while(true) {   // block waiting for successful write 
             ResponseObserver<WriteResponse> collector = new ResponseObserver<WriteResponse>(this.quorum, this.replicas.size(), this.DEBUG);
             synchronized(collector) {
                 try {
@@ -130,38 +136,41 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
                     if (collector.getLogicException() != null) { throw collector.getLogicException(); }
                 }
 
-                if (collector.isQuorumMet()) return;
+                if (collector.isQuorumMet()) break;
             }
         }
 
-        // Tries exceeded
-        throw UNAVAILABLE.withDescription("Exceeded " + NTRIES_TO_TIMEOUT + " tries to process the request").asRuntimeException();
+        if (DEBUG && loggerId!=0) { logger.stopWrite(loggerId); }      // logging performance
     }
 
     private ResponseObserver<ReadResponse> readReplicatedResponseObserver(RegisterRequest request) throws StatusRuntimeException {
+        int loggerId = 0;
+        if (DEBUG) { loggerId = logger.startRead(); }      // logging performance
 
-        for(int i=0; i<NTRIES_TO_TIMEOUT; i++) {
-            ResponseObserver<ReadResponse> collector = new ResponseObserver<ReadResponse>(this.quorum, this.replicas.size(), this.DEBUG);
+        ResponseObserver<ReadResponse> collector;
+        while(true) {   // block waiting for successful read
+            collector = new ResponseObserver<ReadResponse>(this.quorum, this.replicas.size(), this.DEBUG);
             synchronized(collector) {
                 try {
-                    replicas.forEach((replica) -> replica.read(request, collector));
+                    for (RecordFrontend replica : replicas) 
+                        replica.read(request, collector);
 
                     collector.wait();
                 
                 } catch(InterruptedException e) {
-                    throw Status.ABORTED.withDescription("Read call was interrupted. Operation might not be totally processed (UKNOWN state)").asRuntimeException();
+                    throw Status.ABORTED.withDescription("Read call was interrupted. Operation might not be totally processed (UNKNOWN state)").asRuntimeException();
                 
                 } finally {
                     if (collector.isReplicaDown()) { rebuildReplicas(); /* rebuild frontend replicas */ }
                     if (collector.getLogicException() != null) { throw collector.getLogicException(); }
                 }
 
-                if (collector.isQuorumMet()) return collector;
+                if (collector.isQuorumMet()) break;
             }
         }
-        
-        // Tries exceeded
-        throw UNAVAILABLE.withDescription("Exceeded " + NTRIES_TO_TIMEOUT + " tries to process the request").asRuntimeException();
+
+        if (DEBUG && loggerId!=0) { logger.stopRead(loggerId); }      // logging performance
+        return collector;
     }
 
     

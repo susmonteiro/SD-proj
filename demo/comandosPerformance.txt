@@ -1,0 +1,207 @@
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
+top-up 10
+tag 38.7372 -9.3024 start
+move start
+scan 3
+bike-up istt
+balance
+info istt
+bike-down istt
+
