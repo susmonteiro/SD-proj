@@ -9,6 +9,9 @@ import pt.tecnico.rec.domain.exception.InvalidArgumentException;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
 
+import static pt.tecnico.rec.RecordMain.debugDemo;
+
+
 public class RecordServerImpl extends RecordServiceGrpc.RecordServiceImplBase {
 
 	private final Rec rec = new Rec();
@@ -18,14 +21,20 @@ public class RecordServerImpl extends RecordServiceGrpc.RecordServiceImplBase {
 		String id = request.getId();
 		RegisterValue.ValueCase type = request.getData().getValue().getValueCase();
 		try {
+			debugDemo("===\tREAD REQUEST\t===");
+			debugDemo("> Received " + type + " read request");
+
 			RegisterData data = rec.getRegister(id, type);
 
 			ReadResponse response = ReadResponse.newBuilder().setData(data).build();
 			
+			debugDemo("> Sending data\n" + data.getValue() + "\n");
+
 			responseObserver.onNext(response);
 			responseObserver.onCompleted();
 
 		} catch (InvalidArgumentException e) {
+			debugDemo("> Sending exception INVALID_ARGUMENT - " + e.getMessage() + "\n");
 			responseObserver.onError(INVALID_ARGUMENT
 				.withDescription(e.getMessage()).asRuntimeException());
 		}
@@ -38,13 +47,20 @@ public class RecordServerImpl extends RecordServiceGrpc.RecordServiceImplBase {
 		RegisterValue.ValueCase type = data.getValue().getValueCase();
 
 		try {
+			debugDemo("===\tWRITE REQUEST\t===");
+			debugDemo("> Received data\n" + data.getValue());
+
 			rec.setRegister(id, type, data);
 
 			WriteResponse response = WriteResponse.getDefaultInstance();
+
+			debugDemo("> Sending write ACK...\n");
+
 			responseObserver.onNext(response);
 			responseObserver.onCompleted();
 
 		} catch (InvalidArgumentException e) {
+			debugDemo("> Sending exception INVALID_ARGUMENT - " + e.getMessage() + "\n");
 			responseObserver.onError(INVALID_ARGUMENT
 				.withDescription(e.getMessage()).asRuntimeException());
 		}	

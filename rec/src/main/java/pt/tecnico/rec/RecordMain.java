@@ -15,6 +15,7 @@ import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 public class RecordMain {
 	private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
+	private static final boolean DEBUG_TEST = (System.getProperty("debugDemo") != null);
 	private static String zooHost, IP, server_path;
 	private static int zooPort, PORT, instance_num;
 	/** ZooKeeper helper object. */
@@ -25,6 +26,7 @@ public class RecordMain {
 		System.out.println(RecordMain.class.getSimpleName());
 		
 		parseArgs(args);
+		debugDemo("Replica " + instance_num + " starting...");
 
 		final BindableService impl = new RecordServerImpl();
 
@@ -32,10 +34,10 @@ public class RecordMain {
 		Server server = ServerBuilder.forPort(PORT).addService(impl).build();
 		
 		// Register on ZooKeeper.
-		debug("Contacting ZooKeeper at " + zooHost + ":" + zooPort);
+		debugDemo("Contacting ZooKeeper at " + zooHost + ":" + zooPort);
 		zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
 
-		debug("Binding " + server_path + " to " + IP + ":" + PORT);
+		debugDemo("Binding " + server_path + " to " + IP + ":" + PORT);
 		zkNaming.rebind(server_path, IP, Integer.toString(PORT));
 		
 		// Start the server.
@@ -113,5 +115,9 @@ public class RecordMain {
 		if (DEBUG_FLAG)
 			System.err.println(debugMessage);
 	}
-	
+
+	public static void debugDemo(Object debugMessage) {
+		if (DEBUG_TEST || DEBUG_FLAG)
+			System.err.println(debugMessage);
+	}	
 }

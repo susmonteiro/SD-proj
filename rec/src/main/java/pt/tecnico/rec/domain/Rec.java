@@ -49,15 +49,6 @@ public class Rec {
         debug("=== READ OPERATION ===");
         debug("#getRegister");
         checkInput(id, type);
-
-        // TODO erase me 
-        /* debug("Sleeping");
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        debug("Finished sleeping"); */
         
         Register register = registers.containsKey(id) ? registers.get(id) : addNewRegister(id);
 

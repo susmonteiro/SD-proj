@@ -39,6 +39,7 @@ public class Register {
         debug("Register constains this type of data? " + register.containsKey(type));
         // if it exists but tag is newer, then update register
         if (register.containsKey(type)) debug("Is the new tag more recent? " + isTagNewer(register.get(type).getTag(), data.getTag()));
+        
         if (!register.containsKey(type) || isTagNewer(register.get(type).getTag(), data.getTag())) {
             register.put(type, data);
         }
