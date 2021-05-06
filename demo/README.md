@@ -66,7 +66,7 @@ Para isso:
 
 -  Basta ir à pasta *hub* e executar:
     ```sh
-    $ mvn compile exec:java [-Ddebug] [-Dexec.args="recIP recPORT IP PORT instance_num users.csv stations.csv [initRec]"]
+    $ mvn compile exec:java [-Ddebug] [-Dexec.args="ZooKeeper_IP ZooKeeper_PORT IP PORT instance_num users.csv stations.csv [initRec]"]
     ```
 
     Este comando vai colocar o *hub* no endereço *localhost*, na porta *8081* e com número de instância *1*.
@@ -77,7 +77,7 @@ Para isso:
 
 - Ou diretamente fazendo `mvn install` e adicionar ao *PATH* ou utilizar diretamente os executáveis gerados na pasta `target/appassembler/bin/`.
     ```sh
-    $ hub servidor_Rec porto_Rec servidor_próprio porto_próprio número_instância users.csv stations.csv [initRec]
+    $ hub servidor_ZooKeeper porto_ZooKeeper servidor_próprio porto_próprio número_instância users.csv stations.csv [initRec]
     ```
     > Opção "initRec" opcional força a inicialização dos registos (escreve por cima se Rec já em funcionamento) 
 
@@ -277,9 +277,12 @@ Em qualquer momento, na sequência de qualquer comando, podem ocorrer 2 erros:
 
 - casos de erro: não existem.
 
+## 3. Teste da replicação e da tolerância a faltas
+
+
 ----
 
-## 3. Considerações Finais
+## 4. Considerações Finais
 
 Estes testes não cobrem tudo, pelo que devem ter sempre em conta os testes de integração e o código.
 

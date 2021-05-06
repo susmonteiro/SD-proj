@@ -37,13 +37,13 @@ mvn install
 To run using appassembler plugin on Linux:
 
 ```
-./target/appassembler/bin/spotter hubIP hubPort username phoneNumber latitude longitude
+./target/appassembler/bin/spotter ZooKeeper_IP ZooKeeper_Port username phoneNumber latitude longitude
 ```
 
 To run using appassembler plugin on Windows:
 
 ```
-target\appassembler\bin\spotter hubIP hubPort username phoneNumber latitude longitude
+target\appassembler\bin\spotter ZooKeeper_IP ZooKeeper_Port username phoneNumber latitude longitude
 ```
 
 
