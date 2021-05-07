@@ -10,28 +10,31 @@ public class PerformanceLogger {
     private Map<Integer, Long> writeTimes = new HashMap<Integer, Long>();    
     private AtomicInteger readIdx = new AtomicInteger();
     private AtomicInteger writeIdx = new AtomicInteger();
+    public static final double NANOSECONDS_PER_MILLISECONDS = 1000000;
 
     public int startRead() {
         int idx = readIdx.incrementAndGet();
-        readTimes.put(idx, System.currentTimeMillis());
+        readTimes.put(idx, System.nanoTime());
         return idx;
     }
 
     public void stopRead(int idx) {
+        long time = System.nanoTime();
         long start = readTimes.get(idx);
-        long diff = System.currentTimeMillis() - start;
+        long diff = time - start;
         readTimes.put(idx, diff);
     }
 
     public int startWrite() {
         int idx = writeIdx.incrementAndGet();
-        writeTimes.put(idx, System.currentTimeMillis());
+        writeTimes.put(idx, System.nanoTime());
         return idx;
     }
 
     public void stopWrite(int idx) {
+        long time = System.nanoTime();
         long start = writeTimes.get(idx);
-        long diff = System.currentTimeMillis() - start;
+        long diff = time - start;
         writeTimes.put(idx, diff);
     }
 
@@ -48,7 +51,7 @@ public class PerformanceLogger {
         double sumAllReads = 0;
         for (Map.Entry<Integer, Long> entry : readTimes.entrySet()) {
             // double time = entry.getValue()/(1000);
-            long time = entry.getValue();
+            double time = toMilliseconds(entry.getValue());
             sumAllReads += time;
             readValues += time + ", ";
         }
@@ -63,7 +66,7 @@ public class PerformanceLogger {
         double sumAllWrites = 0;
         for (Map.Entry<Integer, Long> entry : writeTimes.entrySet()) {
             // double time = entry.getValue()/(1000);
-            long time = entry.getValue();
+            double time = toMilliseconds(entry.getValue());
             sumAllWrites += time;
             writeValues += time + ", ";
         }
@@ -76,5 +79,9 @@ public class PerformanceLogger {
         results += "Total time taken in Ops: " + (sumAllReads + sumAllWrites) + "\n";
         results += "\n$=$\n\tPerformance Logger Results.\n$=$\n";
         return results;
+    }
+
+    public static double toMilliseconds(double nanoseconds) {
+        return nanoseconds / NANOSECONDS_PER_MILLISECONDS;
     }
 }

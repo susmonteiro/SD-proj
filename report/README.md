@@ -43,7 +43,7 @@ Sendo a nossa implementação baseada num protocolo de registo distribuído coer
 
 Assim, na nossa implementação base são toleradas *f* faltas silenciosas/crash quando o grau de replicação é *2f+1*. Após as otimizações este número é diferente para as operações de leitura e de escrita, sendo referido e explicado [aqui](#opções-de-implementação).
 
-As faltas bizantinas/arbitrárias não são toleradas. Também não se tolera faltas no `hub` nem no `ZooKeeper`. toleradas. 
+As faltas bizantinas/arbitrárias não são toleradas. Também não se tolera faltas no `hub` nem no `ZooKeeper`. 
 
 ## Solução
 
@@ -59,13 +59,16 @@ Como referido, a nossa implementação base tolera *f* faltas silenciosas/crash 
 _(Explicação do protocolo)_
 Segue-se uma abordagem de replicação ativa, implementando uma variante do protocolo registo distribuído coerente para coordenar as leituras e escritas concorrentes nas réplicas.
 
-Cada réplica guarda o valor do registo e uma tag composta por um seqNumber (número de sequência da escrita que deu origem à versão) e um clientID (identificador do cliente que escreveu essa versão). Uma tag é mais recente do que outra se o seu seqNumber for maior ou, caso os seqNumber sejam iguais, se o seu clientID for maior. É de notar que, devido ao `hub` não ser replicado, o clientID é sempre o mesmo. No entanto, a nossa implementação tem em conta o clientID de forma a prever uma futura possibilidade de replicar o `hub`.
+Cada réplica guarda o valor do registo e uma tag composta por um seqNumber (número de sequência da escrita que deu origem à versão) e um clientID (identificador do cliente que escreveu essa versão). Uma tag é mais recente do que outra se o seu seqNumber for maior ou, caso os seqNumber sejam iguais, se o seu clientID for maior. É de notar que, devido ao `hub` não ser replicado, o clientID é sempre o mesmo. No entanto, a nossa implementação tem em conta o clientID prevendo uma futura possibilidade de replicar o `hub`.
 
 Para que a coerência sequencial seja garantida, a nossa versão base conta com um quórum de *f+1* réplicas, tanto para escritas como para leituras (sendo *f* o número de faltas silenciosas toleradas). Desta forma, garante-se que os quóruns de escrita e de leitura têm pelo menos uma réplica em comum.
 
-Para o `hub` não ficar bloqueado à espera das respostas do rec, as chamadas remotas são assíncronas. Isto é feito com recurso a um stub não bloqueante. Sendo assim, na chamada é passado um objeto do tipo StreamObserver, o ResponseObserver, que se comporta por um lado como um **ResponseCollector** permitindo receber os resultados da chamada e ao mesmo tempo, como **objeto de callback** que é chamado quando se recebe uma resposta utilizando os métodos onNext, onError e onCompleted. 
+Para o `hub` não ficar bloqueado à espera de uma resposta específica do rec, as chamadas remotas são assíncronas. Isto é feito com recurso a um stub não bloqueante. Sendo assim, na chamada é passado um objeto do tipo `StreamObserver`, o `ResponseObserver`, que se comporta por um lado como um **ResponseCollector** permitindo receber os resultados da chamada e ao mesmo tempo, como **objeto de callback** que é chamado quando se recebe uma resposta utilizando os métodos onNext, onError e onCompleted. 
 
 Em relação à possibilidade de fazer um *writeback*, ainda que o `hub` seja um servidor gRPC *multi-threaded*, este é sincrozinado não permitindo que haja duas operações (escritas ou leituras) concorrentes no mesmo registo. Como se assume que o `hub` não falha durante o processamento de pedidos remotos, então não há operações inacabadas - nunca se dá o caso de uma escrita ter sido feita apenas num número de réplicas inferior ao quórum e portanto duas leituras seguidas nunca serão incoerentes.  Deste modo, a operação de *writeback* proposta no protocolo de registo coerente não é necessária na nossa implementação. 
+
+Na implementação base, os *quóruns*, tanto de escrita como de leitura têm um valor igual (*N/2+1*). Após as medições de desempenho e análise de resultados, observamos que uma operação de leitura tem uma frequência absoluta consideravelmente superior à de escrita (cerca de *2/3*) e que conseguiriamos tirar partido de uma variante do protocolo com *quóruns* de escrita e leitura com pesos variáveis, neste caso diminuindo o peso para uma leitura, optimizando esta à custa das escritas. Na secção [opções-de-implementação](#opções-de-implementação) aprofundamos este conceito, principalmente a escolha para o valores de **Threshold** para cada uma das operações.
+
 
 <!-- _(descrição das trocas de mensagens)_
  -->
@@ -98,177 +101,34 @@ Em relação à possibilidade de fazer um *writeback*, ainda que o `hub` seja um
 
 ## Medições de desempenho
 
-**Rascunhooooo**
 
-Por cada escrita, ha' uma leitura para obter o numero de sequencia maximo 
-Por cada operacao, supondo que correm sem excecoes lancadas, tem-se:
+Por observação do código foi possível gerar a seguinte tabela, que mostra o número de escritas e leituras por cada operação.
 
-- balance: 1 leitura
-- top-up: 1 leitura (getBalance()), 1 escrita (setBalance()) 
-- infoStation: 3 leituras (getNBikes(), getNPickUps(), getNDeliviries())
-- locateStation: 0 leituras e 0 escritas
-- bikeUp: 4 leituras (getBalance(), getNBikes(), getNPickUps(), getOnBike()) e 4 escritas (setNBikes(), setNPickUps(), setBalance(), setOnBike())
-- bikeDown: 4 leituras (getBalance(), getNBikes(), getNDeliveries(), getOnBike()) e 4 escritas (setNBikes(), setNDeliveries(), setBalance(), setOnBike())
+| operação | leituras | escritas |
+|----------|----------|----------|
+| balance | 1 | 0 |
+| top-up | 2 | 1 |
+| info-station | 3 | 0 |
+| locate-station | 0 | 0 |
+| bike-up | 8 | 4 |
+| bike-down | 8 | 4 |
+| **Total** | 22 | 9 |
 
+Observa-se que fazendo um número igual de operações de cada tipo, o número de leituras é bastante superior ao número de escritas. É então esperado que diminuir o quórum de leituras leve a um aumento da performance, ainda que para isso seja necessário aumentar o número de escritas.
 
-<!-- _(Tabela-resumo)_
- -->
+Para confirmar esta hipótese e otimizar o código, foram feitas algumas medições utilizando-se:
+- um hub, que não corre com a opção initRec;
+- 5 réplicas do Rec (todas up), inicializadas anteriormente;
+- uma app, que corre o ficheiro `demo/commandsPerformance.txt`. Este ficheiro tem um conjunto de operações repetido várias vezes, sendo este conjunto constituído por todas as operações disponiveis (1 operação de cada)
+ 
+No total são feitas 712 leituras (77,56%) e 206 escritas (22,44%). Como o número de leituras é muito superior ao número de escritas, é esperado que diminuir o quórum de leituras leve a um aumento da performance, ainda que para isso seja necessário aumentar o número de escritas. Portanto foram feitas medições nesse sentido, estando resumidas na tabela abaixo:
 
----
+![Medições](medicoes.png)
 
- Um hub sem correr initRec, 3 Recs (todos up), correr app com `demo/commandsPerformance.txt`
- ```
- $$$
-        Performance Logger Results:
-$$$
-
-        **Reads**
-Number of reads: 712    (77.5599128540305% of all Ops)
-Average time taken: 3.5070224719101124
-Values: [10, 8, 10, 12, 8, 6, 6, 6, 7, 5, 6, 4, 6, 7, 8, 4, 5, 4, 5, 5, 5, 6, 4, 4, 6, 5, 6, 5, 7, 8, 6, 6, 6, 4, 4, 6, 5, 6, 5, 3, 5, 6, 4, 4, 3, 5, 4, 4, 4, 5, 4, 5, 5, 5, 3, 6, 6, 4, 7, 4, 3, 5, 5, 4, 5, 4, 4, 4, 4, 5, 5, 6, 5, 4, 5, 5, 6, 4, 6, 5, 5, 5, 4, 3, 3, 5, 5, 5, 4, 7, 5, 6, 4, 7, 5, 3, 4, 5, 5, 4, 6, 5, 4, 3, 3, 3, 5, 5, 5, 3, 3, 4, 5, 3, 3, 6, 3, 7, 3, 6, 5, 4, 3, 4, 3, 5, 3, 3, 4, 2, 4, 4, 4, 3, 7, 3, 3, 3, 3, 3, 4, 4, 6, 4, 3, 3, 3, 4, 3, 8, 7, 4, 5, 5, 6, 2, 3, 2, 3, 5, 4, 5, 3, 4, 4, 5, 4, 2, 5, 4, 4, 4, 3, 3, 3, 3, 4, 5, 6, 3, 5, 6, 6, 4, 4, 6, 3, 5, 4, 2, 3, 5, 5, 3, 4, 5, 5, 6, 3, 3, 5, 4, 4, 4, 4, 5, 3, 5, 5, 6, 5, 3, 3, 4, 5, 2, 3, 3, 6, 4, 3, 4, 3, 3, 6, 3, 3, 4, 4, 5, 3, 2, 5, 3, 2, 3, 2, 2, 3, 5, 3, 3, 2, 4, 5, 4, 3, 4, 3, 2, 4, 3, 2, 2, 3, 3, 2, 2, 5, 4, 2, 2, 4, 3, 3, 3, 3, 5, 5, 3, 6, 3, 4, 4, 2, 3, 4, 6, 7, 3, 3, 3, 3, 4, 3, 2, 2, 3, 3, 4, 2, 6, 2, 2, 2, 4, 4, 4, 6, 3, 4, 3, 3, 5, 4, 3, 4, 7, 6, 5, 3, 2, 5, 3, 3, 4, 4, 12, 6, 4, 2, 2, 4, 3, 4, 3, 4, 4, 3, 3, 1, 4, 2, 3, 2, 6, 3, 2, 4, 3, 2, 2, 4, 2, 4, 5, 3, 6, 2, 2, 3, 5, 4, 3, 2, 2, 3, 5, 5, 2, 2, 2, 2, 3, 2, 4, 4, 13, 3, 4, 2, 4, 5, 2, 2, 8, 5, 2, 2, 2, 2, 4, 2, 3, 2, 2, 10, 2, 6, 3, 3, 2, 4, 4, 4, 2, 3, 2, 4, 2, 2, 5, 3, 3, 3, 2, 3, 2, 2, 3, 2, 2, 2, 2, 3, 1, 2, 2, 5, 3, 4, 3, 2, 2, 2, 4, 2, 2, 3, 4, 2, 4, 1, 4, 3, 2, 3, 5, 4, 2, 3, 2, 3, 2, 2, 3, 4, 3, 2, 3, 2, 2, 3, 2, 2, 4, 4, 3, 4, 5, 4, 3, 3, 3, 3, 4, 2, 2, 2, 4, 2, 4, 2, 2, 1, 3, 3, 1, 2, 4, 2, 3, 4, 3, 2, 3, 3, 2, 4, 3, 2, 2, 2, 2, 2, 4, 3, 3, 3, 3, 2, 6, 2, 4, 4, 1, 2, 4, 2, 3, 2, 3, 4, 2, 4, 3, 3, 4, 2, 4, 2, 2, 3, 2, 4, 5, 5, 1, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 1, 3, 3, 4, 2, 4, 2, 4, 2, 1, 2, 3, 2, 2, 4, 2, 3, 1, 3, 3, 2, 2, 2, 2, 2, 3, 6, 2, 3, 3, 2, 2, 2, 4, 2, 3, 3, 5, 4, 2, 2, 4, 4, 3, 4, 3, 3, 2, 2, 2, 4, 1, 3, 2, 2, 2, 2, 2, 2, 2, 5, 5, 2, 2, 5, 1, 3, 2, 5, 3, 2, 4, 3, 3, 2, 2, 2, 5, 3, 2, 3, 4, 2, 6, 4, 3, 3, 2, 1, 4, 2, 3, 4, 2, 4, 4, 2, 3, 2, 2, 2, 2, 3, 4, 2, 3, 2, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 5, 2, 2, 2, 4, 1, 1, 2, 4, 2, 2, 1, 2, 4, 4, 4, 3, 2, 1, 4, 4, 2, 4, 3, 3, 1, 2, 2, 2, 2, 2, 2, 2, 2, 4, 3, 2, 2, 4, 2, 2, 3, 3, 2, 4, 2, 5, 2, 3, 2, 2,
-        **Writes**
-Number of writes: 206   (22.440087145969496% of all Ops)
-Average time taken: 2.4805825242718447
-Values: [3, 5, 5, 5, 3, 3, 3, 5, 3, 5, 5, 3, 4, 4, 5, 3, 2, 4, 3, 4, 4, 3, 3, 3, 3, 4, 3, 2, 3, 3, 2, 3, 4, 3, 3, 2, 2, 3, 2, 2, 3, 2, 3, 4, 2, 3, 3, 2, 4, 2, 2, 3, 3, 4, 2, 4, 3, 2, 3, 2, 2, 5, 3, 3, 2, 2, 3, 2, 2, 2, 2, 2, 3, 3, 3, 4, 6, 2, 4, 2, 2, 3, 2, 2, 2, 3, 3, 3, 6, 2, 2, 7, 2, 2, 2, 4, 2, 4, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 3, 3, 2, 2, 4, 1, 2, 2, 1, 1, 3, 2, 2, 3, 2, 2, 1, 2, 2, 1, 3, 1, 2, 2, 1, 2, 4, 2, 2, 2, 2, 2, 2, 4, 2, 2, 2, 3, 3, 1, 2, 2, 2, 2, 1, 2, 2, 1, 2, 1, 2, 1, 2, 2, 1, 2, 1, 1, 2, 1, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 2, 3, 1, 1, 3, 1, 4, 4, 1, 2, 2, 2, 2, 1, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 4, 2, 2,
-$=$
-        Performance Logger Results.
-$=$
-
----
----
-
-$$$
-        Performance Logger Results:
-$$$
-
-        **Reads**
-Number of reads: 712    (77.5599128540305% of all Ops)
-Average time taken: 2.4353932584269664
-Values: [10, 9, 8, 7, 5, 5, 5, 5, 3, 5, 5, 4, 5, 3, 2, 4, 3, 4, 2, 4, 5, 2, 5, 3, 2, 4, 3, 5, 2, 3, 4, 4, 3, 3, 3, 4, 4, 4, 5, 2, 4, 4, 2, 3, 1, 4, 3, 3, 3, 5, 3, 3, 3, 2, 4, 2, 2, 4, 5, 3, 6, 4, 6, 6, 3, 4, 4, 2, 2, 4, 2, 2, 4, 4, 3, 6, 4, 4, 4, 5, 5, 2, 2, 3, 5, 4, 2, 4, 3, 3, 3, 5, 5, 4, 3, 2, 3, 2, 3, 3, 3, 2, 1, 6, 4, 2, 2, 2, 5, 3, 2, 2, 3, 4, 4, 3, 4, 4, 2, 4, 4, 2, 1, 5, 3, 4, 2, 4, 2, 3, 4, 3, 2, 2, 2, 2, 3, 3, 2, 2, 1, 2, 3, 2, 3, 3, 4, 3, 4, 2, 7, 3, 3, 2, 3, 3, 2, 1, 3, 2, 1, 2, 5, 1, 2, 2, 3, 2, 2, 3, 3, 3, 4, 2, 2, 3, 2, 2, 2, 2, 3, 3, 5, 2, 1, 4, 4, 3, 5, 4, 5, 3, 2, 2, 3, 3, 3, 4, 4, 3, 4, 3, 4, 3, 3, 3, 1, 3, 4, 2, 2, 4, 1, 3, 3, 4, 2, 4, 4, 1, 3, 4, 2, 3, 4, 4, 3, 2, 3, 2, 2, 2, 2, 4, 2, 4, 1, 2, 2, 3, 4, 3, 2, 2, 4, 3, 1, 3, 2, 2, 3, 2, 3, 1, 1, 2, 2, 2, 4, 3, 3, 1, 2, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 2, 3, 1, 1, 3, 4, 2, 2, 2, 2, 2, 1, 3, 2, 1, 2, 2, 2, 4, 1, 3, 3, 3, 2, 2, 2, 3, 4, 2, 2, 2, 5, 1, 2, 2, 4, 2, 1, 3, 2, 1, 3, 3, 2, 2, 2, 1, 2, 1, 3, 2, 1, 2, 4, 3, 2, 1, 3, 3, 3, 3, 3, 1, 2, 2, 3, 1, 3, 1, 2, 1, 1, 2, 1, 2, 2, 2, 3, 3, 3, 3, 1, 3, 2, 4, 2, 2, 3, 1, 2, 4, 2, 2, 1, 2, 3, 3, 2, 2, 4, 3, 2, 2, 3, 1, 2, 1, 3, 2, 1, 2, 3, 1, 1, 3, 3, 2, 1, 1, 2, 3, 2, 2, 3, 3, 1, 3, 3, 1, 2, 2, 2, 2, 1, 2, 3, 2, 2, 2, 3, 2, 2, 2, 3, 1, 3, 2, 1, 2, 1, 3, 2, 2, 3, 2, 2, 2, 1, 1, 1, 4, 1, 2, 3, 1, 2, 2, 2, 2, 1, 1, 2, 3, 2, 2, 1, 2, 1, 1, 2, 1, 1, 2, 2, 3, 1, 2, 2, 2, 4, 2, 2, 2, 2, 1, 2, 2, 3, 1, 3, 1, 1, 4, 2, 3, 1, 2, 1, 2, 3, 1, 1, 3, 1, 1, 1, 1, 1, 2, 3, 3, 2, 1, 1, 1, 2, 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 3, 3, 2, 3, 2, 1, 3, 2, 1, 1, 2, 3, 2, 4, 2, 2, 2, 3, 2, 1, 1, 3, 1, 2, 4, 2, 2, 4, 1, 2, 4, 3, 2, 1, 1, 1, 2, 3, 1, 4, 2, 1, 3, 2, 1, 4, 2, 3, 3, 1, 3, 2, 1, 2, 1, 2, 1, 1, 1, 2, 2, 1, 2, 1, 1, 2, 2, 1, 2, 1, 2, 2, 1, 3, 1, 1, 1, 2, 2, 2, 2, 1, 5, 2, 3, 1, 2, 1, 2, 1, 3, 3, 3, 1, 0, 1, 1, 3, 1, 1, 1, 2, 3, 2, 2, 2, 3, 3, 2, 1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 3, 3, 1, 2, 4, 1, 1, 2, 2, 2, 2, 2, 1, 2, 2, 3, 2, 1, 1, 3, 2, 2, 1, 1, 1, 3, 2, 2, 3, 1, 1, 1, 4, 3, 1, 2, 3, 1, 2, 1, 2, 1, 2, 1, 1, 3, 2, 2, 1, 1, 1, 1, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 1, 1, 3, 3, 2, 4, 1, 2, 3, 2, 3, 2, 1,
-        **Writes**
-Number of writes: 206   (22.440087145969496% of all Ops)
-Average time taken: 3.3689320388349513
-Values: [4, 3, 4, 5, 3, 4, 3, 3, 4, 5, 3, 4, 3, 6, 4, 3, 4, 4, 4, 3, 5, 5, 5, 5, 5, 3, 5, 4, 3, 5, 4, 4, 5, 3, 3, 5, 4, 7, 3, 3, 4, 4, 3, 3, 3, 3, 4, 5, 3, 3, 3, 3, 4, 7, 5, 3, 2, 2, 3, 3, 3, 3, 3, 4, 3, 3, 3, 3, 6, 4, 3, 4, 4, 4, 5, 3, 4, 4, 2, 2, 3, 5, 5, 3, 3, 6, 4, 3, 2, 3, 2, 2, 3, 3, 5, 2, 3, 6, 4, 3, 3, 5, 3, 3, 3, 2, 2, 2, 4, 3, 3, 3, 3, 2, 2, 3, 3, 5, 3, 2, 2, 2, 3, 3, 3, 2, 3, 4, 2, 3, 3, 4, 2, 3, 2, 5, 3, 3, 4, 2, 3, 3, 2, 2, 4, 5, 3, 2, 2, 4, 4, 4, 3, 3, 2, 3, 4, 2, 2, 5, 3, 3, 3, 2, 3, 2, 3, 3, 2, 3, 2, 4, 2, 2, 2, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3, 2, 3, 4, 3, 2, 4, 5, 3, 4, 15, 2, 5, 3, 2, 3, 2, 3, 3, 3, 3, 2, 
-Total time taken in Ops: 2428.0
-
-$=$
-        Performance Logger Results.
-$=$
+É de esperar que correndo o mesmo teste com um maior conjunto de réplicas levaria a uma maior discrepância de valores entre os vários quóruns. Porém, considerou-se que 5 réplicas do Rec era um número razoável e que permite já observar que um meio termo entre ter quóruns iguais e ter um *write thresthold* máximo parece ser melhor hipótese.
 
 
 
-
-
-
-
-
-
-
-OLD
-
-
-$$$
-        Performance Logger Results:
-$$$
-
-        **Reads**
-Number of reads: 712    (77.5599128540305% of all Ops)
-Average time taken: 2.6418539325842696
-Values: [8, 8, 7, 7, 7, 5, 3, 3, 4, 3, 4, 4, 6, 4, 2, 5, 6, 3, 5, 4, 4, 3, 4, 6, 3, 5, 7, 5, 5, 3, 6, 4, 4, 4, 2, 4, 4, 2, 4, 4, 3, 5, 5, 5, 5, 3, 3, 5, 6, 4, 3, 5, 3, 4, 2, 2, 4, 4, 5, 6, 5, 6, 6, 4, 4, 9, 3, 3, 4, 4, 2, 2, 3, 4, 2, 4, 2, 5, 6, 3, 5, 2, 2, 3, 3, 2, 2, 3, 3, 4, 7, 2, 4, 4, 6, 2, 5, 3, 4, 3, 4, 2, 4, 4, 3, 2, 3, 2, 2, 2, 4, 4, 4, 5, 2, 5, 2, 2, 4, 3, 3, 2, 11, 4, 4, 3, 2, 2, 5, 4, 3, 3, 4, 3, 4, 3, 4, 2, 3, 15, 3, 6, 3, 2, 3, 4, 4, 3, 3, 5, 5, 3, 3, 3, 5, 4, 2, 2, 2, 3, 5, 3, 3, 4, 2, 3, 3, 3, 4, 4, 1, 3, 2, 3, 2, 2, 2, 3, 3, 3, 3, 3, 4, 3, 4, 5, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 4, 4, 2, 5, 3, 3, 4, 4, 2, 2, 2, 2, 3, 2, 1, 2, 4, 4, 3, 5, 3, 2, 2, 2, 2, 3, 4, 2, 3, 3, 2, 2, 3, 2, 2, 2, 3, 3, 5, 3, 2, 3, 4, 3, 3, 3, 3, 2, 3, 3, 1, 2, 3, 2, 3, 3, 2, 1, 4, 3, 3, 2, 5, 1, 2, 2, 4, 4, 5, 6, 4, 3, 2, 5, 3, 1, 2, 2, 3, 2, 3, 2, 4, 2, 1, 3, 2, 1, 1, 3, 2, 2, 1, 3, 2, 2, 2, 1, 1, 2, 1, 2, 2, 1, 3, 2, 4, 2, 2, 2, 5, 4, 2, 3, 2, 1, 2, 3, 1, 2, 2, 2, 3, 1, 3, 1, 2, 1, 2, 2, 3, 2, 5, 3, 2, 2, 4, 2, 4, 2, 2, 2, 3, 2, 2, 3, 3, 1, 1, 2, 1, 2, 2, 1, 2, 11, 3, 2, 1, 3, 2, 3, 2, 2, 3, 2, 2, 3, 4, 1, 3, 2, 3, 2, 3, 3, 2, 5, 2, 2, 4, 2, 1, 1, 1, 2, 3, 2, 2, 3, 1, 3, 2, 2, 1, 4, 3, 2, 3, 2, 2, 4, 1, 1, 4, 5, 3, 1, 2, 2, 1, 2, 2, 3, 1, 2, 2, 2, 1, 3, 3, 2, 3, 3, 1, 3, 2, 1, 2, 4, 4, 1, 2, 3, 2, 1, 2, 3, 1, 2, 4, 1, 2, 2, 1, 1, 1, 2, 3, 3, 2, 2, 1, 2, 3, 1, 3, 2, 2, 2, 3, 2, 2, 1, 5, 2, 2, 1, 5, 3, 3, 1, 2, 2, 1, 1, 2, 3, 1, 4, 2, 2, 2, 2, 2, 3, 1, 1, 1, 4, 2, 2, 2, 1, 2, 2, 2, 3, 1, 2, 1, 2, 2, 1, 1, 2, 2, 4, 4, 1, 1, 1, 3, 1, 3, 1, 2, 2, 4, 2, 2, 1, 4, 2, 3, 2, 1, 3, 2, 2, 2, 1, 1, 2, 3, 1, 1, 2, 2, 2, 2, 2, 4, 1, 4, 2, 2, 2, 2, 2, 2, 1, 2, 2, 1, 1, 1, 1, 1, 2, 2, 1, 2, 2, 1, 4, 1, 1, 2, 3, 1, 1, 3, 2, 1, 2, 1, 3, 4, 1, 3, 2, 1, 2, 4, 1, 2, 1, 5, 1, 1, 1, 1, 4, 4, 1, 1, 1, 1, 2, 3, 1, 2, 3, 1, 2, 2, 2, 2, 1, 2, 3, 1, 1, 2, 4, 1, 1, 2, 3, 2, 4, 2, 1, 2, 1, 2, 2, 3, 2, 3, 2, 3, 2, 3, 2, 2, 1, 1, 0, 1, 4, 1, 1, 1, 2, 2, 3, 6, 2, 3, 2, 3, 2, 2, 1, 2, 2, 3, 1, 1, 2, 2, 1, 2, 4, 3, 3, 2, 3, 2, 2, 1, 3, 2, 1, 1, 2, 1, 1, 2, 1, 1, 3, 1, 2, 2, 1, 2, 2, 1, 1, 1, 2, 2, 2, 2, 3, 3, 2, 1, 3, 2, 4, 2, 4, 1, 1, 2, 1, 2, 1, 3, 2, 2, 2]
-        **Writes**
-Number of writes: 206   (22.440087145969496% of all Ops)
-Average time taken: 1.674757281553398
-Values: [3, 3, 4, 2, 4, 2, 3, 2, 2, 2, 5, 3, 2, 2, 2, 2, 2, 3, 2, 2, 1, 3, 3, 4, 1, 4, 2, 2, 2, 3, 2, 2, 2, 2, 3, 2, 1, 2, 2, 1, 2, 1, 2, 4, 2, 2, 1, 2, 2, 2, 2, 1, 3, 1, 2, 2, 2, 4, 4, 4, 3, 2, 2, 3, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 1, 1, 2, 1, 6, 1, 2, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 1, 2, 2, 1, 2, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 2, 2, 2, 1, 2, 1, 1, 1, 1, 1, 2, 2, 1, 2, 1, 2, 1, 1, 2, 1, 1, 1, 1, 3, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 2, 2, 1, 2, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 2, 1]
-Total time taken in Ops: 2226.0
-
-$=$
-        Performance Logger Results.
-$=$
-
-
-$$$
-        Performance Logger Results:
-$$$
-
-        **Reads**
-Number of reads: 712    (77.5599128540305% of all Ops)
-Average time taken: 3.5014044943820224
-Values: [10, 10, 9, 8, 9, 6, 7, 7, 5, 4, 8, 6, 6, 4, 6, 6, 7, 6, 8, 6, 6, 3, 4, 5, 4, 3, 6, 5, 5, 7, 7, 5, 4, 5, 5, 4, 3, 5, 4, 4, 3, 6, 4, 4, 3, 5, 4, 4, 4, 8, 7, 3, 5, 6, 4, 3, 3, 3, 4, 6, 5, 5, 6, 5, 5, 3, 4, 6, 6, 6, 3, 5, 4, 3, 6, 4, 6, 6, 4, 7, 6, 6, 4, 5, 5, 4, 4, 4, 6, 6, 6, 3, 6, 3, 4, 3, 5, 4, 4, 4, 6, 3, 2, 5, 3, 3, 3, 4, 5, 4, 7, 5, 4, 3, 4, 3, 5, 4, 6, 4, 3, 5, 5, 4, 4, 4, 3, 6, 4, 3, 3, 3, 5, 4, 4, 4, 2, 2, 3, 4, 2, 6, 3, 5, 4, 4, 6, 4, 4, 3, 4, 3, 5, 4, 3, 3, 4, 4, 4, 7, 3, 3, 3, 3, 3, 4, 5, 3, 5, 5, 5, 8, 5, 3, 3, 4, 2, 4, 5, 4, 5, 3, 3, 3, 5, 6, 6, 4, 5, 7, 3, 3, 4, 3, 5, 4, 6, 3, 3, 2, 4, 3, 7, 3, 5, 3, 3, 2, 3, 5, 4, 5, 3, 3, 2, 4, 4, 3, 3, 3, 4, 3, 4, 4, 3, 5, 5, 3, 3, 3, 5, 3, 3, 3, 5, 3, 2, 4, 3, 4, 2, 3, 2, 4, 3, 2, 4, 2, 4, 4, 3, 3, 2, 4, 2, 2, 3, 4, 3, 3, 5, 10, 2, 3, 5, 7, 3, 3, 4, 6, 3, 4, 2, 2, 3, 3, 6, 2, 4, 3, 3, 4, 4, 3, 4, 4, 3, 3, 2, 4, 3, 2, 3, 3, 3, 5, 4, 5, 3, 5, 6, 3, 4, 4, 3, 4, 5, 5, 3, 5, 5, 4, 3, 3, 4, 4, 5, 9, 3, 3, 3, 4, 4, 3, 2, 2, 2, 3, 5, 4, 1, 4, 3, 4, 2, 3, 6, 4, 2, 3, 2, 3, 2, 2, 4, 2, 2, 4, 3, 2, 2, 2, 4, 2, 2, 4, 2, 3, 2, 3, 3, 2, 3, 4, 2, 2, 2, 5, 3, 4, 3, 4, 7, 2, 3, 2, 5, 4, 3, 3, 2, 3, 3, 3, 4, 4, 4, 4, 2, 4, 6, 4, 4, 3, 4, 3, 3, 7, 2, 3, 3, 4, 3, 1, 3, 3, 2, 2, 2, 3, 4, 2, 2, 4, 4, 2, 2, 3, 4, 3, 6, 4, 4, 5, 2, 2, 2, 2, 2, 2, 2, 4, 3, 3, 3, 2, 4, 2, 6, 3, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 4, 2, 5, 2, 3, 3, 3, 2, 2, 3, 2, 2, 5, 4, 3, 2, 3, 3, 4, 3, 1, 2, 2, 2, 2, 4, 4, 2, 4, 2, 2, 2, 3, 5, 4, 2, 4, 2, 2, 5, 2, 2, 4, 6, 3, 3, 3, 4, 2, 2, 2, 1, 2, 4, 2, 2, 8, 4, 5, 3, 3, 3, 3, 2, 6, 5, 5, 2, 3, 3, 2, 4, 2, 3, 8, 3, 2, 2, 6, 2, 4, 3, 4, 2, 2, 4, 4, 4, 3, 3, 4, 1, 3, 4, 3, 4, 2, 2, 2, 3, 4, 2, 2, 2, 3, 4, 2, 4, 3, 2, 3, 3, 2, 3, 2, 2, 3, 2, 3, 2, 3, 1, 2, 4, 2, 3, 2, 3, 4, 2, 3, 2, 6, 5, 4, 2, 4, 3, 2, 2, 4, 4, 3, 2, 2, 4, 2, 2, 2, 2, 2, 4, 2, 3, 2, 2, 4, 2, 3, 2, 2, 3, 1, 1, 2, 3, 2, 2, 2, 3, 1, 3, 3, 2, 4, 2, 6, 2, 2, 3, 2, 4, 3, 2, 2, 3, 4, 1, 3, 2, 3, 2, 3, 2, 3, 2, 2, 2, 6, 3, 3, 3, 5, 2, 4, 5, 4, 2, 3, 2, 2, 2, 2, 2, 1, 3, 4, 2, 4, 2, 1, 2, 3, 3, 2, 2, 2, 3, 5, 1, 4, 3, 4, 3, 2, 5, 2, 2, 2, 2, 3, 2, 2, 2, 3, 4, 2, 2, 2, 4, 1, 3, 2, 2, 2, 3, 2, 5, 2, 5, 4, 3]
-        **Writes**
-Number of writes: 206   (22.440087145969496% of all Ops)
-Average time taken: 2.5436893203883497
-Values: [4, 4, 5, 4, 4, 3, 5, 5, 5, 3, 8, 9, 4, 3, 3, 4, 4, 3, 3, 4, 5, 3, 3, 3, 3, 3, 3, 3, 3, 4, 3, 3, 4, 2, 4, 3, 3, 3, 2, 3, 3, 2, 2, 3, 4, 3, 3, 4, 2, 2, 8, 3, 3, 3, 4, 3, 4, 3, 3, 3, 3, 4, 2, 2, 3, 2, 3, 2, 2, 2, 2, 2, 2, 10, 4, 3, 2, 1, 2, 3, 3, 3, 2, 3, 2, 3, 2, 2, 3, 2, 1, 2, 3, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 5, 2, 2, 2, 2, 3, 2, 2, 2, 1, 2, 1, 6, 2, 2, 1, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 1, 3, 2, 2, 4, 2, 2, 2, 2, 2, 2, 2, 1, 2, 3, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 5, 2, 2, 2, 2, 2, 2, 1, 1, 2, 1, 2, 2, 2, 2, 2, 1, 1, 2, 2, 3, 2, 3]
-Total time taken in Ops: 3017.0
-
-$=$
-        Performance Logger Results.
-$=$
-
-
-
-NEW
-
-$$$
-        Performance Logger Results:
-$$$
-
-        **Reads**
-Number of reads: 712    (77.5599128540305% of all Ops)
-Average time taken: 3.443820224719101
-Values: [8, 9, 9, 10, 4, 4, 4, 5, 7, 5, 7, 5, 5, 6, 5, 8, 7, 6, 5, 7, 5, 7, 6, 6, 4, 6, 8, 5, 4, 7, 5, 5, 6, 5, 6, 3, 6, 5, 5, 2, 5, 4, 4, 5, 3, 4, 4, 5, 4, 9, 5, 3, 5, 6, 5, 5, 3, 3, 6, 5, 3, 3, 4, 6, 3, 5, 4, 4, 5, 5, 6, 3, 6, 6, 4, 6, 4, 3, 4, 6, 6, 4, 3, 3, 7, 3, 6, 5, 4, 3, 4, 4, 4, 6, 4, 4, 4, 3, 4, 4, 6, 4, 4, 5, 2, 5, 6, 3, 3, 3, 4, 4, 6, 3, 3, 5, 5, 4, 5, 4, 6, 3, 6, 5, 4, 3, 7, 5, 3, 5, 4, 5, 4, 3, 3, 2, 2, 6, 4, 4, 3, 3, 5, 3, 2, 4, 5, 5, 4, 5, 3, 3, 5, 4, 3, 5, 3, 5, 3, 3, 3, 3, 3, 3, 7, 3, 3, 3, 8, 6, 7, 14, 2, 4, 3, 4, 3, 6, 4, 5, 3, 4, 3, 4, 3, 3, 2, 3, 4, 5, 3, 3, 5, 5, 3, 4, 7, 3, 3, 3, 7, 4, 7, 3, 4, 3, 7, 5, 5, 6, 7, 8, 5, 3, 3, 3, 3, 4, 3, 4, 5, 5, 3, 5, 4, 4, 4, 4, 6, 4, 4, 6, 4, 3, 3, 3, 3, 4, 2, 2, 4, 4, 3, 3, 3, 3, 4, 3, 5, 2, 4, 3, 6, 3, 2, 3, 3, 3, 3, 3, 2, 5, 2, 4, 3, 2, 4, 2, 3, 3, 3, 3, 3, 2, 3, 2, 4, 3, 3, 3, 2, 2, 3, 4, 3, 3, 3, 3, 3, 2, 3, 3, 4, 4, 3, 2, 3, 3, 4, 3, 3, 2, 4, 3, 3, 4, 4, 2, 2, 2, 2, 2, 5, 5, 3, 3, 3, 12, 4, 2, 2, 6, 5, 5, 4, 2, 5, 6, 3, 3, 5, 2, 2, 2, 3, 3, 1, 2, 3, 2, 2, 3, 2, 4, 2, 3, 4, 3, 5, 4, 5, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 3, 2, 3, 3, 2, 13, 4, 2, 5, 3, 5, 3, 2, 4, 4, 2, 2, 3, 2, 3, 2, 2, 2, 3, 6, 3, 3, 2, 2, 3, 4, 2, 4, 3, 2, 1, 3, 3, 2, 2, 4, 3, 4, 2, 3, 4, 2, 4, 2, 6, 2, 2, 3, 4, 2, 4, 2, 3, 2, 2, 2, 4, 3, 3, 3, 3, 5, 5, 2, 4, 3, 2, 2, 2, 4, 2, 3, 2, 2, 4, 2, 6, 5, 5, 2, 4, 4, 3, 2, 4, 4, 3, 4, 3, 2, 4, 1, 2, 4, 2, 1, 2, 4, 2, 2, 2, 2, 3, 2, 3, 2, 5, 3, 2, 2, 3, 2, 2, 2, 3, 2, 3, 3, 2, 2, 2, 4, 2, 3, 4, 2, 2, 3, 3, 3, 1, 2, 3, 2, 2, 3, 3, 4, 2, 2, 3, 3, 6, 2, 4, 3, 4, 3, 5, 3, 2, 4, 3, 3, 5, 3, 5, 4, 5, 8, 3, 2, 5, 2, 5, 3, 1, 3, 3, 2, 2, 2, 3, 2, 2, 2, 1, 4, 2, 1, 3, 4, 3, 3, 2, 1, 3, 3, 1, 4, 3, 2, 3, 4, 2, 2, 2, 1, 3, 1, 3, 1, 3, 2, 1, 2, 3, 3, 3, 2, 2, 3, 2, 3, 2, 4, 2, 1, 4, 2, 3, 3, 3, 3, 2, 4, 3, 2, 1, 2, 3, 2, 2, 3, 3, 3, 1, 3, 2, 3, 2, 2, 2, 3, 2, 3, 4, 2, 2, 3, 2, 2, 3, 4, 2, 2, 1, 3, 2, 2, 1, 4, 2, 1, 2, 2, 4, 2, 4, 2, 4, 2, 3, 3, 2, 2, 3, 2, 3, 1, 1, 2, 1, 3, 4, 3, 3, 1, 2, 5, 2, 4, 4, 2, 3, 4, 2, 1, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 3, 4, 1, 4, 2, 2, 4, 2, 2, 3, 6, 3, 2, 3, 2, 5, 2, 2, 6, 3, 3, 5, 3, 2, 5, 3, 5, 1, 2, 4, 2, 1, 4, 1, 2, 5, 3, 2]
-        **Writes**
-Number of writes: 206   (22.440087145969496% of all Ops)
-Average time taken: 5.300970873786408
-Values: [6, 7, 7, 6, 7, 5, 6, 4, 5, 8, 8, 8, 10, 5, 6, 8, 5, 16, 7, 6, 3, 4, 9, 6, 7, 5, 5, 5, 5, 5, 3, 8, 4, 5, 4, 4, 6, 6, 5, 5, 6, 5, 3, 4, 7, 7, 25, 4, 4, 4, 21, 5, 4, 6, 4, 5, 6, 7, 8, 2, 7, 5, 19, 6, 5, 4, 4, 6, 2, 6, 4, 4, 4, 3, 6, 5, 5, 5, 5, 4, 3, 4, 4, 4, 4, 6, 4, 4, 5, 5, 5, 3, 4, 5, 3, 4, 5, 4, 4, 7, 5, 5, 8, 5, 4, 3, 6, 4, 5, 7, 6, 7, 5, 3, 4, 6, 5, 5, 7, 4, 5, 7, 3, 3, 1, 6, 4, 6, 4, 5, 4, 3, 3, 3, 5, 3, 4, 4, 4, 4, 5, 3, 3, 3, 9, 4, 31, 11, 5, 6, 3, 20, 3, 4, 3, 3, 3, 4, 4, 4, 4, 3, 10, 4, 4, 3, 2, 3, 3, 3, 2, 4, 5, 3, 4, 4, 8, 3, 3, 3, 4, 4, 3, 5, 5, 6, 7, 4, 3, 4, 5, 4, 3, 2, 6, 8, 4, 7, 5, 7, 3, 4, 7, 2, 5, 4]
-Total time taken in Ops: 3544.0
-
-$=$
-        Performance Logger Results.
-$=$
-
-
-
-
-$$$
-        Performance Logger Results:
-$$$
-
-        **Reads**
-Number of reads: 712    (77.5599128540305% of all Ops)
-Average time taken: 5.231741573033708
-Values: [13, 9, 8, 8, 10, 8, 7, 10, 7, 9, 8, 7, 7, 7, 8, 6, 6, 4, 12, 6, 8, 6, 9, 6, 6, 7, 7, 8, 5, 6, 6, 6, 4, 6, 5, 6, 3, 7, 6, 4, 5, 6, 6, 7, 3, 3, 8, 13, 4, 8, 14, 9, 6, 6, 8, 7, 9, 8, 6, 3, 3, 8, 8, 7, 9, 9, 8, 10, 5, 5, 7, 5, 5, 6, 7, 6, 5, 8, 3, 6, 5, 6, 7, 5, 4, 7, 8, 11, 6, 8, 4, 7, 6, 5, 8, 4, 6, 6, 7, 5, 8, 5, 5, 6, 5, 9, 4, 7, 5, 7, 6, 8, 6, 6, 7, 6, 5, 6, 5, 3, 3, 3, 8, 8, 5, 5, 3, 4, 7, 4, 5, 2, 4, 4, 5, 7, 8, 4, 4, 5, 6, 2, 5, 7, 7, 6, 4, 6, 6, 8, 6, 6, 4, 3, 6, 7, 6, 6, 3, 7, 5, 6, 7, 3, 6, 5, 5, 3, 5, 5, 4, 8, 5, 8, 9, 5, 8, 6, 4, 3, 4, 5, 4, 6, 7, 6, 5, 4, 7, 9, 3, 5, 9, 6, 6, 6, 7, 6, 7, 4, 3, 2, 5, 4, 4, 4, 4, 4, 11, 3, 6, 5, 10, 8, 7, 7, 5, 5, 3, 2, 4, 9, 5, 4, 6, 8, 8, 3, 5, 8, 4, 6, 7, 9, 5, 4, 4, 10, 6, 5, 7, 5, 5, 5, 6, 6, 6, 6, 7, 7, 3, 8, 5, 4, 3, 6, 4, 6, 5, 5, 4, 5, 5, 5, 5, 4, 4, 9, 3, 3, 3, 3, 3, 5, 4, 6, 9, 6, 4, 6, 3, 3, 5, 7, 6, 5, 5, 4, 6, 3, 5, 5, 8, 4, 4, 4, 3, 3, 5, 3, 6, 7, 5, 6, 5, 6, 5, 7, 6, 12, 4, 6, 5, 9, 7, 4, 5, 5, 3, 3, 7, 4, 3, 3, 5, 4, 9, 3, 6, 4, 7, 5, 4, 5, 5, 5, 4, 6, 3, 7, 5, 6, 5, 6, 7, 5, 5, 3, 6, 5, 4, 4, 3, 5, 6, 6, 4, 6, 4, 5, 3, 5, 6, 6, 5, 5, 3, 6, 6, 6, 4, 6, 6, 5, 5, 5, 5, 3, 2, 8, 4, 4, 3, 6, 4, 10, 2, 4, 5, 2, 4, 7, 2, 3, 5, 4, 4, 3, 5, 7, 5, 3, 6, 6, 7, 5, 7, 6, 4, 6, 5, 6, 4, 5, 4, 6, 5, 4, 3, 3, 5, 8, 8, 11, 9, 5, 7, 4, 6, 5, 5, 5, 9, 5, 6, 6, 6, 6, 5, 5, 6, 4, 4, 5, 7, 6, 4, 5, 5, 6, 4, 5, 7, 6, 6, 7, 5, 4, 5, 5, 7, 7, 3, 4, 6, 4, 5, 7, 7, 6, 5, 7, 6, 4, 5, 5, 5, 4, 5, 6, 4, 8, 3, 6, 4, 4, 3, 5, 3, 6, 7, 8, 6, 5, 4, 7, 4, 3, 5, 7, 3, 4, 5, 2, 3, 3, 6, 3, 3, 4, 3, 3, 4, 3, 4, 10, 5, 7, 4, 4, 2, 2, 4, 2, 2, 2, 5, 4, 6, 3, 4, 4, 4, 2, 6, 4, 3, 2, 2, 3, 4, 5, 4, 5, 5, 5, 9, 6, 5, 5, 6, 4, 7, 4, 5, 5, 4, 4, 6, 4, 3, 3, 4, 3, 3, 3, 3, 3, 3, 6, 5, 5, 6, 3, 5, 4, 4, 4, 3, 5, 5, 3, 4, 3, 4, 4, 5, 2, 4, 4, 6, 4, 6, 5, 5, 5, 4, 2, 4, 6, 8, 9, 8, 6, 6, 6, 3, 2, 7, 6, 3, 6, 6, 4, 5, 7, 3, 8, 6, 4, 6, 5, 5, 6, 4, 4, 4, 7, 5, 3, 3, 3, 6, 4, 4, 2, 5, 4, 9, 6, 6, 6, 4, 3, 2, 7, 4, 2, 2, 2, 3, 7, 2, 5, 4, 6, 4, 5, 3, 1, 5, 3, 4, 7, 6, 4, 4, 5, 2, 7, 8, 3, 4, 4, 5, 3, 3, 3, 4, 5, 4, 3, 5, 4, 5, 4, 4, 4, 4, 4, 3, 5, 5, 5, 6, 4, 4, 3, 4, 4, 4, 4, 5, 5, 5, 4, 4, 7, 3, 9, 6, 4]
-        **Writes**
-Number of writes: 206   (22.440087145969496% of all Ops)
-Average time taken: 3.6116504854368934
-Values: [5, 5, 5, 5, 5, 4, 4, 6, 4, 5, 4, 5, 5, 3, 6, 5, 4, 4, 3, 5, 5, 5, 6, 4, 4, 5, 4, 4, 4, 5, 5, 3, 5, 5, 4, 5, 4, 3, 3, 3, 3, 4, 2, 5, 4, 7, 5, 3, 3, 3, 3, 2, 3, 3, 3, 4, 5, 6, 5, 3, 2, 3, 6, 3, 4, 5, 5, 3, 4, 4, 4, 3, 3, 3, 3, 3, 4, 6, 11, 3, 3, 2, 3, 4, 4, 5, 4, 5, 5, 4, 3, 3, 3, 3, 3, 4, 3, 4, 3, 4, 4, 4, 4, 2, 4, 4, 3, 3, 5, 3, 2, 6, 2, 2, 3, 5, 4, 3, 3, 4, 4, 3, 2, 4, 3, 3, 3, 3, 3, 2, 4, 4, 2, 3, 5, 3, 4, 3, 3, 3, 3, 2, 3, 3, 3, 3, 6, 3, 4, 4, 3, 3, 3, 4, 3, 3, 2, 4, 4, 3, 3, 3, 3, 5, 3, 3, 3, 3, 3, 2, 3, 3, 4, 3, 3, 3, 3, 3, 3, 3, 2, 2, 3, 4, 3, 4, 2, 2, 3, 2, 2, 3, 3, 3, 4, 3, 3, 4, 3, 3, 2, 3, 3, 3, 3, 2]
-Total time taken in Ops: 4469.0
-
-$=$
-        Performance Logger Results.
-$=$
-
-
-
-
-$$$
-        Performance Logger Results:
-$$$
-
-        **Reads**
-Number of reads: 712    (77.5599128540305% of all Ops)
-Average time taken: 5.474719101123595
-Values: [13, 12, 10, 8, 6, 7, 7, 8, 8, 5, 8, 8, 7, 7, 5, 7, 6, 7, 9, 5, 5, 5, 7, 7, 6, 10, 6, 9, 8, 10, 6, 7, 8, 8, 7, 8, 6, 6, 6, 5, 7, 7, 9, 7, 7, 3, 5, 24, 7, 6, 5, 6, 6, 5, 5, 6, 5, 9, 8, 5, 11, 7, 8, 5, 11, 6, 7, 6, 5, 5, 5, 6, 7, 6, 6, 7, 6, 7, 5, 5, 6, 6, 6, 6, 5, 5, 6, 5, 4, 3, 5, 7, 7, 7, 7, 6, 9, 6, 7, 6, 5, 6, 5, 6, 7, 4, 4, 7, 5, 6, 4, 8, 5, 6, 6, 5, 5, 3, 4, 4, 8, 3, 7, 7, 6, 7, 8, 9, 7, 8, 6, 7, 5, 5, 4, 8, 7, 9, 9, 5, 6, 5, 5, 5, 6, 7, 5, 5, 7, 9, 5, 3, 4, 6, 7, 5, 6, 5, 5, 4, 5, 7, 4, 4, 4, 5, 5, 6, 5, 10, 4, 5, 7, 7, 4, 6, 8, 6, 3, 5, 7, 4, 5, 5, 6, 7, 7, 4, 4, 4, 5, 4, 5, 5, 5, 7, 3, 4, 10, 6, 4, 7, 11, 4, 4, 3, 3, 4, 6, 5, 5, 4, 6, 7, 2, 8, 10, 11, 7, 5, 4, 5, 7, 7, 7, 6, 4, 7, 3, 5, 6, 6, 6, 7, 5, 7, 7, 5, 7, 6, 4, 6, 4, 4, 6, 6, 6, 5, 4, 3, 8, 6, 6, 5, 5, 6, 5, 5, 5, 4, 6, 5, 5, 7, 6, 7, 7, 4, 12, 7, 8, 6, 6, 4, 5, 5, 4, 9, 6, 5, 5, 7, 6, 5, 5, 8, 6, 6, 6, 7, 3, 4, 5, 5, 4, 6, 5, 5, 4, 7, 5, 6, 6, 4, 4, 5, 7, 8, 5, 5, 16, 5, 6, 9, 6, 7, 6, 6, 5, 3, 5, 6, 4, 6, 5, 2, 8, 6, 5, 3, 4, 4, 4, 4, 7, 4, 4, 7, 4, 4, 4, 6, 6, 8, 6, 6, 5, 6, 5, 6, 6, 4, 5, 7, 4, 6, 4, 5, 3, 5, 6, 6, 5, 6, 6, 3, 5, 5, 4, 4, 4, 4, 5, 5, 7, 4, 3, 5, 3, 5, 4, 4, 6, 7, 4, 4, 5, 5, 6, 3, 5, 5, 5, 13, 5, 6, 6, 5, 6, 5, 4, 6, 4, 3, 3, 7, 5, 8, 5, 5, 5, 5, 8, 6, 5, 6, 8, 6, 6, 5, 4, 6, 4, 4, 4, 3, 5, 3, 5, 6, 8, 5, 6, 6, 5, 4, 5, 4, 4, 4, 4, 5, 5, 6, 4, 9, 5, 5, 4, 6, 6, 3, 4, 4, 4, 7, 3, 4, 7, 7, 6, 7, 5, 3, 7, 3, 7, 5, 6, 5, 6, 6, 4, 3, 6, 6, 7, 4, 5, 9, 5, 7, 4, 6, 6, 8, 5, 6, 5, 8, 5, 5, 6, 2, 5, 4, 7, 3, 4, 6, 6, 5, 4, 4, 3, 4, 5, 5, 5, 5, 4, 5, 6, 4, 6, 13, 5, 4, 4, 3, 4, 5, 3, 7, 4, 8, 3, 4, 8, 4, 2, 3, 7, 4, 4, 4, 6, 5, 5, 4, 7, 6, 3, 5, 3, 5, 5, 5, 5, 5, 3, 4, 4, 3, 4, 6, 8, 6, 4, 5, 6, 4, 7, 3, 4, 6, 6, 4, 5, 5, 5, 5, 4, 5, 3, 3, 7, 9, 8, 5, 4, 5, 5, 5, 4, 4, 4, 3, 4, 2, 3, 3, 5, 4, 5, 3, 5, 4, 5, 5, 4, 4, 3, 5, 7, 3, 4, 4, 4, 6, 7, 4, 6, 6, 4, 4, 6, 4, 5, 6, 6, 6, 7, 5, 6, 6, 5, 5, 6, 5, 4, 3, 6, 6, 6, 3, 4, 3, 7, 8, 6, 8, 7, 7, 7, 6, 5, 5, 4, 4, 5, 6, 5, 4, 5, 7, 4, 6, 7, 4, 3, 4, 7, 7, 4, 3, 5, 4, 3, 5, 5, 5, 6, 7, 5, 4, 3, 4, 5, 4, 4, 6, 3, 3, 3, 6, 4, 5, 5, 6, 7, 6, 4, 4, 4, 3, 3, 4, 3, 2, 5, 5, 4, 4, 4, 3, 3, 5, 5, 5, 5, 5]
-        **Writes**
-Number of writes: 206   (22.440087145969496% of all Ops)
-Average time taken: 3.3398058252427183
-Values: [6, 4, 5, 5, 4, 6, 3, 4, 3, 4, 5, 6, 5, 4, 4, 5, 5, 4, 5, 5, 3, 5, 3, 4, 5, 3, 3, 6, 4, 3, 4, 4, 3, 4, 5, 3, 3, 6, 5, 8, 5, 3, 4, 4, 4, 2, 3, 4, 4, 2, 4, 4, 3, 3, 2, 4, 4, 7, 3, 3, 2, 4, 4, 2, 3, 2, 3, 3, 4, 3, 3, 2, 3, 4, 4, 3, 4, 3, 3, 3, 4, 3, 3, 3, 2, 3, 4, 2, 3, 3, 4, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 4, 2, 2, 5, 2, 3, 4, 12, 2, 3, 3, 2, 5, 3, 2, 3, 3, 3, 3, 2, 5, 4, 3, 2, 4, 3, 3, 3, 2, 4, 2, 2, 4, 2, 3, 2, 3, 3, 4, 3, 2, 3, 3, 3, 4, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3, 5, 3, 2, 2, 2, 3, 3, 3, 3, 3, 2, 2, 2, 3, 2, 2, 5, 4, 2, 3, 2, 3, 2, 2, 4, 2, 2, 10, 3, 3, 4, 2, 3, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3]
-Total time taken in Ops: 4586.0
-
-$=$
-        Performance Logger Results.
-$=$
-
- ```
 
 <!-- _(explicação)_
  -->
@@ -278,7 +138,8 @@ Para implementar as chamadas remotas assíncronas era necessário criar um Strea
 
 Foi adotada esta opção visto que, além de ter sido a primeira ideia do grupo, implica ter menos uma classe e apenas 1 objeto por cada leitura/escrita (em vez dos *2f+1* StreamObservers e *1* ResponseCollector necessários na outra opção). A opção adotada implica um maior investimento na coerência mas, sendo esta bem feita, permite obter os mesmos resultados. 
 
-Em relação às melhorias, verificou-se que o número de leituras é muito superior ao número de escritas. Isto significa que ter um quórum menor para as operações de leitura permitiria que a nossa implementação fosse mais eficiente. Portanto, otimizando uma operação à custa da outra permite ter muitas operações de leituras baratas (mais rápidas) e poucas operações de escrita mais caras (mais lentas). É no entanto de notar que isto implica que as operações de escrita já não toleram *f* faltas mas antes *TODO* faltas (visto que é agora preciso obter resposta de *TODO* réplicas). Já as operações de leitura passam a tolerar *TODO* faltas (visto que são precisas apenas *TODO* respostas para se atingir o quórum).
+Em relação às melhorias, verificou-se que o número de leituras é muito superior ao número de escritas. Isto significa que ter um quórum menor para as operações de leitura permitiria que a nossa implementação fosse mais eficiente. Portanto, otimizando uma operação à custa da outra permite ter muitas operações de leituras baratas (mais rápidas) e poucas operações de escrita mais caras (mais lentas). 
+Escolhemos um **Threshold** de **N/3 + 1** para as leituras (em proporção com a frequência desta operação (2/3)) e por consequência **N - ReadThreshold + 1** para as escritas (de modo a manter uma replica em comum)  É no entanto de notar que isto implica que as operações de escrita já não toleram *f* faltas mas antes *TODO* faltas (visto que é agora preciso obter resposta de *TODO* réplicas). Já as operações de leitura passam a tolerar *2N/3 - 1* faltas (visto que são precisas apenas *N/3 + 1* respostas para se atingir o quórum).
 
 
 <!-- _(Descrição de opções de implementação, incluindo otimizações e melhorias introduzidas)_ -->
@@ -287,6 +148,6 @@ Em relação às melhorias, verificou-se que o número de leituras é muito supe
 
 ## Notas finais
 
-_(Algo mais a dizer?)_
-
+<!-- _(Algo mais a dizer?)_
+ -->
 É de notar que o número de réplicas inicial do `rec` nunca pode ser *zero*. Para impedir esta situação, o `hub` não começará a sua execução enquanto não encontrar pelo menos uma réplica do `rec` registada no ZooKeeper. Isto é verdade tanto para o número de `recs` como para o número de `hubs` pelo que, da mesma forma, a App não começará a sua execução enquanto não encontrar nenhum `hub` registado no ZooKeeper.

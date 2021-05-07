@@ -50,7 +50,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
 
     public void close() {
         replicas.forEach((replica) -> replica.close());
-        debug(logger.computeResults());     // print performance results
+        System.out.println(logger.computeResults());     // print performance results
     }
 
     private void initReplicas() {
@@ -68,11 +68,11 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
             /* readQuorum = (int)(replicas.size()*READ_FRACTION) + 1;
             writeQuorum = replicas.size() - readQuorum + 1; */
 
-            readQuorum = replicas.size()/2 + 1;
-            writeQuorum = replicas.size()/2 + 1;
+            /* readQuorum = replicas.size()/2 + 1;
+            writeQuorum = replicas.size()/2 + 1; */
 
-            /* readQuorum = 1;
-            writeQuorum = replicas.size(); */
+            readQuorum = 1;
+            writeQuorum = replicas.size();
 
             debug("#initReplicas\tQuorum for read: " + readQuorum + "\tQuorum for write: " + writeQuorum);
 
@@ -126,8 +126,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     }
     
     public void writeReplicated(RegisterRequest request) {
-        int loggerId = 0;
-        if (DEBUG) { loggerId = logger.startWrite(); }      // logging performance
+        int loggerId = logger.startWrite();       // logging performance
 
         ResponseObserver<WriteResponse> collector;
         while(true) {   // block waiting for successful write 
@@ -138,7 +137,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
                         replica.write(request, collector);
 
                     collector.wait();
-                
+
                 } catch(InterruptedException e) {
                     throw Status.ABORTED.withDescription("Write call was interrupted. Operation might not be totally processed (UKNOWN state)").asRuntimeException();
                 
@@ -151,12 +150,11 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
             }
         }
 
-        if (DEBUG && loggerId!=0) { logger.stopWrite(loggerId); }      // logging performance
+        logger.stopWrite(loggerId);      // logging performance
     }
 
     private ResponseObserver<ReadResponse> readReplicatedResponseObserver(RegisterRequest request) throws StatusRuntimeException {
-        int loggerId = 0;
-        if (DEBUG) { loggerId = logger.startRead(); }      // logging performance
+        int loggerId = logger.startRead();      // logging performance
 
         ResponseObserver<ReadResponse> collector;
         while(true) {   // block waiting for successful read
@@ -180,7 +178,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
             }
         }
 
-        if (DEBUG && loggerId!=0) { logger.stopRead(loggerId); }      // logging performance
+        logger.stopRead(loggerId);      // logging performance
         return collector;
     }
 
