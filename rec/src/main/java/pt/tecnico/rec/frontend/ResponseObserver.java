@@ -4,13 +4,13 @@ import java.util.List;
 import java.util.ArrayList;
 
 import io.grpc.stub.StreamObserver;
-
+import pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper.Debug;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
 
 public class ResponseObserver<R> implements StreamObserver<R> {
-    private static boolean DEBUG = false;
+    private static Debug DEBUG = Debug.NO_DEBUG;
     private final int totalReplicas;
     private volatile int totalResponses = 0;
     private int goal;
@@ -18,7 +18,7 @@ public class ResponseObserver<R> implements StreamObserver<R> {
     private volatile boolean replicaDown = false;
     private volatile StatusRuntimeException logicException = null;
 
-    public ResponseObserver(int nResponsesGoal, int totalReplicas, boolean debug) {
+    public ResponseObserver(int nResponsesGoal, int totalReplicas, Debug debug) {
         this.goal = nResponsesGoal;
         this.totalReplicas = totalReplicas;
         DEBUG = debug;
@@ -92,8 +92,13 @@ public class ResponseObserver<R> implements StreamObserver<R> {
     }
     
     /** Helper method to print debug messages. */
-	public static void debug(Object debugMessage) {
-		if (DEBUG)
-			System.err.println("@ResponseObserver\t" + debugMessage);
+	public void debug(Object debugMessage) {
+		if (DEBUG == Debug.STRONGER_DEBUG)
+			System.err.println(debugMessage);
+	}
+
+	public void debugDemo(Object debugMessage) {
+		if (DEBUG == Debug.STRONGER_DEBUG || DEBUG == Debug.WEAKER_DEBUG)
+			System.err.println(debugMessage);
 	}
 }

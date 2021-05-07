@@ -2,6 +2,7 @@ package pt.tecnico.rec.frontend;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper.Debug;
 import pt.tecnico.rec.grpc.RecordServiceGrpc;
 import pt.tecnico.rec.grpc.Rec.*;
 import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
@@ -10,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 
 public class RecordFrontend implements AutoCloseable {
-	private boolean DEBUG = false;
+	private static Debug DEBUG = Debug.NO_DEBUG;
 
 	private final ManagedChannel channel;
 	private final RecordServiceGrpc.RecordServiceStub asyncStub;
@@ -34,7 +35,7 @@ public class RecordFrontend implements AutoCloseable {
         this.timeout = timeoutMS;
     }
     
-    public RecordFrontend(ZKRecord zkRecord, int timeoutMS, boolean debug) {
+    public RecordFrontend(ZKRecord zkRecord, int timeoutMS, Debug debug) {
         this(zkRecord, timeoutMS);
 		this.DEBUG = debug;
 	}
@@ -52,7 +53,7 @@ public class RecordFrontend implements AutoCloseable {
         this.timeout = timeoutMS;
     }
 
-	public RecordFrontend(String host, int port, int timeoutMS, boolean debug) {
+	public RecordFrontend(String host, int port, int timeoutMS, Debug debug) {
 		this(host, port, timeoutMS);
 		this.DEBUG = debug;
 	}
@@ -84,7 +85,12 @@ public class RecordFrontend implements AutoCloseable {
 
 	/** Helper method to print debug messages. */
 	public void debug(Object debugMessage) {
-		if (DEBUG)
-			System.err.println("@RecordFrontend\t" +  debugMessage);
+		if (DEBUG == Debug.STRONGER_DEBUG)
+			System.err.println(debugMessage);
 	}
+
+	public void debugDemo(Object debugMessage) {
+		if (DEBUG == Debug.STRONGER_DEBUG || DEBUG == Debug.WEAKER_DEBUG)
+			System.err.println(debugMessage);
+	}	
 }

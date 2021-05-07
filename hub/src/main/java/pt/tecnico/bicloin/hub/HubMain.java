@@ -2,6 +2,7 @@ package pt.tecnico.bicloin.hub;
 
 import java.io.IOException;
 import pt.tecnico.bicloin.hub.domain.exception.InvalidFileInputException;
+import pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper.Debug;
 import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
@@ -19,8 +20,7 @@ import static pt.tecnico.bicloin.hub.frontend.HubFrontend.ZOO_DIR;
 import pt.tecnico.bicloin.hub.domain.*;
 
 public class HubMain {
-	private static final boolean DEBUG = (System.getProperty("debug") != null);
-	private static final boolean DEBUG_TEST = (System.getProperty("debugDemo") != null);
+	private static Debug DEBUG = Debug.NO_DEBUG;
 	private static final int USER_FILE_FIELDS = 3;
 	private static final int STATION_FILE_FIELDS = 7;
 	
@@ -35,6 +35,9 @@ public class HubMain {
 
 	public static void main(String[] args) throws IOException, InterruptedException, ZKNamingException {
 		System.out.println(HubMain.class.getSimpleName());
+
+		if (System.getProperty("debug") != null) { DEBUG = Debug.STRONGER_DEBUG; }
+		if (System.getProperty("debugDemo") != null) { DEBUG = Debug.WEAKER_DEBUG; }
 
 		// Use hook to register a thread to be called on shutdown.
 		Runtime.getRuntime().addShutdownHook(new CleanUp());
@@ -189,12 +192,12 @@ public class HubMain {
 
 	/** Helper method to print debug messages. */
 	public static void debug(Object debugMessage) {
-		if (DEBUG)
-			System.err.println("@HubMain\t" + debugMessage);
+		if (DEBUG == Debug.STRONGER_DEBUG)
+			System.err.println(debugMessage);
 	}
 
 	public static void debugDemo(Object debugMessage) {
-		if (DEBUG_TEST || DEBUG)
+		if (DEBUG == Debug.STRONGER_DEBUG || DEBUG == Debug.WEAKER_DEBUG)
 			System.err.println(debugMessage);
-	}
+	}	
 }

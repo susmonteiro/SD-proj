@@ -19,7 +19,7 @@ import pt.tecnico.bicloin.hub.frontend.HubFrontend;
 import io.grpc.StatusRuntimeException;
 
 public class Hub {
-    private boolean DEBUG = false;
+    private static Debug DEBUG = Debug.NO_DEBUG;
 
     private static final int BIC_EXCHANGE_RATE = 10;        /* Bic (Bicloin) is the currency */
     private static final int BIKE_UP_PRICE = 10;            /* Price of bike up in project currency (Bic`s) */
@@ -36,7 +36,7 @@ public class Hub {
         rec = new RecordFrontendReplicationWrapper(zooHost, zooPort, instance_num);
     }
     
-    public Hub(String zooHost, int zooPort, int instance_num, Map<String, User> users, Map<String, Station> stations, boolean debug) {
+    public Hub(String zooHost, int zooPort, int instance_num, Map<String, User> users, Map<String, Station> stations, Debug debug) {
         DEBUG = debug;
 
         this.users = users;
@@ -400,7 +400,12 @@ public class Hub {
 
     /** Helper method to print debug messages. */
 	public void debug(Object debugMessage) {
-		if (DEBUG)
-			System.err.println("@Hub\t" + debugMessage);
+		if (DEBUG == Debug.STRONGER_DEBUG)
+			System.err.println(debugMessage);
 	}
+
+    public void debugDemo(Object debugMessage) {
+		if (DEBUG == Debug.STRONGER_DEBUG || DEBUG == Debug.WEAKER_DEBUG)
+			System.err.println(debugMessage);
+	}	
 }

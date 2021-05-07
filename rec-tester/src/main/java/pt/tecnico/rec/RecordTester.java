@@ -4,7 +4,6 @@ import java.util.Map;
 
 import pt.tecnico.rec.grpc.Rec.*;
 import io.grpc.StatusRuntimeException;
-
 import pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper;
 import static pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper.*;
 import static pt.tecnico.rec.frontend.MessageHelper.*;
@@ -35,7 +34,7 @@ public class RecordTester {
 		final String zooHost = args[0];
 		final int zooPort = Integer.parseInt(args[1]);
 
-		frontend = new RecordFrontendReplicationWrapper(zooHost, zooPort, 1, true);
+		frontend = new RecordFrontendReplicationWrapper(zooHost, zooPort, 1);
 		
 
 		/* Ping */

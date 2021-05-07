@@ -15,7 +15,7 @@ import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import io.grpc.StatusRuntimeException;
 
 public class RecordFrontendReplicationWrapper extends MessageHelper {
-    private boolean DEBUG = false;
+    private static Debug DEBUG = Debug.NO_DEBUG;
     private static final int DELAY = 10000; // 10 seconds
     private static final float READ_FRACTION = 1/3f;
     public static final int DEADLINE_MS = 2000;
@@ -29,6 +29,8 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     private int writeQuorum;
     private PerformanceLogger logger = new PerformanceLogger();
 
+    public enum Debug { NO_DEBUG, WEAKER_DEBUG, STRONGER_DEBUG }
+
     public RecordFrontendReplicationWrapper(String zooHost, int zooPort, int cid) {        
         this.clientID = cid;
         debug("#RecordFrontendReplicationWrapper\tContacting ZooKeeper at " + zooHost + ":" + zooPort);
@@ -36,8 +38,8 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
         initReplicas();
     }
 
-    public RecordFrontendReplicationWrapper(String zooHost, int zooPort, int cid, boolean debug) {
-        this.DEBUG = debug;
+    public RecordFrontendReplicationWrapper(String zooHost, int zooPort, int cid, Debug debug) {
+        DEBUG = debug;
         this.clientID = cid;
         debug("#RecordFrontendReplicationWrapper\tContacting ZooKeeper at " + zooHost + ":" + zooPort);
         zkNaming = new ZKNaming(zooHost, Integer.toString(zooPort));
@@ -56,6 +58,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     private void initReplicas() {
         // list lookup
         try {
+            debugDemo("Initialize replicas registered in ZooKeeper...");
             List<ZKRecord> records = new ArrayList<>(zkNaming.listRecords(ZOO_DIR));
 
             // if no replicas were found, try again
@@ -63,16 +66,19 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
             
             debug("#initReplicas\tZk records: " + records);
             replicas = new ArrayList<RecordFrontend>();
-            records.forEach((r) -> replicas.add(new RecordFrontend(r, DEADLINE_MS, this.DEBUG)));
+            records.forEach((r) -> {
+                debugDemo("Replica " + r.getPath() + " starting...");
+                replicas.add(new RecordFrontend(r, DEADLINE_MS, DEBUG));
+            });
                        
-            /* readQuorum = (int)(replicas.size()*READ_FRACTION) + 1;
-            writeQuorum = replicas.size() - readQuorum + 1; */
+            readQuorum = (int)(replicas.size()*READ_FRACTION) + 1;
+            writeQuorum = replicas.size() - readQuorum + 1;
 
             /* readQuorum = replicas.size()/2 + 1;
             writeQuorum = replicas.size()/2 + 1; */
 
-            readQuorum = 1;
-            writeQuorum = replicas.size();
+            /* readQuorum = 1;
+            writeQuorum = replicas.size(); */
 
             debug("#initReplicas\tQuorum for read: " + readQuorum + "\tQuorum for write: " + writeQuorum);
 
@@ -97,6 +103,8 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
      *  Look for the same replicas that might have a new location (but same path)  
      */
     private void rebuildReplicas() {
+        debugDemo("Looking again for replicas registered in ZooKeeper...");
+
         // list lookup
         List<RecordFrontend> updatedReplicas = new ArrayList<>();
 
@@ -106,7 +114,9 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
                 if (newRecord.getURI() != replica.getURI()) {
                     // the replica has a new ip and/or port
                     replica.close();
-                    updatedReplicas.add(new RecordFrontend(newRecord, DEADLINE_MS, this.DEBUG));
+                    updatedReplicas.add(new RecordFrontend(newRecord, DEADLINE_MS, DEBUG));
+                    debugDemo("Updating replica " + newRecord.getPath() + " ...");
+
                 } else {
                     updatedReplicas.add(replica);   // keeping old one for target reference
                 }
@@ -130,11 +140,14 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
 
         ResponseObserver<WriteResponse> collector;
         while(true) {   // block waiting for successful write 
-            collector = new ResponseObserver<WriteResponse>(this.writeQuorum, this.replicas.size(), this.DEBUG);
+            collector = new ResponseObserver<WriteResponse>(this.writeQuorum, this.replicas.size(), DEBUG);
             synchronized(collector) {
                 try {
-                    for (RecordFrontend replica : replicas) 
+                    for (RecordFrontend replica : replicas) {
+                        debugDemo(">> Contacting replica " + replica.getPath() + " at " + replica.getURI());
                         replica.write(request, collector);
+                    }
+                    debugDemo("All replicas contacted!\n");
 
                     collector.wait();
 
@@ -151,18 +164,23 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
         }
 
         logger.stopWrite(loggerId);      // logging performance
+        debugDemo("== Received enough ACKs from Rec\n");
     }
 
     private ResponseObserver<ReadResponse> readReplicatedResponseObserver(RegisterRequest request) throws StatusRuntimeException {
         int loggerId = logger.startRead();      // logging performance
 
+
         ResponseObserver<ReadResponse> collector;
         while(true) {   // block waiting for successful read
-            collector = new ResponseObserver<ReadResponse>(this.readQuorum, this.replicas.size(), this.DEBUG);
+            collector = new ResponseObserver<ReadResponse>(this.readQuorum, this.replicas.size(), DEBUG);
             synchronized(collector) {
                 try {
-                    for (RecordFrontend replica : replicas) 
+                    for (RecordFrontend replica : replicas) {
+                        debugDemo(">> Contacting replica " + replica.getPath() + " at " + replica.getURI());
                         replica.read(request, collector);
+                    }
+                    debugDemo("All replicas contacted!\n");
 
                     collector.wait();
                 
@@ -187,6 +205,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
         /* +++ */
 
     private RegisterRequest addTagToRegister(RegisterRequest request) {
+        debugDemo("== Getting most recent tag from Rec...\n");
         ResponseObserver<ReadResponse> collector = readReplicatedResponseObserver(request);
         int maxSeqNumber = getMostRecentSeqNumber(collector);
         
@@ -216,7 +235,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
             
             latestTag = responses.get(0).getData().getTag();
             latestResponse = responses.get(0);
-
+            
             for (ReadResponse response : responses) {
                 tag = response.getData().getTag();
                 if (isTagNewer(latestTag, tag)) {
@@ -224,8 +243,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
                     latestResponse = response;
                 }
             }
-        }
-        
+        }        
         return latestResponse;
     }
 
@@ -253,6 +271,8 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
 
     public int getBalance(String id) throws StatusRuntimeException {
         /* Use only with trusted id */
+        debugDemo("== Read Balance from Rec. ID: " + id + "\n");
+
         RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue());
         debug("#getBalance\n**Request:\n" + request);
         
@@ -262,11 +282,14 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
         int value = getBalanceValue(response.getData());
         debug("#getBalance\n**Value:\n" + value);
 
+        debugDemo("== Received from Rec: " + value + "\n");
+
         return value;
     }
 
     public void setBalance(String id, int value) throws StatusRuntimeException {
         /* Use only with trusted id */        
+        debugDemo("== Write Balance to Rec: " + value + "\n");
         RegisterRequest request = getRegisterRequest(id, getRegisterBalanceAsRegisterValue(value));
         request = addTagToRegister(request);
         debug("#setBalance\n**Request:\n" + request);
@@ -275,6 +298,8 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     }
 
     public void setBalance(String id) throws StatusRuntimeException {
+        debugDemo("== Write Balance to Rec: 0\n");
+
         /* Use only with trusted id */
         setBalance(id, getBalanceDefaultValue());
     }
@@ -282,6 +307,8 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
 
 	public boolean getOnBike(String id) throws StatusRuntimeException {
         /* Use only with trusted id */
+        debugDemo("== Read OnBike from Rec. ID: " + id + "\n");
+
         RegisterRequest request = getRegisterRequest(id, getRegisterOnBikeAsRegisterValue());
         debug("#getOnBike\n**Request:\n" + request);
         
@@ -291,11 +318,14 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
         boolean value = getOnBikeValue(response.getData());
         debug("#getOnBike\n**Value:\n" + value);
 
+        debugDemo("== Received from Rec: " + value + "\n");
+
         return value;
     }
 
     public void setOnBike(String id, boolean value) throws StatusRuntimeException {
         /* Use only with trusted id */
+        debugDemo("== Write OnBike to Rec: " + value + "\n");
         RegisterRequest request = getRegisterRequest(id, getRegisterOnBikeAsRegisterValue(value));
         request = addTagToRegister(request);
         debug("#setOnBike\n**Request:\n" + request);
@@ -305,12 +335,15 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
 
     public void setOnBike(String id) throws StatusRuntimeException {
         /* Use only with trusted id */
+        debugDemo("== Write OnBike to Rec: false\n");
         setOnBike(id, getOnBikeDefaultValue());
     }
 
 
     public int getNBikes(String id) throws StatusRuntimeException {
         /* Use only with trusted id */
+        debugDemo("== Read NBikes from Rec. ID: " + id + "\n");
+
         RegisterRequest request = getRegisterRequest(id, getRegisterNBikesAsRegisterValue());
         debug("#getNBikes\n**Request:\n" + request);
         
@@ -320,11 +353,15 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
         int value = getNBikesValue(response.getData());
         debug("#getNBikes\n**Value:\n" + value);
 
+        debugDemo("== Received from Rec: " + value + "\n");
+
         return value;
     }
 
     public void setNBikes(String id, int value) throws StatusRuntimeException {
         /* Use only with trusted id */
+        debugDemo("== Write NBikes to Rec: " + value + "\n");
+
         RegisterRequest request = getRegisterRequest(id, getRegisterNBikesAsRegisterValue(value));
         request = addTagToRegister(request);
         debug("#setNBikes\n**Request:\n" + request);
@@ -335,6 +372,8 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
 
 	public int getNPickUps(String id) throws StatusRuntimeException {
         /* Use only with trusted id */
+        debugDemo("== Read NPickUps from Rec. ID: " + id + "\n");
+
         RegisterRequest request = getRegisterRequest(id, getRegisterNPickUpsAsRegisterValue());
         debug("#getNPickUps\n**Request:\n" + request);
         
@@ -344,10 +383,13 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
         int value = getNPickUpsValue(response.getData());
         debug("#getNPickUps\n**Value:\n" + value);
 
+        debugDemo("== Received from Rec: " + value + "\n");
+
         return value;
     }
 
     public void setNPickUps(String id, int value) throws StatusRuntimeException {
+        debugDemo("== Write NPickUps to Rec: " + value + "\n");
         /* Use only with trusted id */
         RegisterRequest request = getRegisterRequest(id, getRegisterNPickUpsAsRegisterValue(value));
         request = addTagToRegister(request);
@@ -357,12 +399,15 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     }
     
     public void setNPickUps(String id) throws StatusRuntimeException {
+        debugDemo("== Write to Rec: 0\n");
         /* Use only with trusted id */
         setNPickUps(id, getNPickUpsDefaultValue());
     }
 
 	public int getNDeliveries(String id) throws StatusRuntimeException {
         /* Use only with trusted id */
+        debugDemo("== Read NDeliveries from Rec. ID: " + id + "\n");
+
         RegisterRequest request = getRegisterRequest(id, getRegisterNDeliveriesAsRegisterValue());
         debug("#getNDeliveries\n**Request:\n" + request);
         
@@ -372,10 +417,13 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
         int value = getNDeliveriesValue(response.getData());
         debug("#getNDeliveries\n**Value:\n" + value);
 
+        debugDemo("== Received from Rec: " + value + "\n");
+
         return value;
     }
 
     public void setNDeliveries(String id, int value) throws StatusRuntimeException {
+        debugDemo("== Write NDeliveries to Rec: " + value + "\n");
         /* Use only with trusted id */
         RegisterRequest request = getRegisterRequest(id, getRegisterNDeliveriesAsRegisterValue(value));
         request = addTagToRegister(request);
@@ -385,6 +433,7 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     }
 
     public void setNDeliveries(String id) throws StatusRuntimeException {
+        debugDemo("== Write to Rec: 0\n");
         /* Use only with trusted id */
         setNDeliveries(id, getNDeliveriesDefaultValue());
     }
@@ -440,10 +489,15 @@ public class RecordFrontendReplicationWrapper extends MessageHelper {
     }
 
    /** Helper method to print debug messages. */
-   public void debug(Object debugMessage) {
-    if (this.DEBUG)
-        System.err.println("@RecordFrontendReplicationWrapper\t" +  debugMessage);
-    }
+	public void debug(Object debugMessage) {
+		if (DEBUG == Debug.STRONGER_DEBUG)
+			System.err.println(debugMessage);
+	}
+
+	public void debugDemo(Object debugMessage) {
+		if (DEBUG == Debug.STRONGER_DEBUG || DEBUG == Debug.WEAKER_DEBUG)
+			System.err.println(debugMessage);
+	}	
 
 
 }

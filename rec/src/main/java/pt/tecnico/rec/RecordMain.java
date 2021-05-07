@@ -10,21 +10,23 @@ import io.grpc.ServerBuilder;
 
 import static pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper.ZOO_DIR;
 
+import pt.tecnico.rec.frontend.RecordFrontendReplicationWrapper.Debug;
 import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 
 public class RecordMain {
-	private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
-	private static final boolean DEBUG_TEST = (System.getProperty("debugDemo") != null);
+	private static Debug DEBUG = Debug.NO_DEBUG;
 	private static String zooHost, IP, server_path;
 	private static int zooPort, PORT, instance_num;
 	/** ZooKeeper helper object. */
 	private static Server server = null;
 	private static ZKNaming zkNaming = null;
 
-
 	public static void main(String[] args) throws IOException, InterruptedException, ZKNamingException {
 		System.out.println(RecordMain.class.getSimpleName());
+
+		if (System.getProperty("debug") != null) { DEBUG = Debug.STRONGER_DEBUG; }
+		if (System.getProperty("debugDemo") != null) { DEBUG = Debug.WEAKER_DEBUG; }
 
 		// Use hook to register a thread to be called on shutdown.
 		Runtime.getRuntime().addShutdownHook(new Unbind());
@@ -111,12 +113,12 @@ public class RecordMain {
 
 	/** Helper method to print debug messages. */
 	public static void debug(Object debugMessage) {
-		if (DEBUG_FLAG)
+		if (DEBUG == Debug.STRONGER_DEBUG)
 			System.err.println(debugMessage);
 	}
 
 	public static void debugDemo(Object debugMessage) {
-		if (DEBUG_TEST || DEBUG_FLAG)
+		if (DEBUG == Debug.STRONGER_DEBUG || DEBUG == Debug.WEAKER_DEBUG)
 			System.err.println(debugMessage);
 	}	
 }
