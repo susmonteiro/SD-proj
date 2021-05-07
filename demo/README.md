@@ -25,12 +25,12 @@ Para isso:
 
 -  Basta ir à pasta *rec* e executar:
     ```sh
-    $ mvn compile exec:java [-Ddebug] [-Dexec.args="ZooKeeper_IP ZooKeeper_PORT IP PORT instance_num"]
+    $ mvn compile exec:java [-Ddebug|-DdebugDemo] [-Dexec.args="ZooKeeper_IP ZooKeeper_PORT IP PORT instance_num"]
     ```
 
     Este comando vai colocar o *rec* no endereço *localhost*, na porta *8091* e com número de instância *1*.
 
-    > Opção '-Ddebug' opcional ativa método de depuramento com *logs* de execução.
+    > Opção '-Ddebug|-DdebugDemo' opcional ativa método de depuramento com *logs* de execução.
 
     > Opção '-Dexec.args="..."' também é opcional e permite especificar argumentos. Quando se usa esta opção, é necessário passar todos os argumentos.
 
@@ -66,12 +66,12 @@ Para isso:
 
 -  Basta ir à pasta *hub* e executar:
     ```sh
-    $ mvn compile exec:java [-Ddebug] [-Dexec.args="ZooKeeper_IP ZooKeeper_PORT IP PORT instance_num users.csv stations.csv [initRec]"]
+    $ mvn compile exec:java [-Ddebug|-DdebugDemo] [-Dexec.args="ZooKeeper_IP ZooKeeper_PORT IP PORT instance_num users.csv stations.csv [initRec]"]
     ```
 
     Este comando vai colocar o *hub* no endereço *localhost*, na porta *8081* e com número de instância *1*.
 
-    > Opção "-Ddebug" opcional ativa método de depuramento com *logs* de execução
+    > Opção "-Ddebug|-DdebugDemo" opcional ativa método de depuramento com *logs* de execução
     
     > Opção '-Dexec.args="..."' também é opcional e permite especificar argumentos. Quando se usa esta opção, é necessário passar todos os argumentos.
 
