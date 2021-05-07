@@ -18,7 +18,6 @@ Sistemas Distribuídos 2020-2021, segundo semestre
 
 ## Melhorias da primeira parte
 
-<!-- _(que correções ou melhorias foram feitas ao código da primeira parte -- incluir link para commits no Git onde a alteração foi feita)_ -->
 
 - [Melhorias no guia de demonstração](https://git.rnl.tecnico.ulisboa.pt/SD-20-21-2/A24-Bicloin/commit/5b432fcd693fd06ddbf1deb0aa0d0c5b785404d7) (teste dos comandos)
 
@@ -31,7 +30,6 @@ Sistemas Distribuídos 2020-2021, segundo semestre
 
 ## Modelo de faltas
 
-<!-- _(que faltas são toleradas, que faltas não são toleradas)_ -->
 
 Sendo a nossa implementação baseada num protocolo de registo distribuído coerente, adotou-se um modelo de faltas semelhante ao deste protocolo. Assim assume-se que:
 - o sistema é assíncrono (tanto a comunicação como o processamento podem demorar um tempo arbitrário)
@@ -47,12 +45,10 @@ As faltas bizantinas/arbitrárias não são toleradas. Também não se tolera fa
 
 ## Solução
 
+![UML](UML.png)
+
 Como referido, a nossa implementação base tolera *f* faltas silenciosas/crash quando o grau de replicação é *2f+1*. Isto acontece porque tanto nas operações de escrita como de leitura, é necessário obter apenas resposta de um quórum de réplicas (de tamanho *f+1*). Quando o número destas faltas ultrapassa o *f*, a chamada remota não poderá ser concluída com sucesso, caso contrário a coerência sequencial seria prejudicada. Assim, se tal acontecer, o nosso `hub` apercebe-se disso e consulta o ZooKeeper para verificar se houve mudança do *ip* e/ou *port* de uma ou mais réplicas e tenta executar a operação de novo. Isto repetir-se-à até que a operação seja concluída (ou até que o `hub` seja terminado pelo utilizador).
 
-<!-- _(Figura da solução de tolerância a faltas)_
- -->
-<!-- _(Breve explicação da solução, suportada pela figura anterior)_
- -->
 
 ## Protocolo de replicação
 
@@ -69,9 +65,6 @@ Em relação à possibilidade de fazer um *writeback*, ainda que o `hub` seja um
 
 Na implementação base, os *quóruns*, tanto de escrita como de leitura têm um valor igual (*N/2+1*). Após as medições de desempenho e análise de resultados, observamos que uma operação de leitura tem uma frequência absoluta consideravelmente superior à de escrita (cerca de *2/3*) e que conseguiriamos tirar partido de uma variante do protocolo com *quóruns* de escrita e leitura com pesos variáveis, neste caso diminuindo o peso para uma leitura, optimizando esta à custa das escritas. Na secção [opções-de-implementação](#opções-de-implementação) aprofundamos este conceito, principalmente a escolha para o valores de **Threshold** para cada uma das operações.
 
-
-<!-- _(descrição das trocas de mensagens)_
- -->
 ### Leituras
 - Cliente (Hub)
     1. Cliente envia um `read()` para todas as réplicas.
@@ -108,13 +101,15 @@ Por observação do código foi possível gerar a seguinte tabela, que mostra o 
 |----------|----------|----------|
 | balance | 1 | 0 |
 | top-up | 2 | 1 |
-| info-station | 3 | 0 |
+| info-station | 4 | 0 |
 | locate-station | 0 | 0 |
 | bike-up | 8 | 4 |
 | bike-down | 8 | 4 |
-| **Total** | 22 | 9 |
+| **Total** | 23 | 9 |
 
-Observa-se que fazendo um número igual de operações de cada tipo, o número de leituras é bastante superior ao número de escritas. É então esperado que diminuir o quórum de leituras leve a um aumento da performance, ainda que para isso seja necessário aumentar o número de escritas.
+Além disso, num comando `scan X` da App são feitas `X` leituras para zero escritas.
+
+Observa-se portanto que fazendo um número igual de operações de cada tipo, o número de leituras é bastante superior ao número de escritas. É então esperado que diminuir o quórum de leituras leve a um aumento da performance, ainda que para isso seja necessário aumentar o número de escritas.
 
 Para confirmar esta hipótese e otimizar o código, foram feitas algumas medições utilizando-se:
 - um hub, que não corre com a opção initRec;
@@ -125,13 +120,11 @@ No total são feitas 712 leituras (77,56%) e 206 escritas (22,44%). Como o núme
 
 ![Medições](medicoes.png)
 
-É de esperar que correndo o mesmo teste com um maior conjunto de réplicas levaria a uma maior discrepância de valores entre os vários quóruns. Porém, considerou-se que 5 réplicas do Rec era um número razoável e que permite já observar que um meio termo entre ter quóruns iguais e ter um *write thresthold* máximo parece ser melhor hipótese.
+> Embora esta tabela seja um resumo das medições obtidas, os valores completos podem ser consultados nos ficheiros [3 leituras/3 escritas](3_3quoruns.txt), [2 leituras/4 escritas](2_4quoruns.txt) e [1 leitura/5 escritas](1_5quoruns.txt)
+
+É de esperar que correndo o mesmo teste com um maior conjunto de réplicas levaria a uma maior discrepância de valores entre os vários quóruns. Porém, considerou-se que 5 réplicas do Rec era um número razoável e que permite já observar que um meio termo entre ter quóruns iguais e ter um *write threshold* máximo parece ser melhor hipótese.
 
 
-
-
-<!-- _(explicação)_
- -->
 ## Opções de implementação
 
 Para implementar as chamadas remotas assíncronas era necessário criar um StreamObserver e um ResponseCollector. Como já foi apontado anteriormente, optou-se por criar uma única classe, chamada `ResponseObserver` que reúne as qualidades de objeto de callback e de armazenamento das respostas das várias réplicas. Cada operação usa a mesma instância para todas as réplicas, guardando nesta toda a informação. 
@@ -139,15 +132,11 @@ Para implementar as chamadas remotas assíncronas era necessário criar um Strea
 Foi adotada esta opção visto que, além de ter sido a primeira ideia do grupo, implica ter menos uma classe e apenas 1 objeto por cada leitura/escrita (em vez dos *2f+1* StreamObservers e *1* ResponseCollector necessários na outra opção). A opção adotada implica um maior investimento na coerência mas, sendo esta bem feita, permite obter os mesmos resultados. 
 
 Em relação às melhorias, verificou-se que o número de leituras é muito superior ao número de escritas. Isto significa que ter um quórum menor para as operações de leitura permitiria que a nossa implementação fosse mais eficiente. Portanto, otimizando uma operação à custa da outra permite ter muitas operações de leituras baratas (mais rápidas) e poucas operações de escrita mais caras (mais lentas). 
-Escolhemos um **Threshold** de **N/3 + 1** para as leituras (em proporção com a frequência desta operação (2/3)) e por consequência **N - ReadThreshold + 1** para as escritas (de modo a manter uma replica em comum)  É no entanto de notar que isto implica que as operações de escrita já não toleram *f* faltas mas antes *TODO* faltas (visto que é agora preciso obter resposta de *TODO* réplicas). Já as operações de leitura passam a tolerar *2N/3 - 1* faltas (visto que são precisas apenas *N/3 + 1* respostas para se atingir o quórum).
+Escolhemos um **ReadThreshold** de **N/3 + 1** para as leituras (em proporção com a frequência desta operação (2/3)) e por consequência **N - ReadThreshold + 1** para as escritas (de modo a manter uma réplica em comum)  É no entanto de notar que isto implica que as operações de escrita já não toleram *f* faltas mas antes *N - WriteThreshold* faltas (visto que é agora preciso obter resposta de *N - ReadThreshold + 1* réplicas). Já as operações de leitura passam a tolerar *N - ReadThreshold* faltas (visto que são precisas apenas *N/3 + 1* respostas para se atingir o quórum). Por exemplo, para 5 réplicas o `ReadThreshold = 2`, `WriteThreshold = 4` e, consequentemente, o número de falhas toleradas é `3` numa leitura e `1` numa escrita.
 
+No limite, poderíamos ter um **WriteThreshold** máximo e, portanto, precisar apenas da resposta de uma única réplica ao fazer uma leitura. Porém, não só a operação de escrita poderia ficar muito pesada como a nossa implementação passaria a não suportar falhas nas operações de escrita.
 
-<!-- _(Descrição de opções de implementação, incluindo otimizações e melhorias introduzidas)_ -->
-
-<!-- _(Justificar as otimizações com as medições efetuadas -- antes e depois)_ -->
 
 ## Notas finais
 
-<!-- _(Algo mais a dizer?)_
- -->
 É de notar que o número de réplicas inicial do `rec` nunca pode ser *zero*. Para impedir esta situação, o `hub` não começará a sua execução enquanto não encontrar pelo menos uma réplica do `rec` registada no ZooKeeper. Isto é verdade tanto para o número de `recs` como para o número de `hubs` pelo que, da mesma forma, a App não começará a sua execução enquanto não encontrar nenhum `hub` registado no ZooKeeper.

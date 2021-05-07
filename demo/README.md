@@ -6,7 +6,7 @@ Para testar o sistema e todos os seus componentes, é necessário preparar um am
 
 ### 1.1. Lançar o *registry* 
 
-*Unimplemented*
+Para lançar o servidor ZooKeeper, navegue até à pasta zookeeper/bin e corra o comando ./zkServer.sh start em Linux, ou zkServer.cmd em Windows. No final para encerrar o servidor, corra o comando ./zkServer.sh stop em Linux, ou faça Ctrl+C na consola em Windows.
 
 
 ### 1.2. Compilar o projeto
@@ -125,7 +125,7 @@ $ app localhost 2181 alice +35191102030 38.7380 -9.3000 [-Ddebug]
 Também pode ser executado com Maven:
 
 ```sh
-$ mvn compile exec:java [-Ddebug] [-Dexec.args="hubIP hubPORT username phoneNumber latitude longitude"]
+$ mvn compile exec:java [-Ddebug] [-Dexec.args="ZooKeeper_IP ZooKeeper_PORT username phoneNumber latitude longitude"]
 ```
 
 
@@ -279,6 +279,110 @@ Em qualquer momento, na sequência de qualquer comando, podem ocorrer 2 erros:
 
 ## 3. Teste da replicação e da tolerância a faltas
 
+4 recs, 1 hub, 2 apps
+
+Lançar o servidor de nomes ZooKeeper:
+
+Navegue até à pasta zookeeper/bin e caso esteja:
+    Em Linux: corra o comando ./zkServer.sh start
+    Em Windows: corra o comando zkServer.cmd
+
+No final para encerrar o servidor, corra o comando ./zkServer.sh stop em Linux, ou faça Ctrl+C na consola em Windows.
+
+Instalar todos os módulos e as suas dependências, dentro da pasta A24-Bicloin, fazer:
+
+```sh
+mvn clean install -DskipTests
+```
+
+Em primeiro lugar, para lançar as réplicas (Rec), abrir 4 terminais, navegar até à pasta A24-Bicloin/rec e executar os comandos em cada um deles, respetivamente:
+
+```sh
+mvn compile exec:java -DdebugDemo -Dexec.args="localhost 2181 localhost 8091 1"
+mvn compile exec:java -DdebugDemo -Dexec.args="localhost 2181 localhost 8092 2"
+mvn compile exec:java -DdebugDemo -Dexec.args="localhost 2181 localhost 8093 3"
+mvn compile exec:java -DdebugDemo -Dexec.args="localhost 2181 localhost 8094 4"
+```
+
+> Com 4 réplicas, a nossa implementação terá `ReadThreshold = 2` e `WriteThreshold = 3`. Consequentemente, uma leitura tolera `2` falta e uma escrita tolera `1` falta.
+
+De seguida, para lançar o Hub, navegar até à pasta A24-Bicloin/hub e fazer noutro terminal:
+
+```sh
+mvn compile exec:java -DdebugDemo -Dexec.args="localhost 2181 localhost 8081 1 ../demo/data/users.csv ../demo/data/stations.csv initRec"
+```
+
+E finalmente, para lançar 2 aplicações móveis, navegar até à pasta A24-Bicloin/app e fazer noutros 2 terminais:
+
+```sh
+mvn compile exec:java -Dexec.args="localhost 2181 alice +35191102030 38.7380 -9.3000"
+mvn compile exec:java -Dexec.args="localhost 2181 bruno +35193334444 38.7038 -9.1597"
+```
+
+Depois de estas componentes estarem todas a correr:
+
+No terminal respetivo, executar:
+- Caso normal:
+```sh
+#REC 1 - UP
+#REC 2 - UP
+#REC 3 - UP
+#REC 4 - UP
+ALICE > top-up 5
+# observar sequência de pedidos e respostas
+BRUNO > info istt
+# observar número de bikes
+ALICE > bike-up istt
+# observar sequência de pedidos e respostas
+BRUNO > info istt
+# observar alterações feitas pela Alice
+```
+
+- Testar o comportamento do sistema no caso de **1** falhas para uma escrita:
+```sh
+REC 1 > [ctrl+z]
+#REC 2 - UP
+#REC 3 - UP
+#REC 4 - UP
+ALICE > top-up 5
+# observar que uma escrita tolera 1 falta
+# O valor é escrito nas 3 replicas *UP* -> REC 2, REC 3, REC 4
+```
+
+- Testar o comportamento do sistema no caso de **2** falhas para uma leitura:
+
+```sh
+REC 1 > fg
+REC 2 > [ctrl+z]
+REC 3 > [ctrl+z]
+#REC 4 - UP
+ALICE > balance
+# observar que uma leitura tolera 2 faltas
+# verificar que mesmo que algumas réplicas estejam em baixo, o valor obtido é o mais atualizado
+# Rec 1 -> oldValue
+# Rec 4 -> newValue      (top-up anterior)
+```
+
+- Testar o comportamento do sistema para *N-1* falhas:
+```sh
+#REC 1 - UP 
+#REC 2 - DOWN
+#REC 3 - DOWN
+REC 4 > [ctrl+z]
+ALICE > balance
+BRUNO > top-up 10
+# O sistema não responderá até obter respostas de um quórum.
+
+# Ligar as réplicas e observar que o pedido é finalizado (leitura).
+#REC 1 - UP  
+REC 2 > fg  # resposta do balance recebida aqui
+
+# Ligar as réplicas e observar que o pedido é finalizado (escrita).
+#REC 1 - UP  
+#REC 2 - UP  
+REC 3 > fg  # resposta do topUp recebida aqui
+REC 4 > fg  # não necessário
+```
 
 ----
 
